@@ -4,9 +4,36 @@ import { matchesQuartzWeek } from './week';
 /** 单次预估最多返回条数，防止异常入参拖垮 UI */
 const MAX_NEXT_RUN_COUNT = 100;
 
-/** 单字段展开上限（等于合法区间宽度即可） */
+/** 单字段展开最大跨度，防止恶意 min/max 占满内存 */
+const MAX_EXPAND_SPAN = 400;
+
+/** 日推进扫描上限（约 5 年） */
+const MAX_SCAN_DAYS = 366 * 5;
+
+/**
+ * @description 将数值夹紧到闭区间
+ * @param {number} n - 原始值
+ * @param {number} min - 下界
+ * @param {number} max - 上界
+ * @returns {number} 夹紧结果
+ */
 function clampInt(n: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, n));
+}
+
+/**
+ * @description 安全生成连续整数数组（超跨度返回 null）
+ * @param {number} start - 起
+ * @param {number} end - 止
+ * @returns {number[] | null} 列表或 null
+ */
+function rangeArray(start: number, end: number): number[] | null {
+  if (!Number.isFinite(start) || !Number.isFinite(end) || start > end) return null;
+  const span = end - start + 1;
+  if (span > MAX_EXPAND_SPAN) return null;
+  const out = new Array<number>(span);
+  for (let i = 0; i < span; i++) out[i] = start + i;
+  return out;
 }
 
 /**
@@ -26,11 +53,14 @@ export function expandFieldValues(
   if (!Number.isFinite(min) || !Number.isFinite(max) || min > max) {
     return null;
   }
+  if (max - min + 1 > MAX_EXPAND_SPAN) {
+    return null;
+  }
 
   switch (field.mode) {
     case 'every':
     case 'unset':
-      return Array.from({ length: max - min + 1 }, (_, i) => min + i);
+      return rangeArray(min, max);
     case 'specific': {
       const n = Number(field.value);
       if (!Number.isFinite(n)) return null;
@@ -39,7 +69,9 @@ export function expandFieldValues(
       return [n];
     }
     case 'list': {
-      const values = (field.values ?? field.value?.split(',') ?? [])
+      const span = max - min + 1;
+      const raw = (field.values ?? field.value?.split(',') ?? []).slice(0, span);
+      const values = raw
         .map((v) => Number(v))
         .filter((n) => Number.isFinite(n) && n >= min && n <= max);
       return values.length > 0 ? [...new Set(values)].sort((a, b) => a - b) : null;
@@ -53,13 +85,13 @@ export function expandFieldValues(
       // 夹紧到合法区间，避免 0..999999 这类恶意/异常输入占满内存
       const start = clampInt(rawStart, min, max);
       const end = clampInt(rawEnd, min, max);
-      return Array.from({ length: end - start + 1 }, (_, i) => start + i);
+      return rangeArray(start, end);
     }
     case 'step': {
       const step = Number(field.secondary);
       if (!Number.isFinite(step) || step < 1) return null;
       const span = max - min + 1;
-      const safeStep = Math.min(step, span);
+      const safeStep = Math.max(1, Math.min(Math.floor(step), span));
       const rawBase = field.value && field.value.length > 0 ? field.value : '*';
 
       // 区间步长 a-b/n（Quartz / cron.ren）
@@ -73,7 +105,10 @@ export function expandFieldValues(
         const start = clampInt(startRaw, min, max);
         const end = clampInt(endRaw, min, max);
         const out: number[] = [];
-        for (let v = start; v <= end; v += safeStep) out.push(v);
+        for (let v = start; v <= end; v += safeStep) {
+          out.push(v);
+          if (out.length > MAX_EXPAND_SPAN) break;
+        }
         return out;
       }
 
@@ -81,7 +116,10 @@ export function expandFieldValues(
       if (!Number.isFinite(baseRaw)) return null;
       const base = clampInt(baseRaw, min, max);
       const out: number[] = [];
-      for (let v = base; v <= max; v += safeStep) out.push(v);
+      for (let v = base; v <= max; v += safeStep) {
+        out.push(v);
+        if (out.length > MAX_EXPAND_SPAN) break;
+      }
       return out;
     }
     default:
@@ -100,6 +138,22 @@ function normalizeCount(count: number): number {
   const n = Math.floor(count);
   if (n < 1) return 0;
   return Math.min(n, MAX_NEXT_RUN_COUNT);
+}
+
+/**
+ * @description 全量时分秒（每秒触发）时的快速路径：按秒递增，避免 86400 次嵌套 Date
+ * @param {number} limit - 条数
+ * @param {number} fromTs - 起始时间戳
+ * @returns {Date[]} 触发列表
+ */
+function nextRunsEverySecond(limit: number, fromTs: number): Date[] {
+  const results: Date[] = new Array(limit);
+  let t = fromTs + 1000;
+  for (let i = 0; i < limit; i++) {
+    results[i] = new Date(t);
+    t += 1000;
+  }
+  return results;
 }
 
 /**
@@ -154,15 +208,28 @@ export function getNextRuns(
   }
 
   const fromTs = from.getTime();
+
+  // 默认 cron.ren 态 `* * * * * ? *`：每秒触发，走 O(N) 快路径
+  const denseCalendar =
+    !weekConcrete &&
+    !dayConcrete &&
+    yearCandidates == null &&
+    months.length === 12 &&
+    days.length === 31;
+  const denseTime = hours.length === 24 && minutes.length === 60 && seconds.length === 60;
+  if (denseCalendar && denseTime) {
+    return nextRunsEverySecond(limit, fromTs);
+  }
+
+  const monthSet = new Set(months);
+  const daySet = dayConcrete ? new Set(days) : null;
+  const yearSet = yearCandidates ? new Set(yearCandidates) : null;
+  const sortedYears = yearCandidates ? [...yearCandidates].sort((a, b) => a - b) : null;
+
   const results: Date[] = [];
-  const sortedSeconds = seconds;
-  const sortedMinutes = minutes;
-  const sortedHours = hours;
-
   const cursor = new Date(from.getFullYear(), from.getMonth(), from.getDate());
-  const maxDays = 366 * 5;
 
-  for (let i = 0; i < maxDays && results.length < limit; i++) {
+  for (let i = 0; i < MAX_SCAN_DAYS && results.length < limit; i++) {
     const year = cursor.getFullYear();
     const month = cursor.getMonth() + 1;
     const day = cursor.getDate();
@@ -171,15 +238,29 @@ export function getNextRuns(
       month === from.getMonth() + 1 &&
       day === from.getDate();
 
-    if (yearCandidates && !yearCandidates.includes(year)) {
-      cursor.setDate(cursor.getDate() + 1);
+    if (yearSet && !yearSet.has(year)) {
+      // 跳到下一个候选年，避免按日空转数年
+      const nextY = sortedYears!.find((y) => y > year);
+      if (nextY == null) break;
+      cursor.setFullYear(nextY, 0, 1);
       continue;
     }
-    if (!months.includes(month)) {
-      cursor.setDate(cursor.getDate() + 1);
+    if (!monthSet.has(month)) {
+      // 跳到本月之后的下一个合法月，否则跨年
+      let jumped = false;
+      for (const m of months) {
+        if (m > month) {
+          cursor.setMonth(m - 1, 1);
+          jumped = true;
+          break;
+        }
+      }
+      if (!jumped) {
+        cursor.setFullYear(year + 1, (months[0] ?? 1) - 1, 1);
+      }
       continue;
     }
-    if (dayConcrete && !days.includes(day)) {
+    if (daySet && !daySet.has(day)) {
       cursor.setDate(cursor.getDate() + 1);
       continue;
     }
@@ -191,14 +272,17 @@ export function getNextRuns(
       }
     }
 
-    for (const hour of sortedHours) {
+    const fromH = from.getHours();
+    const fromM = from.getMinutes();
+
+    for (const hour of hours) {
       // 同一天时跳过已过去的小时，减少无意义 Date 构造
-      if (sameDayAsFrom && hour < from.getHours()) continue;
-      for (const minute of sortedMinutes) {
-        if (sameDayAsFrom && hour === from.getHours() && minute < from.getMinutes()) {
+      if (sameDayAsFrom && hour < fromH) continue;
+      for (const minute of minutes) {
+        if (sameDayAsFrom && hour === fromH && minute < fromM) {
           continue;
         }
-        for (const second of sortedSeconds) {
+        for (const second of seconds) {
           const dt = new Date(year, month - 1, day, hour, minute, second, 0);
           // 统一用时间戳过滤已过去的秒（覆盖同分钟内的历史秒）
           if (dt.getTime() <= fromTs) continue;
