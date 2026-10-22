@@ -56,8 +56,9 @@ describe('性能与内存边界', () => {
     const runs = getNextRuns(state, 100, from);
     const ms = performance.now() - t0;
     expect(runs).toHaveLength(100);
-    expect(ms).toBeLessThan(1500);
+    expect(ms).toBeLessThan(50);
   });
+
 
   it('getNextRuns 超大 count 不超过 100', () => {
     const runs = getNextRuns(createDefaultCronState(), 1e9, new Date(2026, 0, 1));

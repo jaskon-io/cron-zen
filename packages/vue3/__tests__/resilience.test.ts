@@ -52,7 +52,7 @@ describe('性能', () => {
     const { nextRuns } = useCronZen({ debounceMs: 0, nextCount: 100 });
     const ms = performance.now() - t0;
     expect(nextRuns.value.length).toBe(100);
-    expect(ms).toBeLessThan(2000);
+    expect(ms).toBeLessThan(200);
   });
 });
 
