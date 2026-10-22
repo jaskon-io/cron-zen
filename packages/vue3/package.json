@@ -1,0 +1,56 @@
+{
+  "name": "@cron-zen/vue3",
+  "version": "0.1.0",
+  "description": "Vue 3 adapter for cron-zen visual Cron expression generator",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/cron-zen-vue3.umd.cjs",
+  "module": "./dist/cron-zen-vue3.js",
+  "types": "./dist/index.d.ts",
+  "style": "./dist/cron-zen-vue3.css",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/cron-zen-vue3.js",
+      "require": "./dist/cron-zen-vue3.umd.cjs"
+    },
+    "./style.css": "./dist/cron-zen-vue3.css"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "keywords": [
+    "cron",
+    "vue",
+    "vue3",
+    "cron-expression",
+    "cron-zen"
+  ],
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build && vue-tsc --declaration --emitDeclarationOnly -p tsconfig.json --outDir dist",
+    "typecheck": "vue-tsc --noEmit -p tsconfig.json",
+    "prepublishOnly": "pnpm run typecheck && pnpm run build"
+  },
+  "peerDependencies": {
+    "vue": "^3.2.0"
+  },
+  "dependencies": {
+    "@cron-zen/core": "workspace:*"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.2.1",
+    "typescript": "^5.7.2",
+    "vite": "^6.0.3",
+    "vue": "^3.5.13",
+    "vue-tsc": "^2.1.10"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "sideEffects": [
+    "**/*.css"
+  ]
+}

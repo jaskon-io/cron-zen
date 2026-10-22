@@ -14,10 +14,12 @@
     "cron-zen"
   ],
   "scripts": {
-    "build": "pnpm -r --filter @cron-zen/core build",
+    "build": "pnpm -r --filter @cron-zen/core build && pnpm -r --filter @cron-zen/vue3 build",
+    "build:core": "pnpm --filter @cron-zen/core build",
+    "build:vue3": "pnpm --filter @cron-zen/vue3 build",
     "test": "pnpm -r --filter @cron-zen/core test",
     "test:coverage": "pnpm -r --filter @cron-zen/core test:coverage",
-    "typecheck": "pnpm -r --filter @cron-zen/core typecheck"
+    "typecheck": "pnpm -r --filter @cron-zen/core typecheck && pnpm -r --filter @cron-zen/vue3 typecheck"
   },
   "engines": {
     "node": ">=18",

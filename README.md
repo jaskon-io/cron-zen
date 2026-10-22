@@ -9,7 +9,7 @@
 | Package | Description | npm |
 | --- | --- | --- |
 | [`@cron-zen/core`](./packages/core) | 纯 TypeScript：解析 / 生成 / 校验（无 UI 依赖） | 待发布 |
-| `@cron-zen/vue3` | Vue 3 适配层 | 规划中 |
+| [`@cron-zen/vue3`](./packages/vue3) | Vue 3 可视化组件（v-model + 三段式 UI） | 待发布 |
 | `@cron-zen/vue2` | Vue 2 适配层 | 规划中 |
 
 ## Requirements

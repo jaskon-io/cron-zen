@@ -1,0 +1,245 @@
+/**
+ * @description cron-zen 主题变量与骨架样式（不绑定 Element 等 UI 库）
+ */
+.cron-zen {
+  --cz-bg: #f7f8fa;
+  --cz-surface: #ffffff;
+  --cz-border: #e5e7eb;
+  --cz-text: #1f2937;
+  --cz-muted: #6b7280;
+  --cz-accent: #0f766e;
+  --cz-accent-soft: #ccfbf1;
+  --cz-danger: #b91c1c;
+  --cz-danger-soft: #fee2e2;
+  --cz-radius: 10px;
+  --cz-gap: 12px;
+  --cz-font: "IBM Plex Sans", "Noto Sans SC", "PingFang SC", sans-serif;
+  --cz-mono: "IBM Plex Mono", "SF Mono", ui-monospace, monospace;
+
+  box-sizing: border-box;
+  color: var(--cz-text);
+  font-family: var(--cz-font);
+  background: linear-gradient(160deg, #f8fafc 0%, #eef2f7 100%);
+  border: 1px solid var(--cz-border);
+  border-radius: calc(var(--cz-radius) + 2px);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--cz-gap);
+  min-width: 0;
+}
+
+.cron-zen *,
+.cron-zen *::before,
+.cron-zen *::after {
+  box-sizing: border-box;
+}
+
+.cron-zen__tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 4px;
+  background: var(--cz-surface);
+  border: 1px solid var(--cz-border);
+  border-radius: var(--cz-radius);
+}
+
+.cron-zen__tab {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--cz-muted);
+  padding: 8px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 600;
+  transition: background 0.2s ease, color 0.2s ease, transform 0.15s ease;
+}
+
+.cron-zen__tab:hover {
+  color: var(--cz-text);
+  background: #f3f4f6;
+}
+
+.cron-zen__tab.is-active {
+  color: var(--cz-accent);
+  background: var(--cz-accent-soft);
+  transform: translateY(-1px);
+}
+
+.cron-zen__body {
+  background: var(--cz-surface);
+  border: 1px solid var(--cz-border);
+  border-radius: var(--cz-radius);
+  padding: 16px;
+  min-height: 160px;
+}
+
+.cron-zen__mutex {
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: #fff7ed;
+  color: #9a3412;
+  font-size: 13px;
+}
+
+.cron-zen__preview {
+  display: grid;
+  gap: 12px;
+  background: var(--cz-surface);
+  border: 1px solid var(--cz-border);
+  border-radius: var(--cz-radius);
+  padding: 16px;
+}
+
+.cron-zen__preview-block h3 {
+  margin: 0 0 8px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--cz-muted);
+  text-transform: uppercase;
+}
+
+.cron-zen__expr {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: #0b1220;
+  color: #e2e8f0;
+  font-family: var(--cz-mono);
+  font-size: 14px;
+  word-break: break-all;
+}
+
+.cron-zen__desc {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.cron-zen__runs {
+  margin: 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 4px;
+  font-family: var(--cz-mono);
+  font-size: 13px;
+  color: var(--cz-text);
+}
+
+.cron-zen__hint {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  background: var(--cz-accent-soft);
+  color: var(--cz-accent);
+}
+
+.cron-zen__hint.is-error {
+  background: var(--cz-danger-soft);
+  color: var(--cz-danger);
+}
+
+.cron-zen__actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.cron-zen__btn {
+  appearance: none;
+  border: 1px solid var(--cz-border);
+  background: var(--cz-surface);
+  color: var(--cz-text);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font: inherit;
+  cursor: pointer;
+}
+
+.cron-zen__btn:hover {
+  border-color: var(--cz-accent);
+  color: var(--cz-accent);
+}
+
+/* Field editor */
+.cz-field__modes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  margin-bottom: 14px;
+}
+
+.cz-field__mode {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.cz-field__controls {
+  display: grid;
+  gap: 10px;
+}
+
+.cz-field__controls--row {
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+}
+
+.cz-field__controls label {
+  display: grid;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--cz-muted);
+}
+
+.cz-field__controls input[type='number'],
+.cz-field__controls input[type='text'] {
+  width: 100%;
+  border: 1px solid var(--cz-border);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font: inherit;
+  color: var(--cz-text);
+  background: #fff;
+}
+
+.cz-field__hint,
+.cz-field__lock {
+  margin: 0;
+  font-size: 13px;
+  color: var(--cz-muted);
+}
+
+.cz-field__lock {
+  margin-bottom: 10px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: #fff7ed;
+  color: #9a3412;
+}
+
+.cz-field--disabled {
+  opacity: 0.72;
+}
+
+@media (max-width: 640px) {
+  .cron-zen {
+    padding: 12px;
+  }
+
+  .cron-zen__tab {
+    padding: 8px 10px;
+    font-size: 13px;
+  }
+
+  .cron-zen__preview {
+    padding: 12px;
+  }
+}
