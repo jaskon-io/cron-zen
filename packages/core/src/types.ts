@@ -121,6 +121,70 @@ export interface ParseResult {
 }
 
 /**
+ * @description 校验结果
+ * @example
+ * const res: ValidateResult = validateCronState(state);
+ * if (!res.valid) console.error(res.errors);
+ */
+export interface ValidateResult {
+  /**
+   * @description 是否通过硬性校验（无 errors）
+   */
+  valid: boolean;
+  /**
+   * @description 硬错误列表（阻止生成 / 提交）
+   */
+  errors: string[];
+  /**
+   * @description 软警告列表（可生成，但需 UI 提示）
+   */
+  warnings: string[];
+}
+
+/**
+ * @description 生成结果
+ * @example
+ * const res: GenerateResult = generateCron(state);
+ * if (res.success) console.log(res.expression);
+ */
+export interface GenerateResult {
+  /**
+   * @description 是否生成成功
+   */
+  success: boolean;
+  /**
+   * @description 7 段 Cron 表达式（成功时）
+   */
+  expression?: string;
+  /**
+   * @description 应用日周互斥等规则后的状态快照
+   */
+  state?: CronState;
+  /**
+   * @description 错误信息
+   */
+  error?: string;
+  /**
+   * @description 警告信息（如自动锁定周字段）
+   */
+  warning?: string;
+}
+
+/**
+ * @description 生成选项
+ */
+export interface GenerateOptions {
+  /**
+   * @description 是否在生成前自动执行日周互斥修正（默认 true）
+   */
+  enforceMutex?: boolean;
+  /**
+   * @description 是否转义 `%`（默认 true）
+   */
+  escapePercent?: boolean;
+}
+
+/**
  * @description 字段数值合法范围
  */
 export interface FieldRange {

@@ -8,6 +8,9 @@ export type {
   CronFieldState,
   CronState,
   ParseResult,
+  ValidateResult,
+  GenerateResult,
+  GenerateOptions,
   FieldRange,
 } from './types';
 
@@ -27,3 +30,20 @@ export {
   assertDayWeekMutex,
   getFieldMode,
 } from './parser';
+
+export {
+  validateCronState,
+  validateFieldRange,
+  validateDayMonthCombo,
+  validateDayWeekMutex,
+  enforceDayWeekMutex,
+  isConcreteField,
+  getDaysInMonth,
+  extractNumericValues,
+} from './validator';
+
+export {
+  generateCron,
+  generateCronOrThrow,
+  stringifyField,
+} from './generator';

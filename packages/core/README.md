@@ -27,12 +27,35 @@ if (res.success) {
 }
 ```
 
+### `validateCronState(state): ValidateResult`
+
+校验范围、日周互斥、非法日期（如 2 月 31 日）。
+
+```ts
+import { validateCronState, createDefaultCronState } from '@cron-zen/core';
+
+const res = validateCronState(createDefaultCronState());
+console.log(res.valid, res.errors, res.warnings);
+```
+
+### `generateCron(state, options?): GenerateResult`
+
+由可视化状态生成 7 段表达式（默认自动日周互斥）。
+
+```ts
+import { generateCron, createDefaultCronState } from '@cron-zen/core';
+
+const res = generateCron(createDefaultCronState());
+// { success: true, expression: '0 0 0 * * ? *' }
+```
+
 ### 其他导出
 
-- `parseField` — 单字段解析
+- `parseField` / `stringifyField` — 单字段解析 / 序列化
 - `escapeCronPercent` / `unescapeCronPercent` — `%` 转义
-- `assertDayWeekMutex` — 日周互斥校验
+- `enforceDayWeekMutex` / `assertDayWeekMutex` — 日周互斥
 - `createDefaultCronState` — 默认 UI 状态
+- `generateCronOrThrow` — 生成失败时抛错
 
 ## Build
 
