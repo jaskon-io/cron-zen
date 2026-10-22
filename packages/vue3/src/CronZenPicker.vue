@@ -89,8 +89,15 @@ const emit = defineEmits<{
   (e: 'cancel'): void;
 }>();
 
+/** 与 core / CronZen 默认态一致 */
+const DEFAULT_CRON = '* * * * * ? *';
+
 const visible = ref(false);
 const draft = ref('');
+/** 每次打开递增，强制 CronZen 按当前草稿重新挂载回显 */
+const editorKey = ref(0);
+/** 打开时输入框是否已有值（无值取消不得写回默认表达式） */
+const openedWithValue = ref(false);
 let confirmed = false;
 
 const inputValue = computed({
@@ -99,14 +106,17 @@ const inputValue = computed({
 });
 
 /**
- * @description 打开 Cron 选择弹窗，用当前值初始化草稿
+ * @description 打开 Cron 选择弹窗：有值则回显，无值则用默认原始态编辑
  * @returns {void}
  */
 function openPicker(): void {
   if (props.disabled) return;
   confirmed = false;
-  const current = (props.modelValue ?? '').trim() || '* * * * * ? *';
-  draft.value = current;
+  const raw = (props.modelValue ?? '').trim();
+  openedWithValue.value = raw.length > 0;
+  // 有值：原样回显；无值：弹窗内用默认表达式，确定前不写回输入框
+  draft.value = openedWithValue.value ? raw : DEFAULT_CRON;
+  editorKey.value += 1;
   visible.value = true;
 }
 
@@ -131,7 +141,7 @@ function onConfirm(): void {
 }
 
 /**
- * @description 取消关闭
+ * @description 取消：关闭且不改输入框（无值仍保持空，有值保持原值）
  * @returns {void}
  */
 function onCancel(): void {
@@ -204,7 +214,13 @@ defineExpose({
       align-center
       @closed="draft = ''"
     >
-      <CronZen v-if="visible" v-model="draft" :show-preview="false" :debounce-ms="debounceMs" />
+      <CronZen
+        v-if="visible"
+        :key="editorKey"
+        v-model="draft"
+        :show-preview="false"
+        :debounce-ms="debounceMs"
+      />
 
       <template #footer>
         <div class="cz-picker__footer">

@@ -170,7 +170,15 @@ function hydrate(v: CronFieldState): void {
     rangeStart.value = Number(v.value) || rangeStart.value;
     rangeEnd.value = Number(v.secondary) || rangeEnd.value;
   } else if (v.mode === 'step') {
-    stepBase.value = v.value && v.value !== '*' ? Number(v.value) || stepBase.value : stepBase.value;
+    // */n → 起点按字段最小值回显（对齐 cron.ren「从 0 开始」观感），步长取 secondary
+    if (v.value && v.value !== '*') {
+      stepBase.value = Number(v.value) || stepBase.value;
+    } else {
+      stepBase.value =
+        props.name === 'day' || props.name === 'month' || props.name === 'year'
+          ? Math.max(range.value.min, 1)
+          : range.value.min;
+    }
     stepValue.value = Number(v.secondary) || 1;
   } else if (v.mode === 'weekday') {
     weekdayNear.value = Number(v.value) || 1;

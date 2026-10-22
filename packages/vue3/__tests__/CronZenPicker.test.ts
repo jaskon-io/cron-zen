@@ -170,4 +170,43 @@ describe('CronZenPicker', () => {
     await nextTick();
     expect(wrapper.find('.stub-ElDialog').exists()).toBe(false);
   });
+
+  it('有值打开应回显到草稿', async () => {
+    const wrapper = mount(CronZenPicker, {
+      props: { modelValue: '0 */5 * * * ? *', debounceMs: 0 },
+    });
+    const vm = wrapper.vm as unknown as { open: () => void; getDraft: () => string };
+    vm.open();
+    await nextTick();
+    expect(vm.getDraft()).toBe('0 */5 * * * ? *');
+    expect(wrapper.find('.cz-picker__draft').text()).toContain('*/5');
+  });
+
+  it('无值打开再用取消，不应写回默认表达式', async () => {
+    const wrapper = mount(CronZenPicker, {
+      props: { modelValue: '', debounceMs: 0 },
+    });
+    const vm = wrapper.vm as unknown as { open: () => void; getDraft: () => string };
+    vm.open();
+    await nextTick();
+    // 弹窗内用默认态编辑
+    expect(vm.getDraft()).toBe('* * * * * ? *');
+    await wrapper.findAll('button').find((b) => b.text() === '取消')!.trigger('click');
+    await nextTick();
+    expect(wrapper.emitted('update:modelValue')).toBeUndefined();
+  });
+
+  it('有值打开取消后 model 保持原值', async () => {
+    const wrapper = mount(CronZenPicker, {
+      props: { modelValue: '0 */5 * * * ? *', debounceMs: 0 },
+    });
+    const vm = wrapper.vm as unknown as { open: () => void };
+    vm.open();
+    await nextTick();
+    await wrapper.findAll('button').find((b) => b.text() === '取消')!.trigger('click');
+    await nextTick();
+    expect(wrapper.emitted('update:modelValue')).toBeUndefined();
+    expect(wrapper.props('modelValue')).toBe('0 */5 * * * ? *');
+  });
 });
+

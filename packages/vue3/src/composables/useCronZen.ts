@@ -20,6 +20,7 @@ import {
   parseCron,
   validateCronState,
   enforceDayWeekMutex,
+  FIELD_ORDER,
   FIELD_RANGES,
   describeCron,
   formatRunTime,
@@ -27,6 +28,26 @@ import {
   getCronTabs,
   stringifyField,
 } from '@cron-zen/core';
+
+/** 默认 7 段表达式（与 createDefaultCronState 一致） */
+const DEFAULT_EXPRESSION = '* * * * * ? *';
+
+/**
+ * @description 按表达式状态选中首个「有具体配置」的 Tab，便于打开弹窗时看到回显
+ * @param {CronState} s - 状态
+ * @returns {CronFieldName} Tab 字段名
+ */
+function pickEchoTab(s: CronState): CronFieldName {
+  for (const name of FIELD_ORDER) {
+    const f = s[name];
+    if (name === 'week' || name === 'year') {
+      if (f.mode !== 'every' && f.mode !== 'unset') return name;
+    } else if (f.mode !== 'every') {
+      return name;
+    }
+  }
+  return 'second';
+}
 
 export type { CronTabMeta, WeekFormat };
 export { getCronTabs, FIELD_RANGES };
@@ -136,7 +157,7 @@ export function useCronZen(options: UseCronZenOptions = {}): UseCronZenReturn {
 
   const state = shallowRef<CronState>(createDefaultCronState());
   const activeTab = shallowRef<CronFieldName>('second');
-  const expression = shallowRef('* * * * * ? *');
+  const expression = shallowRef(DEFAULT_EXPRESSION);
   const description = shallowRef('');
   const nextRuns = shallowRef<string[]>([]);
   const validation = shallowRef<ValidateResult>({
@@ -318,30 +339,37 @@ export function useCronZen(options: UseCronZenOptions = {}): UseCronZenReturn {
    */
   const loadExpression = (expr: string): void => {
     if (typeof expr !== 'string') return;
-    const parsed = parseCron(expr);
+    const trimmed = expr.trim();
+    // 空串：恢复默认原始状态（每* / 周?），不把空写进表达式预览
+    if (!trimmed) {
+      state.value = createDefaultCronState();
+      weekFormat.value = 'number';
+      activeTab.value = 'second';
+      hint.value = '';
+      applyLocal({ immediateNextRuns: true });
+      return;
+    }
+    const parsed = parseCron(trimmed);
     if (!parsed.success) {
       hint.value = parsed.error ?? 'Cron 表达式无效';
       // 失败时仅回显短且无尖括号的输入，避免超长/注入串进入预览
-      if (
-        expr.length > 0 &&
-        expr.length <= 256 &&
-        !/[<>]/.test(expr)
-      ) {
-        expression.value = expr;
+      if (trimmed.length <= 256 && !/[<>]/.test(trimmed)) {
+        expression.value = trimmed;
       }
       return;
     }
     if (parsed.state) {
       state.value = parsed.state;
       // 以原始输入判断周写法：英文→abbr，含数字→number（?/* 不强制改）
-      const weekPart = expr.trim().split(/\s+/)[5] ?? '';
+      const weekPart = trimmed.split(/\s+/)[5] ?? '';
       if (/[A-Za-z]/.test(weekPart)) {
         weekFormat.value = 'abbr';
       } else if (/\d/.test(weekPart)) {
         weekFormat.value = 'number';
       }
-      expression.value = parsed.expression ?? expr;
+      expression.value = parsed.expression ?? trimmed;
       hint.value = parsed.warning ?? '';
+      activeTab.value = pickEchoTab(parsed.state);
       refreshNow();
     }
   };
@@ -353,19 +381,39 @@ export function useCronZen(options: UseCronZenOptions = {}): UseCronZenReturn {
   const reset = (): void => {
     state.value = createDefaultCronState();
     weekFormat.value = 'number';
+    activeTab.value = 'second';
     refreshNow();
   };
+
+  // 先同步初始 v-model，再挂 watch，避免首帧用默认态把有值回显冲掉
+  const initialModel = options.modelValue?.value;
+  if (typeof initialModel === 'string' && initialModel.trim()) {
+    loadExpression(initialModel);
+  } else {
+    // 无值：保持原始默认态，且不把默认表达式写回空的 v-model
+    applyLocal({ immediateNextRuns: true });
+  }
 
   if (options.modelValue) {
     watch(
       () => options.modelValue!.value,
       (val) => {
         if (syncingOut) return;
-        if (val && val !== expression.value) {
-          loadExpression(val);
+        const next = val ?? '';
+        if (!String(next).trim()) {
+          // 外部清空：回到原始默认态，且不把默认表达式写回空 v-model
+          state.value = createDefaultCronState();
+          weekFormat.value = 'number';
+          activeTab.value = 'second';
+          hint.value = '';
+          applyLocal({ immediateNextRuns: true });
+          expression.value = DEFAULT_EXPRESSION;
+          return;
+        }
+        if (next !== expression.value) {
+          loadExpression(next);
         }
       },
-      { immediate: true },
     );
   }
 
@@ -381,8 +429,6 @@ export function useCronZen(options: UseCronZenOptions = {}): UseCronZenReturn {
       },
     );
   }
-
-  refreshNow();
 
   if (getCurrentInstance()) {
     onBeforeUnmount(() => {
