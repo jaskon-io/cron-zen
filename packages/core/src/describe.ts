@@ -1,6 +1,5 @@
 import type { CronFieldState, CronState } from './types';
-
-const WEEK_LABELS = ['日', '一', '二', '三', '四', '五', '六', '日'] as const;
+import { quartzWeekShortLabel } from './week';
 
 /**
  * @description 将单个字段状态转为简短中文描述片段
@@ -27,12 +26,12 @@ export function describeField(label: string, field: CronFieldState): string {
     }
     case 'last':
       return field.value
-        ? `最后一个星期${WEEK_LABELS[Number(field.value) % 7] ?? field.value}`
+        ? `最后一个星期${quartzWeekShortLabel(field.value)}`
         : '最后一天';
     case 'weekday':
       return `最接近 ${field.value} 号的工作日`;
     case 'nth':
-      return `第 ${field.secondary} 个星期${WEEK_LABELS[Number(field.value) % 7] ?? field.value}`;
+      return `第 ${field.secondary} 个星期${quartzWeekShortLabel(field.value ?? '')}`;
     default:
       return field.raw;
   }

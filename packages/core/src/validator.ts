@@ -235,17 +235,32 @@ export function validateDayWeekMutex(state: CronState): { ok: boolean; error?: s
 }
 
 /**
- * @description 自动执行日周互斥修正：日具体则周锁定为 `?`；周具体则日锁定为 `?`
- * @param {CronState} state - 原始状态（不会被原地修改）
+ * @description 日周互斥修正选项
+ */
+export interface EnforceDayWeekMutexOptions {
+  /**
+   * @description 双方皆具体时保留哪一侧（另一侧改为 ?）；默认 day
+   */
+  prefer?: 'day' | 'week';
+}
+
+/**
+ * @description 日周互斥自动修正（Quartz：日/周不能同时指定具体值）
+ * @param {CronState} state - 原始状态
+ * @param {EnforceDayWeekMutexOptions} [options] - 优先保留侧
  * @returns {{ state: CronState; changed: boolean; warning?: string }} 修正后的状态
  * @example
- * const { state, warning } = enforceDayWeekMutex(rawState);
+ * const { state, warning } = enforceDayWeekMutex(rawState, { prefer: 'week' });
  */
-export function enforceDayWeekMutex(state: CronState): {
+export function enforceDayWeekMutex(
+  state: CronState,
+  options: EnforceDayWeekMutexOptions = {},
+): {
   state: CronState;
   changed: boolean;
   warning?: string;
 } {
+  const prefer = options.prefer ?? 'day';
   const next: CronState = {
     second: { ...state.second },
     minute: { ...state.minute },
@@ -260,11 +275,19 @@ export function enforceDayWeekMutex(state: CronState): {
   const weekConcrete = isConcreteField(next.week);
 
   if (dayConcrete && weekConcrete) {
+    if (prefer === 'week') {
+      next.day = createUnsetField();
+      return {
+        state: next,
+        changed: true,
+        warning: '日和周不能同时指定，已自动将日字段设为 ?',
+      };
+    }
     next.week = createUnsetField();
     return {
       state: next,
       changed: true,
-      warning: '日和周不能同时指定，已自动将周字段锁定为 ?',
+      warning: '日和周不能同时指定，已自动将周字段设为 ?',
     };
   }
 

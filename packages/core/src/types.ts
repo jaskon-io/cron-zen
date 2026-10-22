@@ -171,6 +171,13 @@ export interface GenerateResult {
 }
 
 /**
+ * @description 周字段输出写法（对齐 cron.ren）
+ * - number：1=周日 … 7=周六
+ * - abbr：SUN、MON、TUE、WED、THU、FRI、SAT
+ */
+export type WeekFormat = 'number' | 'abbr';
+
+/**
  * @description 生成选项
  */
 export interface GenerateOptions {
@@ -182,6 +189,10 @@ export interface GenerateOptions {
    * @description 是否转义 `%`（默认 true）
    */
   escapePercent?: boolean;
+  /**
+   * @description 周字段输出写法：number=1~7（默认），abbr=SUN…SAT（对齐 cron.ren）
+   */
+  weekFormat?: WeekFormat;
 }
 
 /**

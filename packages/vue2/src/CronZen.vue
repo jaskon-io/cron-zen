@@ -50,7 +50,7 @@ export default Vue.extend({
   data() {
     return {
       state: createDefaultCronState() as CronState,
-      activeTab: 'hour' as CronFieldName,
+      activeTab: 'second' as CronFieldName,
       expression: '0 0 0 * * ? *',
       description: '',
       nextRuns: [] as string[],

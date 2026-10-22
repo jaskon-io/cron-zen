@@ -1,13 +1,14 @@
 <script setup lang="ts">
 /**
- * @description Vue3 可视化 Cron 表达式生成器（参考经典生成器布局：Tab + 配置 + 底部字段表/表达式/近10次）
+ * @description Vue3 可视化 Cron 表达式生成器（对齐 cron.ren：Tab + 配置 + 可选预览 + 日周联动）
  * @example
  * <CronZen v-model="cron" />
+ * <CronZen v-model="cron" :show-preview="false" />
  */
 import { computed, toRef } from 'vue';
-import type { CronFieldName, CronFieldState } from '@cron-zen/core';
-import { getCronTabs, stringifyField } from '@cron-zen/core';
-import { useCronZen } from './composables/useCronZen';
+import type { CronFieldName, CronFieldState, WeekFormat } from '@cron-zen/core';
+import { getCronTabs } from '@cron-zen/core';
+import { displayFieldValue, useCronZen } from './composables/useCronZen';
 import FieldEditor from './components/FieldEditor.vue';
 import './styles/cron-zen.css';
 
@@ -25,11 +26,16 @@ const props = withDefaults(
      * @description 预览最近触发次数
      */
     nextCount?: number;
+    /**
+     * @description 是否展示底部字段表 / 表达式 / 近 N 次（弹窗场景建议 false）
+     */
+    showPreview?: boolean;
   }>(),
   {
     modelValue: '0 0 0 * * ? *',
     debounceMs: 300,
     nextCount: 10,
+    showPreview: true,
   },
 );
 
@@ -63,12 +69,15 @@ const {
   nextRuns,
   validation,
   hint,
+  weekFormat,
   updateField,
+  setWeekFormat,
   reset,
 } = useCronZen({
   modelValue: writableModel,
   debounceMs: props.debounceMs,
   nextCount: props.nextCount,
+  showPreview: props.showPreview,
 });
 
 const tabs = getCronTabs();
@@ -78,30 +87,22 @@ const fieldParts = computed(() =>
   tabs.map((tab) => ({
     name: tab.name,
     label: tab.label,
-    value: stringifyField(state.value[tab.name]),
+    value: displayFieldValue(tab.name, state.value[tab.name], weekFormat.value),
   })),
 );
 
-const dayLocked = computed(
-  () =>
-    state.value.week.mode !== 'every' &&
-    state.value.week.mode !== 'unset' &&
-    activeTab.value === 'day',
-);
-
-const weekLocked = computed(
-  () =>
-    state.value.day.mode !== 'every' &&
-    state.value.day.mode !== 'unset' &&
-    activeTab.value === 'week',
-);
-
+/** 日被周占用时的提示（不锁死编辑，选具体值会自动把另一侧改为 ?） */
 const mutexTip = computed(() => {
-  if (dayLocked.value) {
-    return '已配置「周」字段，日字段需保持为 ?（日周互斥）';
+  const dayConcrete =
+    state.value.day.mode !== 'every' && state.value.day.mode !== 'unset';
+  const weekConcrete =
+    state.value.week.mode !== 'every' && state.value.week.mode !== 'unset';
+
+  if (activeTab.value === 'day' && weekConcrete) {
+    return '当前已配置「周」字段；若在此选择具体「日」，将自动把周改为 ?（日周互斥）';
   }
-  if (weekLocked.value) {
-    return '已配置「日」字段，周字段需保持为 ?（日周互斥）';
+  if (activeTab.value === 'week' && dayConcrete) {
+    return '当前已配置「日」字段；若在此选择具体「周」，将自动把日改为 ?（日周互斥）';
   }
   return '';
 });
@@ -126,6 +127,16 @@ function onFieldUpdate(field: CronFieldState): void {
 }
 
 /**
+ * @description 周字段写法变更
+ * @param {WeekFormat} format - number | abbr
+ * @returns {void}
+ */
+function onWeekFormat(format: WeekFormat): void {
+  setWeekFormat(format);
+  emit('change', state.value);
+}
+
+/**
  * @description 复制当前表达式
  * @returns {Promise<void>}
  */
@@ -139,7 +150,7 @@ async function copyExpression(): Promise<void> {
 </script>
 
 <template>
-  <div class="cron-zen" data-cron-zen>
+  <div class="cron-zen" :class="{ 'cron-zen--compact': !showPreview }" data-cron-zen>
     <nav class="cron-zen__tabs" aria-label="Cron 字段">
       <button
         v-for="tab in tabs"
@@ -158,19 +169,46 @@ async function copyExpression(): Promise<void> {
       <FieldEditor
         :name="activeTab"
         :model-value="currentField"
-        :disabled="dayLocked || weekLocked"
-        :disabled-reason="mutexTip"
+        :week-format="weekFormat"
         @update:model-value="onFieldUpdate"
+        @update:week-format="onWeekFormat"
       />
     </section>
 
-    <section class="cron-zen__preview" aria-label="预览">
+    <p
+      v-if="!showPreview && hint"
+      class="cron-zen__hint cron-zen__hint--compact"
+      :class="{ 'is-error': !validation.valid }"
+    >
+      {{ hint }}
+    </p>
+
+    <section v-if="showPreview" class="cron-zen__preview" aria-label="预览">
       <div class="cron-zen__fields">
         <div class="cron-zen__fields-head">
-          <span v-for="p in fieldParts" :key="p.name">{{ p.label }}</span>
+          <button
+            v-for="p in fieldParts"
+            :key="p.name"
+            type="button"
+            class="cron-zen__field-tab"
+            :class="{ 'is-active': activeTab === p.name }"
+            @click="onTab(p.name)"
+          >
+            {{ p.label }}
+          </button>
         </div>
         <div class="cron-zen__fields-body">
-          <code v-for="p in fieldParts" :key="p.name + '-v'">{{ p.value }}</code>
+          <button
+            v-for="p in fieldParts"
+            :key="p.name + '-v'"
+            type="button"
+            class="cron-zen__field-val"
+            :class="{ 'is-active': activeTab === p.name }"
+            :title="`编辑${p.label}`"
+            @click="onTab(p.name)"
+          >
+            <code>{{ p.value }}</code>
+          </button>
         </div>
       </div>
 

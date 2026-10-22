@@ -100,7 +100,8 @@ describe('parseField', () => {
     expect(emptyList.warning).toContain('列表为空');
 
     const alias = parseField('MON', 'week');
-    expect(alias.warning).toContain('非标准写法');
+    expect(alias.state).toMatchObject({ mode: 'specific', value: '2' });
+    expect(alias.warning).toBeUndefined();
   });
 });
 

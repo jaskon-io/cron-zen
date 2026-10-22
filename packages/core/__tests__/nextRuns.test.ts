@@ -84,17 +84,18 @@ describe('getNextRuns / formatRunTime', () => {
     expect(getNextRuns(state, 5, from)).toEqual([]);
   });
 
-  it('应按周过滤并尊重年份', () => {
+  it('应按 Quartz 周过滤并尊重年份（1=周日）', () => {
     const state = createDefaultCronState();
     state.day = createUnsetField();
-    state.week = { mode: 'specific', raw: '1', value: '1' }; // 周一
+    state.week = { mode: 'specific', raw: '1', value: '1' }; // Quartz 周日
     state.year = { mode: 'specific', raw: '2026', value: '2026' };
     const from = new Date(2026, 0, 1, 0, 0, 0); // 周四
     const runs = getNextRuns(state, 2, from);
     expect(runs.length).toBeGreaterThan(0);
-    expect(runs[0].getDay()).toBe(1);
+    expect(runs[0].getDay()).toBe(0); // JS 周日
     expect(runs[0].getFullYear()).toBe(2026);
   });
+
 
   it('月不匹配时应跳过', () => {
     const state = createDefaultCronState();

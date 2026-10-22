@@ -236,7 +236,7 @@ describe('validateDayWeekMutex / enforceDayWeekMutex', () => {
     const { state: next, changed, warning } = enforceDayWeekMutex(state);
     expect(changed).toBe(true);
     expect(next.week.mode).toBe('unset');
-    expect(warning).toContain('周字段锁定');
+    expect(warning).toContain('周字段设为');
   });
 
   it('配置日时 every 周应变为 ?；配置周时 every 日应变为 ?', () => {

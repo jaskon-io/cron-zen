@@ -1,55 +1,15 @@
 import {
-  type CronFieldState,
   type CronState,
   type GenerateOptions,
   type GenerateResult,
   FIELD_ORDER,
   createDefaultCronState,
 } from './types';
-import { escapeCronPercent } from './parser';
+import { escapeCronPercent } from './escape';
 import { enforceDayWeekMutex, validateCronState } from './validator';
+import { stringifyField } from './stringify';
 
-/**
- * @description 将单个字段状态序列化为 Cron 字段字符串
- * @param {CronFieldState} field - 字段可视化状态
- * @returns {string} 字段原始串（如 `0/5`、`1-3`、`?`）
- * @example
- * stringifyField({ mode: 'step', raw: '0/5', value: '0', secondary: '5' }); // '0/5'
- */
-export function stringifyField(field: CronFieldState): string {
-  switch (field.mode) {
-    case 'every':
-      return '*';
-    case 'unset':
-      return '?';
-    case 'specific':
-      return field.value || field.raw || '0';
-    case 'range': {
-      const start = field.value || '0';
-      const end = field.secondary || start;
-      return `${start}-${end}`;
-    }
-    case 'step': {
-      const base = field.value && field.value.length > 0 ? field.value : '*';
-      const step = field.secondary || '1';
-      return `${base}/${step}`;
-    }
-    case 'list': {
-      if (field.values && field.values.length > 0) {
-        return field.values.join(',');
-      }
-      return field.value || field.raw || '*';
-    }
-    case 'last':
-      return field.value ? `${field.value}L` : 'L';
-    case 'weekday':
-      return `${field.value ?? '1'}W`;
-    case 'nth':
-      return `${field.value ?? '1'}#${field.secondary ?? '1'}`;
-    default:
-      return field.raw || '*';
-  }
-}
+export { stringifyField } from './stringify';
 
 /**
  * @description 由可视化状态生成 7 段 Cron 表达式（自动日周互斥、可选 `%` 转义）
@@ -99,7 +59,10 @@ export function generateCron(
     notes.push(...validation.warnings);
   }
 
-  const parts = FIELD_ORDER.map((name) => stringifyField(working[name]));
+  const weekFormat = options.weekFormat ?? 'number';
+  const parts = FIELD_ORDER.map((name) =>
+    stringifyField(working[name], { fieldName: name, weekFormat }),
+  );
   let expression = parts.join(' ');
   if (escapePercent) {
     expression = escapeCronPercent(expression);

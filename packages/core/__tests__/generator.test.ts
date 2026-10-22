@@ -72,7 +72,7 @@ describe('generateCron', () => {
     const res = generateCron(state);
     expect(res.success).toBe(true);
     expect(res.expression).toBe('0 0 0 15 * ? *');
-    expect(res.warning).toContain('周字段锁定');
+    expect(res.warning).toContain('周字段设为');
   });
 
   it('enforceMutex=false 时日周冲突应失败', () => {

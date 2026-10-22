@@ -21,11 +21,15 @@ describe('describeField', () => {
       describeField('日', { mode: 'list', raw: '1,15', values: ['1', '15'] }),
     ).toContain('1、15');
     expect(describeField('日', { mode: 'last', raw: 'L' })).toBe('最后一天');
-    expect(describeField('周', { mode: 'last', raw: '6L', value: '6' })).toContain('星期六');
+    // Quartz：6 = 周五
+    expect(describeField('周', { mode: 'last', raw: '6L', value: '6' })).toContain('星期五');
     expect(describeField('日', { mode: 'weekday', raw: '15W', value: '15' })).toContain('15');
     expect(
       describeField('周', { mode: 'nth', raw: '6#3', value: '6', secondary: '3' }),
     ).toContain('第 3');
+    expect(
+      describeField('周', { mode: 'nth', raw: '6#3', value: '6', secondary: '3' }),
+    ).toContain('星期五');
     expect(describeField('月', { mode: 'unknown' as never, raw: 'X' })).toBe('X');
     expect(
       describeField('秒', { mode: 'step', raw: '*/1', value: '', secondary: undefined }),

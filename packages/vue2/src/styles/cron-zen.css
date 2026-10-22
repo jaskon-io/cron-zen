@@ -238,16 +238,25 @@
 
 .cz-row {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 8px;
   margin: 0;
+  min-height: 28px;
   cursor: pointer;
-  line-height: 28px;
+  line-height: 1.5;
 }
 
-.cz-row input[type='radio'] {
-  margin-top: 7px;
-  flex: 0 0 auto;
+.cz-row > input[type='radio'],
+.cz-row__head > input[type='radio'] {
+  box-sizing: border-box;
+  width: 14px;
+  height: 14px;
+  margin: 0;
+  padding: 0;
+  flex: 0 0 14px;
+  align-self: center;
+  appearance: auto;
+  vertical-align: middle;
 }
 
 .cz-row strong {
@@ -267,16 +276,21 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 6px;
+  min-height: 28px;
 }
 
 .cz-row__inline input[type='number'],
 .cz-row__inline select {
   width: 72px;
+  height: 28px;
+  box-sizing: border-box;
   border: 1px solid var(--cz-border);
   border-radius: 4px;
-  padding: 4px 6px;
+  padding: 0 6px;
   font: inherit;
+  line-height: 26px;
   background: #fff;
+  vertical-align: middle;
 }
 
 .cz-row__inline select {
@@ -287,6 +301,7 @@
 .cz-row--block {
   display: grid;
   gap: 8px;
+  align-items: start;
   cursor: default;
 }
 
@@ -294,11 +309,8 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
+  min-height: 28px;
   cursor: pointer;
-}
-
-.cz-row__head input[type='radio'] {
-  margin-top: 0;
 }
 
 /* Checkbox grid */

@@ -11,12 +11,13 @@ export default defineConfig({
       fileName: 'cron-zen-vue3',
     },
     rollupOptions: {
-      external: ['vue', '@cron-zen/core'],
+      external: ['vue', '@cron-zen/core', 'element-plus'],
       output: {
         exports: 'named',
         globals: {
           vue: 'Vue',
           '@cron-zen/core': 'CronZenCore',
+          'element-plus': 'ElementPlus',
         },
         assetFileNames: 'cron-zen-vue3.[ext]',
       },

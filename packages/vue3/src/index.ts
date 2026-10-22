@@ -4,9 +4,10 @@
 
 import type { App, Plugin } from 'vue';
 import CronZen from './CronZen.vue';
+import CronZenPicker from './CronZenPicker.vue';
 
-export { CronZen };
-export { useCronZen } from './composables/useCronZen';
+export { CronZen, CronZenPicker };
+export { useCronZen, displayFieldValue } from './composables/useCronZen';
 export type { UseCronZenOptions, UseCronZenReturn } from './composables/useCronZen';
 export {
   describeCron,
@@ -15,6 +16,10 @@ export {
   expandFieldValues,
   formatRunTime,
   getCronTabs,
+  stringifyField,
+  parseCron,
+  generateCron,
+  enforceDayWeekMutex,
 } from '@cron-zen/core';
 
 export type {
@@ -22,6 +27,7 @@ export type {
   CronFieldState,
   CronFieldName,
   CronTabMeta,
+  WeekFormat,
 } from '@cron-zen/core';
 
 /**
@@ -35,6 +41,7 @@ export type {
  */
 export function install(app: App): void {
   app.component('CronZen', CronZen);
+  app.component('CronZenPicker', CronZenPicker);
 }
 
 /**

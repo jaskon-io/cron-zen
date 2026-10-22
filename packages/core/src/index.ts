@@ -12,6 +12,7 @@ export type {
   GenerateResult,
   GenerateOptions,
   FieldRange,
+  WeekFormat,
 } from './types';
 
 export {
@@ -41,12 +42,14 @@ export {
   getDaysInMonth,
   extractNumericValues,
 } from './validator';
+export type { EnforceDayWeekMutexOptions } from './validator';
 
 export {
   generateCron,
   generateCronOrThrow,
   stringifyField,
 } from './generator';
+export type { StringifyFieldOptions } from './stringify';
 
 export { describeCron, describeField } from './describe';
 
@@ -58,3 +61,17 @@ export {
 
 export type { CronTabMeta } from './tabs';
 export { getCronTabs } from './tabs';
+
+export {
+  QUARTZ_WEEK_LABELS,
+  QUARTZ_WEEK_ABBR,
+  QUARTZ_WEEK_ABBR_TO_NUM,
+  QUARTZ_WEEK_UI_ORDER,
+  quartzWeekShortLabel,
+  weekNumberToAbbr,
+  weekAbbrToNumber,
+  normalizeWeekFieldToken,
+  matchesQuartzWeek,
+  isYearLikeToken,
+} from './week';
+

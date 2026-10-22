@@ -22,6 +22,10 @@ const props = withDefaults(
     columns?: number;
     /** @description 可选分组：如小时 AM/PM */
     groups?: { label: string; min: number; max: number }[];
+    /**
+     * @description 自定义格子顺序（如周：周一→周日）；缺省按 min..max
+     */
+    order?: number[];
   }>(),
   {
     disabled: false,
@@ -41,6 +45,9 @@ const emit = defineEmits<{
 const selected = computed(() => new Set(props.modelValue));
 
 const flatCells = computed(() => {
+  if (props.order && props.order.length > 0) {
+    return props.order.filter((n) => n >= props.min && n <= props.max);
+  }
   const list: number[] = [];
   for (let i = props.min; i <= props.max; i++) list.push(i);
   return list;

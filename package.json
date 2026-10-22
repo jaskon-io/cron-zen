@@ -19,7 +19,7 @@
     "build:core": "pnpm --filter @cron-zen/core build",
     "build:vue3": "pnpm --filter @cron-zen/vue3 build",
     "build:vue2": "pnpm --filter @cron-zen/vue2 build",
-    "test": "pnpm -r --filter @cron-zen/core test",
+    "test": "pnpm -r --filter @cron-zen/core test && pnpm -r --filter @cron-zen/vue3 test",
     "test:coverage": "pnpm -r --filter @cron-zen/core test:coverage",
     "typecheck": "pnpm -r --filter @cron-zen/core typecheck && pnpm -r --filter @cron-zen/vue3 typecheck && pnpm -r --filter @cron-zen/vue2 typecheck"
   },

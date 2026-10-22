@@ -4,20 +4,33 @@
  * @see https://www.cron.ren/index.html
  */
 import { computed, watch, ref } from 'vue';
-import type { CronFieldMode, CronFieldName, CronFieldState } from '@cron-zen/core';
-import { FIELD_RANGES } from '@cron-zen/core';
+import type {
+  CronFieldMode,
+  CronFieldName,
+  CronFieldState,
+  WeekFormat,
+} from '@cron-zen/core';
+import { FIELD_RANGES, QUARTZ_WEEK_LABELS, QUARTZ_WEEK_UI_ORDER } from '@cron-zen/core';
 import ValueGrid from './ValueGrid.vue';
 
-const props = defineProps<{
-  /** @description 字段名 */
-  name: CronFieldName;
-  /** @description 字段状态 */
-  modelValue: CronFieldState;
-  /** @description 是否禁用（日周互斥锁定） */
-  disabled?: boolean;
-  /** @description 禁用原因 */
-  disabledReason?: string;
-}>();
+const props = withDefaults(
+  defineProps<{
+    /** @description 字段名 */
+    name: CronFieldName;
+    /** @description 字段状态 */
+    modelValue: CronFieldState;
+    /** @description 是否禁用 */
+    disabled?: boolean;
+    /** @description 禁用 / 互斥提示 */
+    disabledReason?: string;
+    /** @description 周字段输出写法（仅 week） */
+    weekFormat?: WeekFormat;
+  }>(),
+  {
+    disabled: false,
+    weekFormat: 'number' as WeekFormat,
+  },
+);
 
 const emit = defineEmits<{
   /**
@@ -25,6 +38,11 @@ const emit = defineEmits<{
    * @param {CronFieldState} value - 新状态
    */
   (e: 'update:modelValue', value: CronFieldState): void;
+  /**
+   * @description 周字段写法变更
+   * @param {WeekFormat} value - number | abbr
+   */
+  (e: 'update:weekFormat', value: WeekFormat): void;
 }>();
 
 const range = computed(() => FIELD_RANGES[props.name]);
@@ -72,25 +90,14 @@ const listVals = ref<number[]>(
     .filter((n) => Number.isFinite(n)),
 );
 
-const weekOptions = [
-  { value: 1, label: '星期一' },
-  { value: 2, label: '星期二' },
-  { value: 3, label: '星期三' },
-  { value: 4, label: '星期四' },
-  { value: 5, label: '星期五' },
-  { value: 6, label: '星期六' },
-  { value: 7, label: '星期天' },
-];
+/** Quartz / cron.ren：1=周日 … 7=周六；UI 文案按周一→周日排列 */
+const weekOptions = QUARTZ_WEEK_UI_ORDER.map((value) => ({
+  value,
+  label: QUARTZ_WEEK_LABELS[value],
+}));
 
-const weekLabels: Record<number, string> = {
-  1: '星期一',
-  2: '星期二',
-  3: '星期三',
-  4: '星期四',
-  5: '星期五',
-  6: '星期六',
-  7: '星期天',
-};
+const weekLabels: Record<number, string> = { ...QUARTZ_WEEK_LABELS };
+const weekOrder = [...QUARTZ_WEEK_UI_ORDER];
 
 const hourGroups = [
   { label: 'AM:', min: 0, max: 11 },
@@ -254,7 +261,31 @@ function selectMode(m: UiMode): void {
   if ((m === 'list' || m === 'specific') && listVals.value.length === 0) {
     listVals.value = [gridMin.value];
   }
+  // 周字段缺省区间：周一-周二（Quartz 2-3）
+  if (m === 'range' && props.name === 'week') {
+    if (rangeStart.value < 1 || rangeStart.value > 7) rangeStart.value = 2;
+    if (rangeEnd.value < 1 || rangeEnd.value > 7) rangeEnd.value = 3;
+  }
   emitState();
+}
+
+/**
+ * @description 聚焦行内控件时自动选中对应模式（对齐 cron.ren 联动）
+ * @param {UiMode} m - 目标模式
+ * @returns {void}
+ */
+function focusMode(m: UiMode): void {
+  if (props.disabled) return;
+  if (mode.value !== m) selectMode(m);
+}
+
+/**
+ * @description 切换周字段写法
+ * @param {WeekFormat} format - number | abbr
+ * @returns {void}
+ */
+function onWeekFormat(format: WeekFormat): void {
+  emit('update:weekFormat', format);
 }
 
 /**
@@ -271,7 +302,7 @@ function onList(vals: number[]): void {
 
 <template>
   <div class="cz-field" :class="{ 'cz-field--disabled': disabled }">
-    <p v-if="disabled && disabledReason" class="cz-field__lock">{{ disabledReason }}</p>
+    <p v-if="disabledReason" class="cz-field__lock">{{ disabledReason }}</p>
 
     <!-- 每 / 不指定 -->
     <label class="cz-row">
@@ -312,11 +343,21 @@ function onList(vals: number[]): void {
         <strong>周期</strong>
         从
         <template v-if="name === 'week'">
-          <select v-model.number="rangeStart" :disabled="disabled || mode !== 'range'" @change="emitState">
+          <select
+            v-model.number="rangeStart"
+            :disabled="disabled"
+            @focus="focusMode('range')"
+            @change="emitState"
+          >
             <option v-for="o in weekOptions" :key="o.value" :value="o.value">{{ o.label }}</option>
           </select>
           -
-          <select v-model.number="rangeEnd" :disabled="disabled || mode !== 'range'" @change="emitState">
+          <select
+            v-model.number="rangeEnd"
+            :disabled="disabled"
+            @focus="focusMode('range')"
+            @change="emitState"
+          >
             <option v-for="o in weekOptions" :key="o.value" :value="o.value">{{ o.label }}</option>
           </select>
         </template>
@@ -326,8 +367,10 @@ function onList(vals: number[]): void {
             type="number"
             :min="range.min"
             :max="range.max"
-            :disabled="disabled || mode !== 'range'"
+            :disabled="disabled"
+            @focus="focusMode('range')"
             @change="emitState"
+            @input="emitState"
           />
           -
           <input
@@ -335,15 +378,17 @@ function onList(vals: number[]): void {
             type="number"
             :min="range.min"
             :max="range.max"
-            :disabled="disabled || mode !== 'range'"
+            :disabled="disabled"
+            @focus="focusMode('range')"
             @change="emitState"
+            @input="emitState"
           />
           {{ unitLabel }}
         </template>
       </span>
     </label>
 
-    <!-- 间隔 step（周用 nth 替代下方单独做） -->
+    <!-- 间隔 step（周无此行，对齐 cron.ren） -->
     <label v-if="name !== 'week'" class="cz-row">
       <input
         type="radio"
@@ -359,8 +404,10 @@ function onList(vals: number[]): void {
           type="number"
           :min="range.min"
           :max="range.max"
-          :disabled="disabled || mode !== 'step'"
+          :disabled="disabled"
+          @focus="focusMode('step')"
           @change="emitState"
+          @input="emitState"
         />
         {{ unitLabel }}开始, 每
         <input
@@ -368,8 +415,10 @@ function onList(vals: number[]): void {
           type="number"
           min="1"
           :max="range.max"
-          :disabled="disabled || mode !== 'step'"
+          :disabled="disabled"
+          @focus="focusMode('step')"
           @change="emitState"
+          @input="emitState"
         />
         {{ name === 'day' ? '天' : unitLabel }}执行一次
       </span>
@@ -390,8 +439,10 @@ function onList(vals: number[]): void {
           type="number"
           min="1"
           max="31"
-          :disabled="disabled || mode !== 'weekday'"
+          :disabled="disabled"
+          @focus="focusMode('weekday')"
           @change="emitState"
+          @input="emitState"
         />
         号最近的那个工作日
       </span>
@@ -423,11 +474,18 @@ function onList(vals: number[]): void {
           type="number"
           min="1"
           max="5"
-          :disabled="disabled || mode !== 'nth'"
+          :disabled="disabled"
+          @focus="focusMode('nth')"
           @change="emitState"
+          @input="emitState"
         />
         个
-        <select v-model.number="nthWeekday" :disabled="disabled || mode !== 'nth'" @change="emitState">
+        <select
+          v-model.number="nthWeekday"
+          :disabled="disabled"
+          @focus="focusMode('nth')"
+          @change="emitState"
+        >
           <option v-for="o in weekOptions" :key="o.value" :value="o.value">{{ o.label }}</option>
         </select>
       </span>
@@ -443,7 +501,12 @@ function onList(vals: number[]): void {
       />
       <span class="cz-row__inline">
         本月最后一个
-        <select v-model.number="lastWeekday" :disabled="disabled || mode !== 'last'" @change="emitState">
+        <select
+          v-model.number="lastWeekday"
+          :disabled="disabled"
+          @focus="focusMode('last')"
+          @change="emitState"
+        >
           <option v-for="o in weekOptions" :key="o.value" :value="o.value">{{ o.label }}</option>
         </select>
       </span>
@@ -468,9 +531,36 @@ function onList(vals: number[]): void {
         :pad="name !== 'week' && name !== 'year'"
         :columns="name === 'month' || name === 'week' ? 7 : name === 'hour' ? 12 : 10"
         :labels="name === 'week' ? weekLabels : undefined"
+        :order="name === 'week' ? weekOrder : undefined"
         :groups="name === 'hour' ? hourGroups : undefined"
         @update:model-value="onList"
       />
     </div>
+
+    <!-- 周字段写法（对齐 cron.ren） -->
+    <div v-if="name === 'week'" class="cz-week-format" role="radiogroup" aria-label="周字段写法">
+      <span class="cz-week-format__label">周字段写法：</span>
+      <label class="cz-week-format__opt">
+        <input
+          type="radio"
+          name="cz-week-format"
+          :checked="weekFormat === 'number'"
+          :disabled="disabled"
+          @change="onWeekFormat('number')"
+        />
+        数字 1~7（1=周日，2=周一，…，7=周六）
+      </label>
+      <label class="cz-week-format__opt">
+        <input
+          type="radio"
+          name="cz-week-format"
+          :checked="weekFormat === 'abbr'"
+          :disabled="disabled"
+          @change="onWeekFormat('abbr')"
+        />
+        英文 SUN、MON、TUE、WED、THU、FRI、SAT
+      </label>
+    </div>
   </div>
 </template>
+

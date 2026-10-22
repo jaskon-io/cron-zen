@@ -32,18 +32,29 @@
     "dev": "vite",
     "build": "vite build && vue-tsc --declaration --emitDeclarationOnly -p tsconfig.json --outDir dist",
     "typecheck": "vue-tsc --noEmit -p tsconfig.json",
-    "prepublishOnly": "pnpm run typecheck && pnpm run build"
+    "test": "vitest run",
+    "prepublishOnly": "pnpm run typecheck && pnpm run test && pnpm run build"
   },
   "peerDependencies": {
-    "vue": "^3.2.0"
+    "vue": "^3.2.0",
+    "element-plus": "^2.4.0"
+  },
+  "peerDependenciesMeta": {
+    "element-plus": {
+      "optional": true
+    }
   },
   "dependencies": {
     "@cron-zen/core": "workspace:*"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^5.2.1",
+    "@vue/test-utils": "^2.4.6",
+    "element-plus": "^2.9.0",
+    "jsdom": "^25.0.1",
     "typescript": "^5.7.2",
     "vite": "^6.0.3",
+    "vitest": "^2.1.8",
     "vue": "^3.5.13",
     "vue-tsc": "^2.1.10"
   },

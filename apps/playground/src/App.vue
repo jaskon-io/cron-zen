@@ -1,56 +1,37 @@
 <script setup lang="ts">
+/**
+ * @description Element Plus 项目用法：输入框 + 可自定义按钮 + 精简 Cron 弹窗
+ */
 import { ref } from 'vue';
-import { CronZen } from '@cron-zen/vue3';
+import { CronZenPicker } from '@cron-zen/vue3';
 
 const cron = ref('0 0 2 * * ? *');
-
-const presets = [
-  { label: '每天 02:00', value: '0 0 2 * * ? *' },
-  { label: '每 5 分钟', value: '0 */5 * * * ? *' },
-  { label: '工作日 9 点', value: '0 0 9 ? * 2-6 *' },
-  { label: '每月 1 号', value: '0 0 0 1 * ? *' },
-  { label: '每月最后一天', value: '0 0 0 L * ? *' },
-];
-
-/**
- * @description 应用预设表达式
- * @param {string} value - Cron 表达式
- * @returns {void}
- */
-function applyPreset(value: string): void {
-  cron.value = value;
-}
+const cronCustom = ref('0 */5 * * * ? *');
 </script>
 
 <template>
   <main class="pg">
     <header class="pg__header">
       <h1 class="pg__brand">cron-zen</h1>
-      <p class="pg__lead">
-        可视化 Cron 表达式生成器（交互参考
-        <a href="https://www.cron.ren/index.html" target="_blank" rel="noreferrer">cron.ren</a>
-        经典版）
-      </p>
+      <p class="pg__lead">项目内用法：Element Plus 输入框旁按钮打开弹窗，仅配置 Cron，确定后回显。</p>
     </header>
 
-    <div class="pg__meta">
-      <div class="pg__presets">
-        <button
-          v-for="p in presets"
-          :key="p.value"
-          type="button"
-          class="pg__chip"
-          @click="applyPreset(p.value)"
-        >
-          {{ p.label }}
-        </button>
-      </div>
-      <label class="pg__expr-input">
-        当前表达式
-        <input v-model="cron" spellcheck="false" />
-      </label>
-    </div>
+    <section class="pg__card">
+      <h2 class="pg__card-title">默认按钮</h2>
+      <CronZenPicker v-model="cron" button-text="选择 Cron" />
+      <p class="pg__value">当前值：<code>{{ cron }}</code></p>
+    </section>
 
-    <CronZen v-model="cron" />
+    <section class="pg__card">
+      <h2 class="pg__card-title">自定义按钮</h2>
+      <CronZenPicker v-model="cronCustom" readonly>
+        <template #trigger="{ open, disabled }">
+          <el-button type="success" :disabled="disabled" @click="open">
+            自定义选择
+          </el-button>
+        </template>
+      </CronZenPicker>
+      <p class="pg__value">当前值：<code>{{ cronCustom }}</code></p>
+    </section>
   </main>
 </template>

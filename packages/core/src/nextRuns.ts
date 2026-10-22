@@ -1,4 +1,5 @@
 import type { CronFieldState, CronState } from './types';
+import { matchesQuartzWeek } from './week';
 
 /** 单次预估最多返回条数，防止异常入参拖垮 UI */
 const MAX_NEXT_RUN_COUNT = 100;
@@ -57,10 +58,28 @@ export function expandFieldValues(
     case 'step': {
       const step = Number(field.secondary);
       if (!Number.isFinite(step) || step < 1) return null;
-      const baseRaw = field.value && field.value !== '*' ? Number(field.value) : min;
+      const span = max - min + 1;
+      const safeStep = Math.min(step, span);
+      const rawBase = field.value && field.value.length > 0 ? field.value : '*';
+
+      // 区间步长 a-b/n（Quartz / cron.ren）
+      if (rawBase.includes('-')) {
+        const [a, b] = rawBase.split('-');
+        const startRaw = Number(a);
+        const endRaw = Number(b);
+        if (!Number.isFinite(startRaw) || !Number.isFinite(endRaw) || startRaw > endRaw) {
+          return null;
+        }
+        const start = clampInt(startRaw, min, max);
+        const end = clampInt(endRaw, min, max);
+        const out: number[] = [];
+        for (let v = start; v <= end; v += safeStep) out.push(v);
+        return out;
+      }
+
+      const baseRaw = rawBase !== '*' ? Number(rawBase) : min;
       if (!Number.isFinite(baseRaw)) return null;
       const base = clampInt(baseRaw, min, max);
-      const safeStep = Math.min(step, max - min + 1);
       const out: number[] = [];
       for (let v = base; v <= max; v += safeStep) out.push(v);
       return out;
@@ -165,9 +184,8 @@ export function getNextRuns(
       continue;
     }
     if (weekConcrete && weeks) {
-      const weekDay = cursor.getDay();
-      const ok = weeks.includes(weekDay) || weeks.includes(weekDay === 0 ? 7 : weekDay);
-      if (!ok) {
+      // Quartz：1=周日…7=周六（0=周日）；勿按 ISO/JS 直接比
+      if (!matchesQuartzWeek(cursor.getDay(), weeks)) {
         cursor.setDate(cursor.getDate() + 1);
         continue;
       }

@@ -10,33 +10,17 @@ import {
   createEveryField,
   createUnsetField,
 } from './types';
+import { isYearLikeToken, normalizeWeekFieldToken } from './week';
+import { enforceDayWeekMutex } from './validator';
+import { escapeCronPercent, unescapeCronPercent } from './escape';
+import { stringifyField } from './stringify';
+
+export { escapeCronPercent, unescapeCronPercent };
 
 /** 字段是否视为「已指定具体日程」（非 * / ?） */
 function isConcreteSchedule(raw: string): boolean {
   const t = raw.trim();
   return t !== '' && t !== '*' && t !== '?';
-}
-
-/**
- * @description 转义 Cron 表达式中的 `%`，避免部分调度系统将其当作参数分隔符导致解析失败
- * @param {string} expression - 原始 Cron 表达式
- * @returns {string} 转义后的表达式（`%` → `\%`；已转义的不重复处理）
- * @example
- * escapeCronPercent('0 0 2 * * ? * %job'); // '0 0 2 * * ? * \\%job'
- */
-export function escapeCronPercent(expression: string): string {
-  return expression.replace(/(?<!\\)%/g, '\\%');
-}
-
-/**
- * @description 还原被转义的 `%`
- * @param {string} expression - 可能含 `\%` 的表达式
- * @returns {string} 还原后的表达式
- * @example
- * unescapeCronPercent('0 0 2 * * ? * \\%job'); // '0 0 2 * * ? * %job'
- */
-export function unescapeCronPercent(expression: string): string {
-  return expression.replace(/\\%/g, '%');
 }
 
 /**
@@ -51,7 +35,8 @@ export function parseField(
   raw: string,
   field: CronFieldName,
 ): { state: CronFieldState; warning?: string } {
-  const token = raw.trim();
+  const token =
+    field === 'week' ? normalizeWeekFieldToken(raw.trim()) : raw.trim();
   const range = FIELD_RANGES[field];
 
   if (token === '*') {
@@ -212,7 +197,14 @@ function normalizeParts(
     return { parts };
   }
   if (parts.length === 6) {
-    // 启发式：第一段为秒（0-59 的具体/通配），补年
+    // 末段像年 → 视为「无秒」的 6 段（分 时 日 月 周 年），补秒=0
+    // 否则视为「无年」的 6 段（秒 分 时 日 月 周），补年=*
+    if (isYearLikeToken(parts[5])) {
+      return {
+        parts: ['0', ...parts],
+        warning: '检测到 6 段表达式（含年），已自动补全秒字段为 0',
+      };
+    }
     return { parts: [...parts, '*'], warning: '检测到 6 段表达式，已自动补全年字段为 *' };
   }
   if (parts.length === 5) {
@@ -311,12 +303,22 @@ export function parseCron(expression: string): ParseResult {
     }
   }
 
-  const expressionOut = escapeCronPercent(normalized.parts.join(' '));
+  // 与 cron.ren / Quartz 一致：解析后即规范化日周互斥（如日具体 + 周 * → 周 ?）
+  const mutexNorm = enforceDayWeekMutex(state);
+  if (mutexNorm.warning) {
+    warnings.push(mutexNorm.warning);
+  }
+
+  const partsOut = FIELD_ORDER.map((name) =>
+    stringifyField(mutexNorm.state[name], { fieldName: name }),
+  );
+
+  const expressionOut = escapeCronPercent(partsOut.join(' '));
   const hasSoftWarning = warnings.length > 0;
 
   return {
     success: true,
-    state,
+    state: mutexNorm.state,
     expression: expressionOut,
     warning: hasSoftWarning ? warnings.join('；') : undefined,
   };

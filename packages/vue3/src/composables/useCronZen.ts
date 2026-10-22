@@ -2,14 +2,19 @@ import {
   shallowRef,
   watch,
   onBeforeUnmount,
+  getCurrentInstance,
   type Ref,
   type ShallowRef,
 } from 'vue';
+import type {
+  CronFieldName,
+  CronFieldState,
+  CronState,
+  CronTabMeta,
+  ValidateResult,
+  WeekFormat,
+} from '@cron-zen/core';
 import {
-  type CronFieldName,
-  type CronFieldState,
-  type CronState,
-  type ValidateResult,
   createDefaultCronState,
   generateCron,
   parseCron,
@@ -20,8 +25,10 @@ import {
   formatRunTime,
   getNextRuns,
   getCronTabs,
+  stringifyField,
 } from '@cron-zen/core';
-export type { CronTabMeta } from '@cron-zen/core';
+
+export type { CronTabMeta, WeekFormat };
 export { getCronTabs, FIELD_RANGES };
 
 /**
@@ -40,6 +47,14 @@ export interface UseCronZenOptions {
    * @description 最近触发次数（默认 10，最大 100）
    */
   nextCount?: number;
+  /**
+   * @description 是否计算自然语言与近 N 次（弹窗精简模式可关）
+   */
+  showPreview?: boolean;
+  /**
+   * @description 周字段输出写法（默认 number）
+   */
+  weekFormat?: Ref<WeekFormat> | WeekFormat;
 }
 
 /**
@@ -60,12 +75,18 @@ export interface UseCronZenReturn {
   validation: Ref<ValidateResult>;
   /** @description 警告 / 提示文案 */
   hint: Ref<string>;
+  /** @description 周字段写法 */
+  weekFormat: Ref<WeekFormat>;
   /** @description 更新单个字段并触发日周互斥 */
   updateField: (name: CronFieldName, field: CronFieldState) => void;
+  /** @description 设置周字段输出写法并立即重生成 */
+  setWeekFormat: (format: WeekFormat) => void;
   /** @description 从表达式反解析到状态 */
   loadExpression: (expression: string) => void;
   /** @description 重置为默认状态 */
   reset: () => void;
+  /** @description 立即刷新（跳过防抖） */
+  flush: () => void;
 }
 
 /**
@@ -87,7 +108,18 @@ function normalizeOptions(debounceMs?: number, nextCount?: number): {
 }
 
 /**
- * @description CronZen 核心组合式 API：shallowRef 状态、防抖生成、日周互斥、销毁清理
+ * @description 解析 weekFormat 选项
+ * @param {Ref<WeekFormat> | WeekFormat | undefined} input - 入参
+ * @returns {WeekFormat} 初始写法
+ */
+function resolveWeekFormat(input?: Ref<WeekFormat> | WeekFormat): WeekFormat {
+  if (input == null) return 'number';
+  if (typeof input === 'string') return input === 'abbr' ? 'abbr' : 'number';
+  return input.value === 'abbr' ? 'abbr' : 'number';
+}
+
+/**
+ * @description CronZen 核心组合式 API：shallowRef 状态、防抖生成、日周互斥、周写法、销毁清理
  * @param {UseCronZenOptions} [options] - 配置项
  * @returns {UseCronZenReturn} 状态与操作方法
  * @example
@@ -100,9 +132,10 @@ export function useCronZen(options: UseCronZenOptions = {}): UseCronZenReturn {
     options.debounceMs,
     options.nextCount,
   );
+  const showPreview = options.showPreview !== false;
 
   const state = shallowRef<CronState>(createDefaultCronState());
-  const activeTab = shallowRef<CronFieldName>('hour');
+  const activeTab = shallowRef<CronFieldName>('second');
   const expression = shallowRef('0 0 0 * * ? *');
   const description = shallowRef('');
   const nextRuns = shallowRef<string[]>([]);
@@ -112,6 +145,7 @@ export function useCronZen(options: UseCronZenOptions = {}): UseCronZenReturn {
     warnings: [],
   });
   const hint = shallowRef('');
+  const weekFormat = shallowRef<WeekFormat>(resolveWeekFormat(options.weekFormat));
 
   let timer: ReturnType<typeof setTimeout> | null = null;
   /** 正在由内部写回 v-model，忽略外部 watch，避免解析↔生成回环 */
@@ -122,16 +156,22 @@ export function useCronZen(options: UseCronZenOptions = {}): UseCronZenReturn {
    * @returns {void}
    */
   const refreshNow = (): void => {
-    const gen = generateCron(state.value);
+    const gen = generateCron(state.value, { weekFormat: weekFormat.value });
     if (gen.state) {
       state.value = gen.state;
     }
 
     validation.value = validateCronState(state.value);
-    description.value = describeCron(state.value);
-    nextRuns.value = getNextRuns(state.value, nextCount)
-      .map(formatRunTime)
-      .filter(Boolean);
+
+    if (showPreview) {
+      description.value = describeCron(state.value);
+      nextRuns.value = getNextRuns(state.value, nextCount)
+        .map(formatRunTime)
+        .filter(Boolean);
+    } else {
+      description.value = '';
+      nextRuns.value = [];
+    }
 
     if (gen.warning) {
       hint.value = gen.warning;
@@ -148,7 +188,6 @@ export function useCronZen(options: UseCronZenOptions = {}): UseCronZenReturn {
       if (options.modelValue && options.modelValue.value !== gen.expression) {
         syncingOut = true;
         options.modelValue.value = gen.expression;
-        // 微任务结束后再允许外部 watch，覆盖同一事件环内的同步触发
         setTimeout(() => {
           syncingOut = false;
         }, 0);
@@ -171,47 +210,61 @@ export function useCronZen(options: UseCronZenOptions = {}): UseCronZenReturn {
   };
 
   /**
-   * @description 更新字段并自动处理日周互斥
+   * @description 更新字段并自动处理日周互斥（日/周变更立即刷新，保证联动预览）
    * @param {CronFieldName} name - 字段名
    * @param {CronFieldState} field - 新字段状态
    * @returns {void}
-   * @example
-   * updateField('hour', { mode: 'specific', raw: '2', value: '2' });
    */
   const updateField = (name: CronFieldName, field: CronFieldState): void => {
     const next: CronState = { ...state.value, [name]: field };
 
     if (name === 'day' || name === 'week') {
-      const enforced = enforceDayWeekMutex(next);
+      const enforced = enforceDayWeekMutex(next, { prefer: name });
       state.value = enforced.state;
       if (enforced.warning) {
         hint.value = enforced.warning;
       }
-    } else {
-      state.value = next;
+      refreshNow();
+      return;
     }
+
+    state.value = next;
     scheduleRefresh();
+  };
+
+  /**
+   * @description 切换周字段写法并立即重生成表达式
+   * @param {WeekFormat} format - number | abbr
+   * @returns {void}
+   */
+  const setWeekFormat = (format: WeekFormat): void => {
+    weekFormat.value = format === 'abbr' ? 'abbr' : 'number';
+    refreshNow();
   };
 
   /**
    * @description 从 Cron 表达式反解析到 UI 状态
    * @param {string} expr - Cron 表达式
    * @returns {void}
-   * @example
-   * loadExpression('0 0 2 * * ? *');
    */
   const loadExpression = (expr: string): void => {
     if (typeof expr !== 'string') return;
     const parsed = parseCron(expr);
+    if (!parsed.success) {
+      hint.value = parsed.error ?? 'Cron 表达式无效';
+      expression.value = expr;
+      return;
+    }
     if (parsed.state) {
       state.value = parsed.state;
-      expression.value = parsed.expression ?? expr;
-      if (parsed.error) {
-        hint.value = parsed.error;
-      } else if (parsed.warning) {
-        hint.value = parsed.warning;
+      // 若表达式含英文周写法则同步 UI 开关
+      const weekPart = (parsed.expression ?? expr).trim().split(/\s+/)[5] ?? '';
+      if (/[A-Za-z]/.test(weekPart)) {
+        weekFormat.value = 'abbr';
       }
-      scheduleRefresh();
+      expression.value = parsed.expression ?? expr;
+      hint.value = parsed.warning ?? '';
+      refreshNow();
     }
   };
 
@@ -221,7 +274,7 @@ export function useCronZen(options: UseCronZenOptions = {}): UseCronZenReturn {
    */
   const reset = (): void => {
     state.value = createDefaultCronState();
-    scheduleRefresh();
+    refreshNow();
   };
 
   if (options.modelValue) {
@@ -237,15 +290,29 @@ export function useCronZen(options: UseCronZenOptions = {}): UseCronZenReturn {
     );
   }
 
-  // 首次同步（immediate watch 可能已 schedule，这里立即出首屏）
+  if (options.weekFormat && typeof options.weekFormat !== 'string') {
+    watch(
+      () => (options.weekFormat as Ref<WeekFormat>).value,
+      (v) => {
+        const next = v === 'abbr' ? 'abbr' : 'number';
+        if (weekFormat.value !== next) {
+          weekFormat.value = next;
+          refreshNow();
+        }
+      },
+    );
+  }
+
   refreshNow();
 
-  onBeforeUnmount(() => {
-    if (timer != null) {
-      clearTimeout(timer);
-      timer = null;
-    }
-  });
+  if (getCurrentInstance()) {
+    onBeforeUnmount(() => {
+      if (timer != null) {
+        clearTimeout(timer);
+        timer = null;
+      }
+    });
+  }
 
   return {
     state,
@@ -255,8 +322,26 @@ export function useCronZen(options: UseCronZenOptions = {}): UseCronZenReturn {
     nextRuns: nextRuns as unknown as Ref<string[]>,
     validation: validation as unknown as Ref<ValidateResult>,
     hint: hint as unknown as Ref<string>,
+    weekFormat: weekFormat as unknown as Ref<WeekFormat>,
     updateField,
+    setWeekFormat,
     loadExpression,
     reset,
+    flush: refreshNow,
   };
+}
+
+/**
+ * @description 预览区字段显示（年 unset→*，周可 abbr）
+ * @param {CronFieldName} name - 字段名
+ * @param {CronFieldState} field - 字段状态
+ * @param {WeekFormat} weekFormat - 周写法
+ * @returns {string} 显示串
+ */
+export function displayFieldValue(
+  name: CronFieldName,
+  field: CronFieldState,
+  weekFormat: WeekFormat = 'number',
+): string {
+  return stringifyField(field, { fieldName: name, weekFormat });
 }
