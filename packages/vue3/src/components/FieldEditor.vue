@@ -1,10 +1,11 @@
 <script setup lang="ts">
 /**
- * @description 单字段配置编辑器（骨架：every / specific / range / step / list / unset）
+ * @description 单字段配置编辑器：模式切换 + 数值格子 / 区间 / 周期
  */
 import { computed, watch, ref } from 'vue';
 import type { CronFieldMode, CronFieldName, CronFieldState } from '@cron-zen/core';
 import { FIELD_RANGES } from '@cron-zen/core';
+import ValueGrid from './ValueGrid.vue';
 
 const props = defineProps<{
   /** @description 字段名 */
@@ -27,19 +28,57 @@ const emit = defineEmits<{
 
 const range = computed(() => FIELD_RANGES[props.name]);
 
+/** 年字段候选过多，格子仅展示近 10 年窗口 */
+const yearWindow = computed(() => {
+  const y = new Date().getFullYear();
+  return { min: y, max: y + 9 };
+});
+
+const gridMin = computed(() => (props.name === 'year' ? yearWindow.value.min : range.value.min));
+const gridMax = computed(() => (props.name === 'year' ? yearWindow.value.max : range.value.max));
+
+const weekLabels: Record<number, string> = {
+  0: '日',
+  1: '一',
+  2: '二',
+  3: '三',
+  4: '四',
+  5: '五',
+  6: '六',
+  7: '日',
+};
+
 const mode = ref<CronFieldMode>(props.modelValue.mode);
-const specific = ref(props.modelValue.value ?? String(range.value.min));
+const specificVals = ref<number[]>([
+  Number(props.modelValue.value ?? range.value.min) || range.value.min,
+]);
+const listVals = ref<number[]>(
+  (props.modelValue.values ?? [])
+    .map((v) => Number(v))
+    .filter((n) => Number.isFinite(n)),
+);
 const rangeStart = ref(props.modelValue.value ?? String(range.value.min));
 const rangeEnd = ref(props.modelValue.secondary ?? String(range.value.max));
-const stepBase = ref(props.modelValue.value && props.modelValue.value !== '*' ? props.modelValue.value : String(range.value.min));
+const stepBase = ref(
+  props.modelValue.value && props.modelValue.value !== '*'
+    ? props.modelValue.value
+    : String(range.value.min),
+);
 const stepValue = ref(props.modelValue.secondary ?? '1');
-const listValue = ref((props.modelValue.values ?? []).join(',') || props.modelValue.value || '');
 
 watch(
   () => props.modelValue,
   (v) => {
     mode.value = v.mode;
-    if (v.mode === 'specific') specific.value = v.value ?? specific.value;
+    if (v.mode === 'specific') {
+      const n = Number(v.value);
+      specificVals.value = [Number.isFinite(n) ? n : range.value.min];
+    }
+    if (v.mode === 'list') {
+      listVals.value = (v.values ?? [])
+        .map((x) => Number(x))
+        .filter((n) => Number.isFinite(n));
+    }
     if (v.mode === 'range') {
       rangeStart.value = v.value ?? rangeStart.value;
       rangeEnd.value = v.secondary ?? rangeEnd.value;
@@ -47,9 +86,6 @@ watch(
     if (v.mode === 'step') {
       stepBase.value = v.value && v.value !== '*' ? v.value : stepBase.value;
       stepValue.value = v.secondary ?? stepValue.value;
-    }
-    if (v.mode === 'list') {
-      listValue.value = (v.values ?? []).join(',') || v.value || '';
     }
   },
   { deep: true },
@@ -70,7 +106,7 @@ const modes = computed(() => {
 });
 
 /**
- * @description 根据当前表单控件拼装字段状态并上抛
+ * @description 根据当前控件拼装字段状态并上抛
  * @returns {void}
  */
 function emitState(): void {
@@ -83,9 +119,11 @@ function emitState(): void {
     case 'unset':
       next = { mode: 'unset', raw: '?' };
       break;
-    case 'specific':
-      next = { mode: 'specific', raw: specific.value, value: specific.value };
+    case 'specific': {
+      const v = String(specificVals.value[0] ?? range.value.min);
+      next = { mode: 'specific', raw: v, value: v };
       break;
+    }
     case 'range':
       next = {
         mode: 'range',
@@ -103,10 +141,7 @@ function emitState(): void {
       };
       break;
     case 'list': {
-      const values = listValue.value
-        .split(',')
-        .map((s: string) => s.trim())
-        .filter(Boolean);
+      const values = listVals.value.map(String);
       next = {
         mode: 'list',
         raw: values.join(','),
@@ -121,7 +156,32 @@ function emitState(): void {
   emit('update:modelValue', next);
 }
 
-watch(mode, () => emitState());
+/**
+ * @description 指定模式格子变更
+ * @param {number[]} vals - 选中值
+ * @returns {void}
+ */
+function onSpecific(vals: number[]): void {
+  specificVals.value = vals.length ? vals : [range.value.min];
+  emitState();
+}
+
+/**
+ * @description 枚举模式格子变更
+ * @param {number[]} vals - 选中值
+ * @returns {void}
+ */
+function onList(vals: number[]): void {
+  listVals.value = vals;
+  emitState();
+}
+
+watch(mode, () => {
+  if (mode.value === 'list' && listVals.value.length === 0) {
+    listVals.value = [range.value.min];
+  }
+  emitState();
+});
 </script>
 
 <template>
@@ -143,17 +203,29 @@ watch(mode, () => emitState());
     </div>
 
     <div v-if="mode === 'specific'" class="cz-field__controls">
-      <label>
-        指定值（{{ range.min }}-{{ range.max }}）
-        <input
-          v-model="specific"
-          type="number"
-          :min="range.min"
-          :max="range.max"
-          :disabled="disabled"
-          @change="emitState"
-        />
-      </label>
+      <p class="cz-field__hint">点击选择一个值（{{ gridMin }}-{{ gridMax }}）</p>
+      <ValueGrid
+        :min="gridMin"
+        :max="gridMax"
+        :model-value="specificVals"
+        :multiple="false"
+        :disabled="disabled"
+        :labels="name === 'week' ? weekLabels : undefined"
+        @update:model-value="onSpecific"
+      />
+    </div>
+
+    <div v-else-if="mode === 'list'" class="cz-field__controls">
+      <p class="cz-field__hint">可多选枚举值</p>
+      <ValueGrid
+        :min="gridMin"
+        :max="gridMax"
+        :model-value="listVals"
+        :multiple="true"
+        :disabled="disabled"
+        :labels="name === 'week' ? weekLabels : undefined"
+        @update:model-value="onList"
+      />
     </div>
 
     <div v-else-if="mode === 'range'" class="cz-field__controls cz-field__controls--row">
@@ -207,20 +279,11 @@ watch(mode, () => emitState());
       </label>
     </div>
 
-    <div v-else-if="mode === 'list'" class="cz-field__controls">
-      <label>
-        枚举值（逗号分隔）
-        <input
-          v-model="listValue"
-          type="text"
-          placeholder="1,3,5"
-          :disabled="disabled"
-          @change="emitState"
-        />
-      </label>
-    </div>
-
-    <p v-else-if="mode === 'every'" class="cz-field__hint">每{{ name === 'week' ? '周' : '' }}单位都触发（*）</p>
-    <p v-else-if="mode === 'unset'" class="cz-field__hint">不指定该字段（?），用于日/周互斥</p>
+    <p v-else-if="mode === 'every'" class="cz-field__hint">
+      每一{{ name === 'week' ? '周' : '' }}单位都触发（*）
+    </p>
+    <p v-else-if="mode === 'unset'" class="cz-field__hint">
+      不指定该字段（?），用于日/周互斥
+    </p>
   </div>
 </template>

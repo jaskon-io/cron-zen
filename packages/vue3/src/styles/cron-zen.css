@@ -229,6 +229,70 @@
   opacity: 0.72;
 }
 
+/* Value grid */
+.cz-grid__toolbar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.cz-grid__tool {
+  appearance: none;
+  border: 1px solid var(--cz-border);
+  background: #fff;
+  color: var(--cz-muted);
+  border-radius: 6px;
+  padding: 4px 10px;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.cz-grid__tool:hover:not(:disabled) {
+  color: var(--cz-accent);
+  border-color: var(--cz-accent);
+}
+
+.cz-grid__cells {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
+  gap: 6px;
+  max-height: 220px;
+  overflow: auto;
+  padding: 2px;
+}
+
+.cz-grid__cell {
+  appearance: none;
+  border: 1px solid var(--cz-border);
+  background: #fff;
+  color: var(--cz-text);
+  border-radius: 8px;
+  min-height: 36px;
+  padding: 6px 4px;
+  font: inherit;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.12s ease;
+}
+
+.cz-grid__cell:hover:not(:disabled) {
+  border-color: var(--cz-accent);
+  transform: translateY(-1px);
+}
+
+.cz-grid__cell.is-active {
+  background: var(--cz-accent);
+  border-color: var(--cz-accent);
+  color: #fff;
+  font-weight: 600;
+}
+
+.cz-grid--disabled .cz-grid__cell {
+  cursor: not-allowed;
+}
+
 @media (max-width: 640px) {
   .cron-zen {
     padding: 12px;

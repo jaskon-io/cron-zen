@@ -1,0 +1,120 @@
+:root {
+  color-scheme: light;
+  --pg-ink: #14213d;
+  --pg-muted: #5c6b7a;
+  --pg-paper: #f3efe6;
+  --pg-accent: #c45c26;
+  --pg-sea: #1f6f6a;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  margin: 0;
+  min-height: 100%;
+}
+
+body {
+  font-family: "Source Sans 3", "PingFang SC", "Noto Sans SC", sans-serif;
+  color: var(--pg-ink);
+  background:
+    radial-gradient(circle at 12% 18%, rgba(196, 92, 38, 0.14), transparent 42%),
+    radial-gradient(circle at 88% 8%, rgba(31, 111, 106, 0.16), transparent 38%),
+    linear-gradient(165deg, #f7f3ea 0%, #e8eef0 52%, #dde8e6 100%);
+}
+
+.pg {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 48px 20px 72px;
+}
+
+.pg__brand {
+  font-family: Fraunces, Georgia, serif;
+  font-size: clamp(2.4rem, 6vw, 3.6rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  margin: 0 0 8px;
+  line-height: 1.05;
+}
+
+.pg__lead {
+  margin: 0 0 28px;
+  max-width: 42rem;
+  color: var(--pg-muted);
+  font-size: 1.05rem;
+  line-height: 1.55;
+}
+
+.pg__panel {
+  display: grid;
+  gap: 16px;
+}
+
+.pg__meta {
+  display: grid;
+  gap: 8px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(20, 33, 61, 0.08);
+  backdrop-filter: blur(6px);
+}
+
+.pg__meta label {
+  display: grid;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--pg-muted);
+}
+
+.pg__meta input {
+  border: 1px solid rgba(20, 33, 61, 0.14);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font: inherit;
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 14px;
+  color: var(--pg-ink);
+  background: #fff;
+}
+
+.pg__presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.pg__chip {
+  appearance: none;
+  border: 1px solid rgba(20, 33, 61, 0.12);
+  background: #fff;
+  color: var(--pg-ink);
+  border-radius: 999px;
+  padding: 7px 12px;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.pg__chip:hover {
+  border-color: var(--pg-sea);
+  color: var(--pg-sea);
+}
+
+.pg__footer {
+  margin-top: 28px;
+  color: var(--pg-muted);
+  font-size: 13px;
+}
+
+@media (max-width: 640px) {
+  .pg {
+    padding: 28px 14px 48px;
+  }
+}

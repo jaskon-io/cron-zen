@@ -23,6 +23,9 @@
 pnpm install
 pnpm test
 pnpm --filter @cron-zen/core typecheck
+
+# 本地可视化 Playground
+pnpm dev
 ```
 
 ### `@cron-zen/core` 示例
