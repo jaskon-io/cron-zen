@@ -136,7 +136,7 @@ export function useCronZen(options: UseCronZenOptions = {}): UseCronZenReturn {
 
   const state = shallowRef<CronState>(createDefaultCronState());
   const activeTab = shallowRef<CronFieldName>('second');
-  const expression = shallowRef('0 0 0 * * ? *');
+  const expression = shallowRef('* * * * * ? *');
   const description = shallowRef('');
   const nextRuns = shallowRef<string[]>([]);
   const validation = shallowRef<ValidateResult>({
@@ -257,8 +257,8 @@ export function useCronZen(options: UseCronZenOptions = {}): UseCronZenReturn {
     }
     if (parsed.state) {
       state.value = parsed.state;
-      // 若表达式含英文周写法则同步 UI 开关
-      const weekPart = (parsed.expression ?? expr).trim().split(/\s+/)[5] ?? '';
+      // 以原始输入判断英文周写法（解析后可能已归一成数字）
+      const weekPart = expr.trim().split(/\s+/)[5] ?? '';
       if (/[A-Za-z]/.test(weekPart)) {
         weekFormat.value = 'abbr';
       }
@@ -269,7 +269,7 @@ export function useCronZen(options: UseCronZenOptions = {}): UseCronZenReturn {
   };
 
   /**
-   * @description 重置为默认每天 0 点
+   * @description 重置为默认（对齐 cron.ren：`* * * * * ? *`）
    * @returns {void}
    */
   const reset = (): void => {

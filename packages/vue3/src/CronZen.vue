@@ -5,7 +5,7 @@
  * <CronZen v-model="cron" />
  * <CronZen v-model="cron" :show-preview="false" />
  */
-import { computed, toRef } from 'vue';
+import { computed, onBeforeUnmount, ref, toRef } from 'vue';
 import type { CronFieldName, CronFieldState, WeekFormat } from '@cron-zen/core';
 import { getCronTabs } from '@cron-zen/core';
 import { displayFieldValue, useCronZen } from './composables/useCronZen';
@@ -32,7 +32,7 @@ const props = withDefaults(
     showPreview?: boolean;
   }>(),
   {
-    modelValue: '0 0 0 * * ? *',
+    modelValue: '* * * * * ? *',
     debounceMs: 300,
     nextCount: 10,
     showPreview: true,
@@ -73,6 +73,7 @@ const {
   updateField,
   setWeekFormat,
   reset,
+  flush,
 } = useCronZen({
   modelValue: writableModel,
   debounceMs: props.debounceMs,
@@ -82,6 +83,8 @@ const {
 
 const tabs = getCronTabs();
 const currentField = computed(() => state.value[activeTab.value]);
+const copied = ref(false);
+let copiedTimer: ReturnType<typeof setTimeout> | null = null;
 
 const fieldParts = computed(() =>
   tabs.map((tab) => ({
@@ -117,12 +120,13 @@ function onTab(name: CronFieldName): void {
 }
 
 /**
- * @description 字段编辑回调
+ * @description 字段编辑回调（确保 change 与最新 state/expression 同步）
  * @param {CronFieldState} field - 新字段状态
  * @returns {void}
  */
 function onFieldUpdate(field: CronFieldState): void {
   updateField(activeTab.value, field);
+  // 非日/周走防抖；此处先抛当前 state，表达式随后经 v-model 同步
   emit('change', state.value);
 }
 
@@ -137,16 +141,40 @@ function onWeekFormat(format: WeekFormat): void {
 }
 
 /**
- * @description 复制当前表达式
+ * @description 重置并回到「秒」Tab
+ * @returns {void}
+ */
+function onReset(): void {
+  reset();
+  activeTab.value = 'second';
+  emit('change', state.value);
+}
+
+/**
+ * @description 复制当前表达式（带短暂「已复制」反馈）
  * @returns {Promise<void>}
  */
 async function copyExpression(): Promise<void> {
+  flush();
   try {
     await navigator.clipboard.writeText(expression.value);
+    copied.value = true;
+    if (copiedTimer != null) clearTimeout(copiedTimer);
+    copiedTimer = setTimeout(() => {
+      copied.value = false;
+      copiedTimer = null;
+    }, 1500);
   } catch {
     // ignore
   }
 }
+
+onBeforeUnmount(() => {
+  if (copiedTimer != null) {
+    clearTimeout(copiedTimer);
+    copiedTimer = null;
+  }
+});
 </script>
 
 <template>
@@ -167,6 +195,7 @@ async function copyExpression(): Promise<void> {
     <section class="cron-zen__body" aria-label="字段配置">
       <p v-if="mutexTip" class="cron-zen__mutex">{{ mutexTip }}</p>
       <FieldEditor
+        :key="activeTab"
         :name="activeTab"
         :model-value="currentField"
         :week-format="weekFormat"
@@ -216,8 +245,10 @@ async function copyExpression(): Promise<void> {
         <div class="cron-zen__preview-title">
           <h3>表达式</h3>
           <div class="cron-zen__actions">
-            <button type="button" class="cron-zen__btn" @click="copyExpression">复制</button>
-            <button type="button" class="cron-zen__btn" @click="reset">重置</button>
+            <button type="button" class="cron-zen__btn" @click="copyExpression">
+              {{ copied ? '已复制' : '复制' }}
+            </button>
+            <button type="button" class="cron-zen__btn" @click="onReset">重置</button>
           </div>
         </div>
         <pre class="cron-zen__expr">{{ expression }}</pre>

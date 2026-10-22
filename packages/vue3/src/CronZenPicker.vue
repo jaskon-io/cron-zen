@@ -10,7 +10,8 @@
  * </CronZenPicker>
  */
 import { computed, ref, watch } from 'vue';
-import { ElButton, ElDialog, ElInput } from 'element-plus';
+import { ElButton, ElDialog, ElInput, ElMessage } from 'element-plus';
+import { parseCron } from '@cron-zen/core';
 import CronZen from './CronZen.vue';
 
 const props = withDefaults(
@@ -66,7 +67,8 @@ const props = withDefaults(
     buttonText: '选择',
     dialogTitle: '选择 Cron 表达式',
     dialogWidth: '760px',
-    debounceMs: 300,
+    // 弹窗内即时回写底部草稿，避免 300ms 滞后造成「点确定值还是旧的」体感
+    debounceMs: 0,
   },
 );
 
@@ -103,21 +105,28 @@ const inputValue = computed({
 function openPicker(): void {
   if (props.disabled) return;
   confirmed = false;
-  const current = (props.modelValue ?? '').trim() || '0 0 0 * * ? *';
+  const current = (props.modelValue ?? '').trim() || '* * * * * ? *';
   draft.value = current;
   visible.value = true;
 }
 
 /**
- * @description 确认：草稿写回并关闭
+ * @description 确认：校验通过后写回并关闭
  * @returns {void}
  */
 function onConfirm(): void {
   const value = draft.value.trim();
   if (!value) return;
+  const parsed = parseCron(value);
+  if (!parsed.success) {
+    ElMessage.error(parsed.error ?? 'Cron 表达式无效');
+    return;
+  }
+  // 使用规范化后的表达式（含日周互斥修正）
+  const normalized = parsed.expression ?? value;
   confirmed = true;
-  emit('update:modelValue', value);
-  emit('confirm', value);
+  emit('update:modelValue', normalized);
+  emit('confirm', normalized);
   visible.value = false;
 }
 
@@ -147,6 +156,19 @@ defineExpose({
    * @description 命令式关闭弹窗（等同取消）
    */
   close: onCancel,
+  /**
+   * @description 读取弹窗草稿表达式
+   * @returns {string} 当前草稿
+   */
+  getDraft: (): string => draft.value,
+  /**
+   * @description 写入弹窗草稿（测试 / 高级用法）
+   * @param {string} value - 草稿表达式
+   * @returns {void}
+   */
+  setDraft: (value: string): void => {
+    draft.value = value;
+  },
 });
 </script>
 
