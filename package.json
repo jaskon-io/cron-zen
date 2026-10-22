@@ -1,0 +1,27 @@
+{
+  "name": "cron-zen",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Visual Cron expression generator for Vue 2 / Vue 3",
+  "license": "MIT",
+  "keywords": [
+    "cron",
+    "cron-expression",
+    "quartz",
+    "vue",
+    "vue3",
+    "scheduler",
+    "cron-zen"
+  ],
+  "scripts": {
+    "build": "pnpm -r --filter @cron-zen/core build",
+    "test": "pnpm -r --filter @cron-zen/core test",
+    "test:coverage": "pnpm -r --filter @cron-zen/core test:coverage",
+    "typecheck": "pnpm -r --filter @cron-zen/core typecheck"
+  },
+  "engines": {
+    "node": ">=18",
+    "pnpm": ">=8"
+  },
+  "packageManager": "pnpm@10.14.0"
+}
