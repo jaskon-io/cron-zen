@@ -152,10 +152,10 @@ export function useCronZen(options: UseCronZenOptions = {}): UseCronZenReturn {
   let syncingOut = false;
 
   /**
-   * @description 立即根据当前 state 刷新表达式 / 描述 / 预览
+   * @description 根据 state 刷新本地表达式 / 描述 / 预览（不写回 v-model）
    * @returns {void}
    */
-  const refreshNow = (): void => {
+  const applyLocal = (): void => {
     const gen = generateCron(state.value, { weekFormat: weekFormat.value });
     if (gen.state) {
       state.value = gen.state;
@@ -185,32 +185,58 @@ export function useCronZen(options: UseCronZenOptions = {}): UseCronZenReturn {
 
     if (gen.success && gen.expression) {
       expression.value = gen.expression;
-      if (options.modelValue && options.modelValue.value !== gen.expression) {
-        syncingOut = true;
-        options.modelValue.value = gen.expression;
-        setTimeout(() => {
-          syncingOut = false;
-        }, 0);
-      }
     }
   };
 
   /**
-   * @description 防抖刷新（默认 300ms）
+   * @description 将当前 expression 写回外部 v-model
+   * @returns {void}
+   */
+  const syncModel = (): void => {
+    if (!options.modelValue) return;
+    if (options.modelValue.value === expression.value) return;
+    syncingOut = true;
+    options.modelValue.value = expression.value;
+    setTimeout(() => {
+      syncingOut = false;
+    }, 0);
+  };
+
+  /**
+   * @description 立即刷新本地预览并同步 v-model（跳过防抖）
+   * @returns {void}
+   */
+  const refreshNow = (): void => {
+    if (timer != null) {
+      clearTimeout(timer);
+      timer = null;
+    }
+    applyLocal();
+    syncModel();
+  };
+
+  /**
+   * @description 立即刷新本地预览；v-model 按 debounceMs 防抖写回（对齐 cron.ren 即时反馈）
    * @returns {void}
    */
   const scheduleRefresh = (): void => {
+    applyLocal();
+    if (debounceMs <= 0) {
+      syncModel();
+      return;
+    }
     if (timer != null) {
       clearTimeout(timer);
     }
     timer = setTimeout(() => {
       timer = null;
-      refreshNow();
+      applyLocal();
+      syncModel();
     }, debounceMs);
   };
 
   /**
-   * @description 更新字段并自动处理日周互斥（日/周变更立即刷新，保证联动预览）
+   * @description 更新字段并自动处理日周互斥（日/周变更立即写回，其它字段预览即时、v-model 可防抖）
    * @param {CronFieldName} name - 字段名
    * @param {CronFieldState} field - 新字段状态
    * @returns {void}
@@ -257,10 +283,12 @@ export function useCronZen(options: UseCronZenOptions = {}): UseCronZenReturn {
     }
     if (parsed.state) {
       state.value = parsed.state;
-      // 以原始输入判断英文周写法（解析后可能已归一成数字）
+      // 以原始输入判断周写法：英文→abbr，含数字→number（?/* 不强制改）
       const weekPart = expr.trim().split(/\s+/)[5] ?? '';
       if (/[A-Za-z]/.test(weekPart)) {
         weekFormat.value = 'abbr';
+      } else if (/\d/.test(weekPart)) {
+        weekFormat.value = 'number';
       }
       expression.value = parsed.expression ?? expr;
       hint.value = parsed.warning ?? '';
@@ -269,11 +297,12 @@ export function useCronZen(options: UseCronZenOptions = {}): UseCronZenReturn {
   };
 
   /**
-   * @description 重置为默认（对齐 cron.ren：`* * * * * ? *`）
+   * @description 重置为默认（对齐 cron.ren：`* * * * * ? *`，周写法还原 number）
    * @returns {void}
    */
   const reset = (): void => {
     state.value = createDefaultCronState();
+    weekFormat.value = 'number';
     refreshNow();
   };
 

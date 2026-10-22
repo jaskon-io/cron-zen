@@ -33,7 +33,8 @@ const props = withDefaults(
   }>(),
   {
     modelValue: '* * * * * ? *',
-    debounceMs: 300,
+    // 对齐 cron.ren：配置即时反映到表达式；需要节流时可显式传 debounceMs
+    debounceMs: 0,
     nextCount: 10,
     showPreview: true,
   },
