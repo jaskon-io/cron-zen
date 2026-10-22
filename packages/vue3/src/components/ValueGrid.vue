@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /**
- * @description 数值格子选择器：单选或多选字段候选值
+ * @description 复选格子选择器（参考经典 Cron 生成器：指定值多选）
  */
 import { computed } from 'vue';
 
@@ -12,16 +12,21 @@ const props = withDefaults(
     max: number;
     /** @description 已选值列表 */
     modelValue: number[];
-    /** @description 是否多选（list）；否则单选（specific） */
-    multiple?: boolean;
     /** @description 是否禁用 */
     disabled?: boolean;
-    /** @description 自定义标签，如周：0→日 */
+    /** @description 自定义标签 */
     labels?: Record<number, string>;
+    /** @description 是否两位补零显示 */
+    pad?: boolean;
+    /** @description 每行列数（默认 10） */
+    columns?: number;
+    /** @description 可选分组：如小时 AM/PM */
+    groups?: { label: string; min: number; max: number }[];
   }>(),
   {
-    multiple: false,
     disabled: false,
+    pad: true,
+    columns: 10,
   },
 );
 
@@ -33,69 +38,91 @@ const emit = defineEmits<{
   (e: 'update:modelValue', value: number[]): void;
 }>();
 
-const cells = computed(() => {
+const selected = computed(() => new Set(props.modelValue));
+
+const flatCells = computed(() => {
   const list: number[] = [];
   for (let i = props.min; i <= props.max; i++) list.push(i);
   return list;
 });
 
-const selected = computed(() => new Set(props.modelValue));
+/**
+ * @description 格式化格子文案
+ * @param {number} n - 数值
+ * @returns {string} 显示文本
+ */
+function labelOf(n: number): string {
+  if (props.labels?.[n] != null) return props.labels[n];
+  if (props.pad) return String(n).padStart(2, '0');
+  return String(n);
+}
 
 /**
- * @description 切换某个数值的选中状态
+ * @description 切换选中（多选）
  * @param {number} n - 数值
  * @returns {void}
  */
 function toggle(n: number): void {
   if (props.disabled) return;
-  if (!props.multiple) {
-    emit('update:modelValue', [n]);
-    return;
-  }
   const next = new Set(props.modelValue);
   if (next.has(n)) next.delete(n);
   else next.add(n);
-  emit('update:modelValue', [...next].sort((a, b) => a - b));
+  const values = [...next].sort((a, b) => a - b);
+  // 至少保留一个，避免空 list 生成非法字段
+  emit('update:modelValue', values.length > 0 ? values : [props.min]);
 }
 
 /**
- * @description 全选 / 清空（仅多选）
- * @returns {void}
+ * @description 区间内单元格
+ * @param {number} a - 起
+ * @param {number} b - 止
+ * @returns {number[]} 数值列表
  */
-function selectAll(): void {
-  if (props.disabled || !props.multiple) return;
-  emit('update:modelValue', [...cells.value]);
-}
-
-/**
- * @description 清空选中
- * @returns {void}
- */
-function clearAll(): void {
-  if (props.disabled) return;
-  emit('update:modelValue', props.multiple ? [] : [props.min]);
+function rangeCells(a: number, b: number): number[] {
+  const list: number[] = [];
+  for (let i = a; i <= b; i++) list.push(i);
+  return list;
 }
 </script>
 
 <template>
-  <div class="cz-grid" :class="{ 'cz-grid--disabled': disabled }">
-    <div v-if="multiple" class="cz-grid__toolbar">
-      <button type="button" class="cz-grid__tool" :disabled="disabled" @click="selectAll">全选</button>
-      <button type="button" class="cz-grid__tool" :disabled="disabled" @click="clearAll">清空</button>
-    </div>
-    <div class="cz-grid__cells" role="group">
-      <button
-        v-for="n in cells"
+  <div class="cz-grid" :class="{ 'cz-grid--disabled': disabled }" :style="{ '--cz-cols': columns }">
+    <template v-if="groups?.length">
+      <div v-for="g in groups" :key="g.label" class="cz-grid__group">
+        <span class="cz-grid__group-label">{{ g.label }}</span>
+        <div class="cz-grid__cells">
+          <label
+            v-for="n in rangeCells(g.min, g.max)"
+            :key="n"
+            class="cz-grid__check"
+            :class="{ 'is-active': selected.has(n) }"
+          >
+            <input
+              type="checkbox"
+              :checked="selected.has(n)"
+              :disabled="disabled"
+              @change="toggle(n)"
+            />
+            <span>{{ labelOf(n) }}</span>
+          </label>
+        </div>
+      </div>
+    </template>
+    <div v-else class="cz-grid__cells">
+      <label
+        v-for="n in flatCells"
         :key="n"
-        type="button"
-        class="cz-grid__cell"
+        class="cz-grid__check"
         :class="{ 'is-active': selected.has(n) }"
-        :disabled="disabled"
-        :aria-pressed="selected.has(n)"
-        @click="toggle(n)"
       >
-        {{ labels?.[n] ?? n }}
-      </button>
+        <input
+          type="checkbox"
+          :checked="selected.has(n)"
+          :disabled="disabled"
+          @change="toggle(n)"
+        />
+        <span>{{ labelOf(n) }}</span>
+      </label>
     </div>
   </div>
 </template>

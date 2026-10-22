@@ -1,12 +1,12 @@
 <script setup lang="ts">
 /**
- * @description Vue3 可视化 Cron 表达式生成器（三段式：Tab + 配置区 + 预览区）
+ * @description Vue3 可视化 Cron 表达式生成器（参考经典生成器布局：Tab + 配置 + 底部字段表/表达式/近10次）
  * @example
  * <CronZen v-model="cron" />
  */
 import { computed, toRef } from 'vue';
 import type { CronFieldName, CronFieldState } from '@cron-zen/core';
-import { getCronTabs } from '@cron-zen/core';
+import { getCronTabs, stringifyField } from '@cron-zen/core';
 import { useCronZen } from './composables/useCronZen';
 import FieldEditor from './components/FieldEditor.vue';
 import './styles/cron-zen.css';
@@ -48,7 +48,6 @@ const emit = defineEmits<{
 
 const modelRef = toRef(props, 'modelValue');
 
-// 将 props.modelValue 包装为可写，驱动 v-model 回写
 const writableModel = computed({
   get: () => modelRef.value,
   set: (val: string | undefined) => {
@@ -73,8 +72,15 @@ const {
 });
 
 const tabs = getCronTabs();
-
 const currentField = computed(() => state.value[activeTab.value]);
+
+const fieldParts = computed(() =>
+  tabs.map((tab) => ({
+    name: tab.name,
+    label: tab.label,
+    value: stringifyField(state.value[tab.name]),
+  })),
+);
 
 const dayLocked = computed(
   () =>
@@ -120,21 +126,20 @@ function onFieldUpdate(field: CronFieldState): void {
 }
 
 /**
- * @description 复制当前表达式到剪贴板
+ * @description 复制当前表达式
  * @returns {Promise<void>}
  */
 async function copyExpression(): Promise<void> {
   try {
     await navigator.clipboard.writeText(expression.value);
   } catch {
-    // 骨架阶段忽略剪贴板失败
+    // ignore
   }
 }
 </script>
 
 <template>
   <div class="cron-zen" data-cron-zen>
-    <!-- 顶部 Tab -->
     <nav class="cron-zen__tabs" aria-label="Cron 字段">
       <button
         v-for="tab in tabs"
@@ -148,7 +153,6 @@ async function copyExpression(): Promise<void> {
       </button>
     </nav>
 
-    <!-- 中部配置区 -->
     <section class="cron-zen__body" aria-label="字段配置">
       <p v-if="mutexTip" class="cron-zen__mutex">{{ mutexTip }}</p>
       <FieldEditor
@@ -160,20 +164,30 @@ async function copyExpression(): Promise<void> {
       />
     </section>
 
-    <!-- 底部预览区 -->
     <section class="cron-zen__preview" aria-label="预览">
-      <div class="cron-zen__preview-block">
-        <h3>Cron 表达式</h3>
-        <pre class="cron-zen__expr">{{ expression }}</pre>
+      <div class="cron-zen__fields">
+        <div class="cron-zen__fields-head">
+          <span v-for="p in fieldParts" :key="p.name">{{ p.label }}</span>
+        </div>
+        <div class="cron-zen__fields-body">
+          <code v-for="p in fieldParts" :key="p.name + '-v'">{{ p.value }}</code>
+        </div>
       </div>
 
       <div class="cron-zen__preview-block">
-        <h3>自然语言</h3>
+        <div class="cron-zen__preview-title">
+          <h3>表达式</h3>
+          <div class="cron-zen__actions">
+            <button type="button" class="cron-zen__btn" @click="copyExpression">复制</button>
+            <button type="button" class="cron-zen__btn" @click="reset">重置</button>
+          </div>
+        </div>
+        <pre class="cron-zen__expr">{{ expression }}</pre>
         <p class="cron-zen__desc">{{ description }}</p>
       </div>
 
       <div class="cron-zen__preview-block">
-        <h3>最近 {{ nextCount }} 次</h3>
+        <h3>近 {{ nextCount }} 次执行时间</h3>
         <ol v-if="nextRuns.length" class="cron-zen__runs">
           <li v-for="(t, i) in nextRuns" :key="i">{{ t }}</li>
         </ol>
@@ -187,11 +201,6 @@ async function copyExpression(): Promise<void> {
       >
         {{ hint }}
       </p>
-
-      <div class="cron-zen__actions">
-        <button type="button" class="cron-zen__btn" @click="reset">重置</button>
-        <button type="button" class="cron-zen__btn" @click="copyExpression">复制表达式</button>
-      </div>
     </section>
   </div>
 </template>

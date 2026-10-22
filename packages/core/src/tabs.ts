@@ -27,8 +27,8 @@ const TAB_ORDER: CronFieldName[] = [
 
 const TAB_LABELS: Record<CronFieldName, string> = {
   second: '秒',
-  minute: '分',
-  hour: '时',
+  minute: '分钟',
+  hour: '小时',
   day: '日',
   month: '月',
   week: '周',
