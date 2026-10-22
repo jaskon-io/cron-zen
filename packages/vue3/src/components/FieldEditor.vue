@@ -13,6 +13,9 @@ import type {
 import { FIELD_RANGES, QUARTZ_WEEK_LABELS, QUARTZ_WEEK_UI_ORDER } from '@cron-zen/core';
 import ValueGrid from './ValueGrid.vue';
 
+/** 同页多实例时避免周写法 radio name 冲突 */
+const weekFormatGroup = `cz-week-fmt-${Math.random().toString(36).slice(2, 9)}`;
+
 const props = withDefaults(
   defineProps<{
     /** @description 字段名 */
@@ -118,17 +121,55 @@ const gridMax = computed(() => {
 let syncingFromProp = false;
 
 /**
+ * @description 按字段重置本地控件默认值（避免 Tab 切换串值）
+ * @returns {void}
+ */
+function resetLocalDefaults(): void {
+  const min = props.name === 'week' ? 1 : range.value.min;
+  const max = props.name === 'week' ? 7 : range.value.max;
+  rangeStart.value = props.name === 'week' ? 2 : Math.min(min + (props.name === 'hour' ? 0 : 1), max);
+  rangeEnd.value = props.name === 'week' ? 3 : Math.min(rangeStart.value + 1, max);
+  if (props.name === 'hour') {
+    rangeStart.value = 0;
+    rangeEnd.value = 2;
+  }
+  if (props.name === 'second' || props.name === 'minute') {
+    rangeStart.value = 1;
+    rangeEnd.value = 2;
+  }
+  if (props.name === 'day' || props.name === 'month') {
+    rangeStart.value = 1;
+    rangeEnd.value = 2;
+  }
+  if (props.name === 'year') {
+    rangeStart.value = yearNow;
+    rangeEnd.value = yearNow + 1;
+  }
+  stepBase.value = props.name === 'day' || props.name === 'month' || props.name === 'year' ? Math.max(min, 1) : min;
+  if (props.name === 'year') stepBase.value = yearNow;
+  stepValue.value = 1;
+  weekdayNear.value = 1;
+  nthOrder.value = 1;
+  nthWeekday.value = 2;
+  lastWeekday.value = 2;
+  listVals.value = [gridMin.value];
+}
+
+/**
  * @description 从 CronFieldState 同步本地表单
  * @param {CronFieldState} v - 字段状态
  * @returns {void}
  */
 function hydrate(v: CronFieldState): void {
-  mode.value = v.mode;
+  mode.value = v.mode === 'specific' ? 'list' : v.mode;
+  // 先恢复字段级默认，再按 mode 覆盖，避免跨 Tab 残留
+  resetLocalDefaults();
+
   if (v.mode === 'range') {
-    rangeStart.value = Number(v.value) || range.value.min;
-    rangeEnd.value = Number(v.secondary) || range.value.min + 1;
+    rangeStart.value = Number(v.value) || rangeStart.value;
+    rangeEnd.value = Number(v.secondary) || rangeEnd.value;
   } else if (v.mode === 'step') {
-    stepBase.value = v.value && v.value !== '*' ? Number(v.value) || range.value.min : range.value.min;
+    stepBase.value = v.value && v.value !== '*' ? Number(v.value) || stepBase.value : stepBase.value;
     stepValue.value = Number(v.secondary) || 1;
   } else if (v.mode === 'weekday') {
     weekdayNear.value = Number(v.value) || 1;
@@ -143,15 +184,14 @@ function hydrate(v: CronFieldState): void {
         ? (v.values ?? []).map(Number).filter((n) => Number.isFinite(n))
         : [Number(v.value)].filter((n) => Number.isFinite(n));
     listVals.value = vals.length ? vals : [gridMin.value];
-    if (v.mode === 'specific') mode.value = 'list';
   }
 }
 
 watch(
-  () => props.modelValue,
-  (v) => {
+  () => [props.name, props.modelValue] as const,
+  () => {
     syncingFromProp = true;
-    hydrate(v);
+    hydrate(props.modelValue);
     Promise.resolve().then(() => {
       syncingFromProp = false;
     });
@@ -240,14 +280,16 @@ function emitState(): void {
 }
 
 /**
- * @description 将数值夹紧到当前字段范围
+ * @description 将数值夹紧到当前字段范围（周字段 UI 使用 1-7，不含 0）
  * @param {number} n - 原始值
  * @returns {number} 夹紧后的整数
  */
 function clamp(n: number): number {
   const v = Math.floor(Number(n));
-  if (!Number.isFinite(v)) return range.value.min;
-  return Math.min(range.value.max, Math.max(range.value.min, v));
+  const min = props.name === 'week' ? 1 : range.value.min;
+  const max = props.name === 'week' ? 7 : range.value.max;
+  if (!Number.isFinite(v)) return min;
+  return Math.min(max, Math.max(min, v));
 }
 
 /**
@@ -257,6 +299,8 @@ function clamp(n: number): number {
  */
 function selectMode(m: UiMode): void {
   if (props.disabled) return;
+  // 用户操作优先，避免 hydrate 微任务未清完时吞掉 emit
+  syncingFromProp = false;
   mode.value = m;
   if ((m === 'list' || m === 'specific') && listVals.value.length === 0) {
     listVals.value = [gridMin.value];
@@ -280,6 +324,21 @@ function focusMode(m: UiMode): void {
 }
 
 /**
+ * @description 行内控件输入/变更：确保模式已选中并上抛（避免仅改数值未切 radio）
+ * @param {UiMode} m - 目标模式
+ * @returns {void}
+ */
+function controlInput(m: UiMode): void {
+  if (props.disabled) return;
+  syncingFromProp = false;
+  if (mode.value !== m) {
+    selectMode(m);
+    return;
+  }
+  emitState();
+}
+
+/**
  * @description 切换周字段写法
  * @param {WeekFormat} format - number | abbr
  * @returns {void}
@@ -294,6 +353,8 @@ function onWeekFormat(format: WeekFormat): void {
  * @returns {void}
  */
 function onList(vals: number[]): void {
+  if (props.disabled) return;
+  syncingFromProp = false;
   listVals.value = vals;
   if (mode.value !== 'list') mode.value = 'list';
   emitState();
@@ -304,7 +365,21 @@ function onList(vals: number[]): void {
   <div class="cz-field" :class="{ 'cz-field--disabled': disabled }">
     <p v-if="disabledReason" class="cz-field__lock">{{ disabledReason }}</p>
 
-    <!-- 每 / 不指定 -->
+    <!-- 年：不指定在前（对齐 cron.ren） -->
+    <label v-if="name === 'year'" class="cz-row">
+      <input
+        type="radio"
+        :checked="mode === 'unset'"
+        :disabled="disabled"
+        @change="selectMode('unset')"
+      />
+      <span>
+        <strong>不指定</strong>
+        <em>允许的通配符{{ wildcards }} 非必填</em>
+      </span>
+    </label>
+
+    <!-- 每 / 每年 -->
     <label class="cz-row">
       <input
         type="radio"
@@ -314,11 +389,12 @@ function onList(vals: number[]): void {
       />
       <span>
         <strong>每{{ unitLabel }}</strong>
-        <em>允许的通配符{{ wildcards }}</em>
+        <em v-if="name !== 'year'">允许的通配符{{ wildcards }}</em>
       </span>
     </label>
 
-    <label v-if="name === 'day' || name === 'week' || name === 'year'" class="cz-row">
+    <!-- 日 / 周：不指定 -->
+    <label v-if="name === 'day' || name === 'week'" class="cz-row">
       <input
         type="radio"
         :checked="mode === 'unset'"
@@ -327,7 +403,6 @@ function onList(vals: number[]): void {
       />
       <span>
         <strong>不指定</strong>
-        <em v-if="name === 'year'">非必填</em>
       </span>
     </label>
 
@@ -347,7 +422,7 @@ function onList(vals: number[]): void {
             v-model.number="rangeStart"
             :disabled="disabled"
             @focus="focusMode('range')"
-            @change="emitState"
+            @change="controlInput('range')"
           >
             <option v-for="o in weekOptions" :key="o.value" :value="o.value">{{ o.label }}</option>
           </select>
@@ -356,7 +431,7 @@ function onList(vals: number[]): void {
             v-model.number="rangeEnd"
             :disabled="disabled"
             @focus="focusMode('range')"
-            @change="emitState"
+            @change="controlInput('range')"
           >
             <option v-for="o in weekOptions" :key="o.value" :value="o.value">{{ o.label }}</option>
           </select>
@@ -369,8 +444,8 @@ function onList(vals: number[]): void {
             :max="range.max"
             :disabled="disabled"
             @focus="focusMode('range')"
-            @change="emitState"
-            @input="emitState"
+            @change="controlInput('range')"
+            @input="controlInput('range')"
           />
           -
           <input
@@ -380,8 +455,8 @@ function onList(vals: number[]): void {
             :max="range.max"
             :disabled="disabled"
             @focus="focusMode('range')"
-            @change="emitState"
-            @input="emitState"
+            @change="controlInput('range')"
+            @input="controlInput('range')"
           />
           {{ unitLabel }}
         </template>
@@ -406,8 +481,8 @@ function onList(vals: number[]): void {
           :max="range.max"
           :disabled="disabled"
           @focus="focusMode('step')"
-          @change="emitState"
-          @input="emitState"
+          @change="controlInput('step')"
+          @input="controlInput('step')"
         />
         {{ unitLabel }}开始, 每
         <input
@@ -417,8 +492,8 @@ function onList(vals: number[]): void {
           :max="range.max"
           :disabled="disabled"
           @focus="focusMode('step')"
-          @change="emitState"
-          @input="emitState"
+          @change="controlInput('step')"
+          @input="controlInput('step')"
         />
         {{ name === 'day' ? '天' : unitLabel }}执行一次
       </span>
@@ -441,8 +516,8 @@ function onList(vals: number[]): void {
           max="31"
           :disabled="disabled"
           @focus="focusMode('weekday')"
-          @change="emitState"
-          @input="emitState"
+          @change="controlInput('weekday')"
+          @input="controlInput('weekday')"
         />
         号最近的那个工作日
       </span>
@@ -456,7 +531,7 @@ function onList(vals: number[]): void {
         :disabled="disabled"
         @change="selectMode('last')"
       />
-      <span><strong>本月最后一天</strong></span>
+      <span><strong>每月最后一天</strong></span>
     </label>
 
     <!-- 周：第 n 个星期 x -->
@@ -476,15 +551,15 @@ function onList(vals: number[]): void {
           max="5"
           :disabled="disabled"
           @focus="focusMode('nth')"
-          @change="emitState"
-          @input="emitState"
+          @change="controlInput('nth')"
+          @input="controlInput('nth')"
         />
         个
         <select
           v-model.number="nthWeekday"
           :disabled="disabled"
           @focus="focusMode('nth')"
-          @change="emitState"
+          @change="controlInput('nth')"
         >
           <option v-for="o in weekOptions" :key="o.value" :value="o.value">{{ o.label }}</option>
         </select>
@@ -505,7 +580,7 @@ function onList(vals: number[]): void {
           v-model.number="lastWeekday"
           :disabled="disabled"
           @focus="focusMode('last')"
-          @change="emitState"
+          @change="controlInput('last')"
         >
           <option v-for="o in weekOptions" :key="o.value" :value="o.value">{{ o.label }}</option>
         </select>
@@ -526,10 +601,12 @@ function onList(vals: number[]): void {
       <ValueGrid
         :min="gridMin"
         :max="gridMax"
-        :model-value="listVals"
-        :disabled="disabled || (mode !== 'list' && mode !== 'specific')"
+        :model-value="mode === 'list' || mode === 'specific' ? listVals : []"
+        :disabled="disabled"
         :pad="name !== 'week' && name !== 'year'"
-        :columns="name === 'month' || name === 'week' ? 7 : name === 'hour' ? 12 : 10"
+        :columns="
+          name === 'year' ? 6 : name === 'month' ? 12 : name === 'week' ? 7 : name === 'hour' ? 12 : 10
+        "
         :labels="name === 'week' ? weekLabels : undefined"
         :order="name === 'week' ? weekOrder : undefined"
         :groups="name === 'hour' ? hourGroups : undefined"
@@ -543,7 +620,7 @@ function onList(vals: number[]): void {
       <label class="cz-week-format__opt">
         <input
           type="radio"
-          name="cz-week-format"
+          :name="weekFormatGroup"
           :checked="weekFormat === 'number'"
           :disabled="disabled"
           @change="onWeekFormat('number')"
@@ -553,7 +630,7 @@ function onList(vals: number[]): void {
       <label class="cz-week-format__opt">
         <input
           type="radio"
-          name="cz-week-format"
+          :name="weekFormatGroup"
           :checked="weekFormat === 'abbr'"
           :disabled="disabled"
           @change="onWeekFormat('abbr')"
