@@ -120,13 +120,15 @@ describe('parseCron', () => {
     expect(res.error).toContain('日和周不能同时指定');
   });
 
-  it('应拒绝空 / 非字符串 / 乱码输入', () => {
+  it('应拒绝空 / 非字符串 / 乱码 / 过长输入', () => {
     expect(parseCron('').success).toBe(false);
     expect(parseCron('   ').success).toBe(false);
     // @ts-expect-error 故意传入非法类型
     expect(parseCron(null).success).toBe(false);
     expect(parseCron('0 0 2 * * ? * @@').success).toBe(false);
     expect(parseCron('0 0 2 * * ? * @@').error).toContain('非法字符');
+    expect(parseCron('0 '.repeat(200)).success).toBe(false);
+    expect(parseCron('0 '.repeat(200)).error).toContain('过长');
   });
 
   it('字段数量非法时应失败', () => {

@@ -255,6 +255,15 @@ export function parseCron(expression: string): ParseResult {
     };
   }
 
+  // 防止异常超长输入拖垮解析 / UI（正常 7 段远小于此）
+  if (trimmed.length > 256) {
+    return {
+      success: false,
+      error: 'Cron 表达式过长（最多 256 字符）',
+      state: createDefaultCronState(),
+    };
+  }
+
   // 乱码 / 明显非法字符（允许数字、字母、以及 Cron 常用符号）
   if (/[^\w\s*?\-,/#\\%]/.test(trimmed)) {
     return {

@@ -158,7 +158,7 @@ describe('validateFieldRange', () => {
 });
 
 describe('validateDayMonthCombo', () => {
-  it('应拦截 2 月 31 日', () => {
+  it('应拦截 2 月 31 日（未锁定年份）', () => {
     const res = validateDayMonthCombo(
       { mode: 'specific', raw: '31', value: '31' },
       { mode: 'specific', raw: '2', value: '2' },
@@ -166,7 +166,23 @@ describe('validateDayMonthCombo', () => {
     expect(res.errors[0]).toContain('2月没有31日');
   });
 
-  it('月为 * 时对 31 / 30 给出警告', () => {
+  it('锁定年份后应拦截非闰年 2 月 29 / 任意年 2 月 31', () => {
+    const nonLeap = validateDayMonthCombo(
+      { mode: 'specific', raw: '29', value: '29' },
+      { mode: 'specific', raw: '2', value: '2' },
+      { mode: 'specific', raw: '2023', value: '2023' },
+    );
+    expect(nonLeap.errors[0]).toContain('2月没有29日');
+
+    const d31 = validateDayMonthCombo(
+      { mode: 'specific', raw: '31', value: '31' },
+      { mode: 'specific', raw: '2', value: '2' },
+      { mode: 'specific', raw: '2024', value: '2024' },
+    );
+    expect(d31.errors[0]).toContain('2月没有31日');
+  });
+
+  it('月为 * 时对 31 / 30 / 29 给出警告', () => {
     const d31 = validateDayMonthCombo(
       { mode: 'specific', raw: '31', value: '31' },
       createEveryField(),
@@ -177,6 +193,20 @@ describe('validateDayMonthCombo', () => {
       createEveryField(),
     );
     expect(d30.warnings[0]).toContain('30');
+    const d29 = validateDayMonthCombo(
+      { mode: 'specific', raw: '29', value: '29' },
+      createEveryField(),
+    );
+    expect(d29.warnings[0]).toContain('29');
+  });
+
+  it('未锁定年份的 2 月 29 应给出闰年警告', () => {
+    const res = validateDayMonthCombo(
+      { mode: 'specific', raw: '29', value: '29' },
+      { mode: 'specific', raw: '2', value: '2' },
+    );
+    expect(res.errors).toHaveLength(0);
+    expect(res.warnings.some((w) => w.includes('闰年'))).toBe(true);
   });
 
   it('合法日期应通过', () => {

@@ -187,11 +187,25 @@ export function validateDayMonthCombo(
       warnings.push('日字段包含 31，部分月份（如 2/4/6/9/11）不存在该日，请确认调度系统行为');
     } else if (maxDay === 30) {
       warnings.push('日字段包含 30，2 月不存在该日，请确认调度系统行为');
+    } else if (maxDay === 29) {
+      warnings.push('日字段包含 29，非闰年的 2 月不存在该日，请确认调度系统行为');
     }
     return { errors, warnings };
   }
 
   for (const m of monthNums) {
+    // 年份未锁定时：2/30、2/31 必然非法；2/29 仅警告（取决于闰年）
+    if (m === 2 && yearNums.length === 0) {
+      for (const d of dayNums) {
+        if (d >= 30) {
+          errors.push(`非法日期: ${m}月没有${d}日`);
+        } else if (d === 29) {
+          warnings.push('2 月 29 日仅在闰年有效，当前未限定年份，请确认调度系统行为');
+        }
+      }
+      continue;
+    }
+
     const dim = getDaysInMonth(m, sampleYear);
     for (const d of dayNums) {
       if (d > dim) {

@@ -45,6 +45,7 @@ export default Vue.extend({
           : String(range.min),
       stepValue: this.value.secondary ?? '1',
       weekLabels: WEEK_LABELS,
+      syncingFromProp: false,
     };
   },
   computed: {
@@ -79,6 +80,7 @@ export default Vue.extend({
     value: {
       deep: true,
       handler(v: CronFieldState) {
+        this.syncingFromProp = true;
         this.mode = v.mode;
         if (v.mode === 'specific') {
           const n = Number(v.value);
@@ -97,9 +99,13 @@ export default Vue.extend({
           this.stepBase = v.value && v.value !== '*' ? v.value : this.stepBase;
           this.stepValue = v.secondary ?? this.stepValue;
         }
+        Promise.resolve().then(() => {
+          this.syncingFromProp = false;
+        });
       },
     },
     mode() {
+      if (this.syncingFromProp) return;
       if (this.mode === 'list' && this.listVals.length === 0) {
         this.listVals = [this.range.min];
       }

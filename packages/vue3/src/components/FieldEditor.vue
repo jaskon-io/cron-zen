@@ -66,9 +66,13 @@ const stepBase = ref(
 );
 const stepValue = ref(props.modelValue.secondary ?? '1');
 
+/** 父级回写时跳过 mode watch，避免 props→emit 回环 */
+let syncingFromProp = false;
+
 watch(
   () => props.modelValue,
   (v) => {
+    syncingFromProp = true;
     mode.value = v.mode;
     if (v.mode === 'specific') {
       const n = Number(v.value);
@@ -87,6 +91,9 @@ watch(
       stepBase.value = v.value && v.value !== '*' ? v.value : stepBase.value;
       stepValue.value = v.secondary ?? stepValue.value;
     }
+    Promise.resolve().then(() => {
+      syncingFromProp = false;
+    });
   },
   { deep: true },
 );
@@ -177,6 +184,7 @@ function onList(vals: number[]): void {
 }
 
 watch(mode, () => {
+  if (syncingFromProp) return;
   if (mode.value === 'list' && listVals.value.length === 0) {
     listVals.value = [range.value.min];
   }

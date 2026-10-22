@@ -37,7 +37,7 @@ export interface UseCronZenOptions {
    */
   debounceMs?: number;
   /**
-   * @description 最近触发次数（默认 10）
+   * @description 最近触发次数（默认 10，最大 100）
    */
   nextCount?: number;
 }
@@ -69,7 +69,25 @@ export interface UseCronZenReturn {
 }
 
 /**
- * @description CronZen 核心组合式 API：shallowRef 状态、300ms 防抖生成、日周互斥、销毁清理
+ * @description 规范化防抖与预览条数，避免异常 props 拖垮主线程
+ * @param {number | undefined} debounceMs - 防抖毫秒
+ * @param {number | undefined} nextCount - 预览条数
+ * @returns {{ debounceMs: number; nextCount: number }} 规范化结果
+ */
+function normalizeOptions(debounceMs?: number, nextCount?: number): {
+  debounceMs: number;
+  nextCount: number;
+} {
+  const d = Number.isFinite(debounceMs) ? Math.max(0, Math.floor(debounceMs as number)) : 300;
+  const n = Number.isFinite(nextCount) ? Math.floor(nextCount as number) : 10;
+  return {
+    debounceMs: Math.min(d, 5000),
+    nextCount: Math.min(Math.max(n, 1), 100),
+  };
+}
+
+/**
+ * @description CronZen 核心组合式 API：shallowRef 状态、防抖生成、日周互斥、销毁清理
  * @param {UseCronZenOptions} [options] - 配置项
  * @returns {UseCronZenReturn} 状态与操作方法
  * @example
@@ -78,8 +96,10 @@ export interface UseCronZenReturn {
  * });
  */
 export function useCronZen(options: UseCronZenOptions = {}): UseCronZenReturn {
-  const debounceMs = options.debounceMs ?? 300;
-  const nextCount = options.nextCount ?? 10;
+  const { debounceMs, nextCount } = normalizeOptions(
+    options.debounceMs,
+    options.nextCount,
+  );
 
   const state = shallowRef<CronState>(createDefaultCronState());
   const activeTab = shallowRef<CronFieldName>('hour');
@@ -94,6 +114,8 @@ export function useCronZen(options: UseCronZenOptions = {}): UseCronZenReturn {
   const hint = shallowRef('');
 
   let timer: ReturnType<typeof setTimeout> | null = null;
+  /** 正在由内部写回 v-model，忽略外部 watch，避免解析↔生成回环 */
+  let syncingOut = false;
 
   /**
    * @description 立即根据当前 state 刷新表达式 / 描述 / 预览
@@ -104,19 +126,12 @@ export function useCronZen(options: UseCronZenOptions = {}): UseCronZenReturn {
     if (gen.state) {
       state.value = gen.state;
     }
-    if (gen.success && gen.expression) {
-      expression.value = gen.expression;
-      if (options.modelValue && options.modelValue.value !== gen.expression) {
-        options.modelValue.value = gen.expression;
-      }
-    }
-    hint.value = [gen.warning, ...(validation.value.warnings || [])]
-      .filter(Boolean)
-      .join('；');
 
     validation.value = validateCronState(state.value);
     description.value = describeCron(state.value);
-    nextRuns.value = getNextRuns(state.value, nextCount).map(formatRunTime);
+    nextRuns.value = getNextRuns(state.value, nextCount)
+      .map(formatRunTime)
+      .filter(Boolean);
 
     if (gen.warning) {
       hint.value = gen.warning;
@@ -126,6 +141,18 @@ export function useCronZen(options: UseCronZenOptions = {}): UseCronZenReturn {
       hint.value = validation.value.errors.join('；');
     } else {
       hint.value = '';
+    }
+
+    if (gen.success && gen.expression) {
+      expression.value = gen.expression;
+      if (options.modelValue && options.modelValue.value !== gen.expression) {
+        syncingOut = true;
+        options.modelValue.value = gen.expression;
+        // 微任务结束后再允许外部 watch，覆盖同一事件环内的同步触发
+        setTimeout(() => {
+          syncingOut = false;
+        }, 0);
+      }
     }
   };
 
@@ -154,7 +181,6 @@ export function useCronZen(options: UseCronZenOptions = {}): UseCronZenReturn {
   const updateField = (name: CronFieldName, field: CronFieldState): void => {
     const next: CronState = { ...state.value, [name]: field };
 
-    // 日 / 周切换为具体值时，给出互斥提示由 enforce 处理
     if (name === 'day' || name === 'week') {
       const enforced = enforceDayWeekMutex(next);
       state.value = enforced.state;
@@ -175,15 +201,15 @@ export function useCronZen(options: UseCronZenOptions = {}): UseCronZenReturn {
    * loadExpression('0 0 2 * * ? *');
    */
   const loadExpression = (expr: string): void => {
+    if (typeof expr !== 'string') return;
     const parsed = parseCron(expr);
     if (parsed.state) {
       state.value = parsed.state;
       expression.value = parsed.expression ?? expr;
-      if (parsed.warning) {
-        hint.value = parsed.warning;
-      }
       if (parsed.error) {
         hint.value = parsed.error;
+      } else if (parsed.warning) {
+        hint.value = parsed.warning;
       }
       scheduleRefresh();
     }
@@ -202,6 +228,7 @@ export function useCronZen(options: UseCronZenOptions = {}): UseCronZenReturn {
     watch(
       () => options.modelValue!.value,
       (val) => {
+        if (syncingOut) return;
         if (val && val !== expression.value) {
           loadExpression(val);
         }
@@ -210,7 +237,7 @@ export function useCronZen(options: UseCronZenOptions = {}): UseCronZenReturn {
     );
   }
 
-  // 首次同步
+  // 首次同步（immediate watch 可能已 schedule，这里立即出首屏）
   refreshNow();
 
   onBeforeUnmount(() => {

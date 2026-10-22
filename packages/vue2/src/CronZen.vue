@@ -58,9 +58,20 @@ export default Vue.extend({
       hint: '',
       tabs: getCronTabs(),
       timer: null as ReturnType<typeof setTimeout> | null,
+      syncingOut: false,
     };
   },
   computed: {
+    /** @description 夹紧后的预览条数 */
+    safeNextCount(): number {
+      const n = Number.isFinite(this.nextCount) ? Math.floor(this.nextCount) : 10;
+      return Math.min(Math.max(n, 1), 100);
+    },
+    /** @description 夹紧后的防抖毫秒 */
+    safeDebounceMs(): number {
+      const d = Number.isFinite(this.debounceMs) ? Math.floor(this.debounceMs) : 300;
+      return Math.min(Math.max(d, 0), 5000);
+    },
     currentField(): CronFieldState {
       return this.state[this.activeTab];
     },
@@ -88,6 +99,7 @@ export default Vue.extend({
     value: {
       immediate: true,
       handler(val: string) {
+        if (this.syncingOut) return;
         if (val && val !== this.expression) {
           this.loadExpression(val);
         }
@@ -111,16 +123,11 @@ export default Vue.extend({
     refreshNow(): void {
       const gen = generateCron(this.state);
       if (gen.state) this.state = gen.state;
-      if (gen.success && gen.expression) {
-        this.expression = gen.expression;
-        if (this.value !== gen.expression) {
-          this.$emit('input', gen.expression);
-          this.$emit('update:value', gen.expression);
-        }
-      }
       this.validation = validateCronState(this.state);
       this.description = describeCron(this.state);
-      this.nextRuns = getNextRuns(this.state, this.nextCount).map(formatRunTime);
+      this.nextRuns = getNextRuns(this.state, this.safeNextCount)
+        .map(formatRunTime)
+        .filter(Boolean);
       if (gen.warning) this.hint = gen.warning;
       else if (this.validation.warnings.length > 0) {
         this.hint = this.validation.warnings.join('；');
@@ -128,6 +135,17 @@ export default Vue.extend({
         this.hint = this.validation.errors.join('；');
       } else {
         this.hint = '';
+      }
+      if (gen.success && gen.expression) {
+        this.expression = gen.expression;
+        if (this.value !== gen.expression) {
+          this.syncingOut = true;
+          this.$emit('input', gen.expression);
+          this.$emit('update:value', gen.expression);
+          Promise.resolve().then(() => {
+            this.syncingOut = false;
+          });
+        }
       }
       this.$emit('change', this.state);
     },
@@ -140,7 +158,7 @@ export default Vue.extend({
       this.timer = setTimeout(() => {
         this.timer = null;
         this.refreshNow();
-      }, this.debounceMs);
+      }, this.safeDebounceMs);
     },
     /**
      * @description 切换 Tab
@@ -252,7 +270,7 @@ export default Vue.extend({
       </div>
 
       <div class="cron-zen__preview-block">
-        <h3>最近 {{ nextCount }} 次</h3>
+        <h3>最近 {{ safeNextCount }} 次</h3>
         <ol v-if="nextRuns.length" class="cron-zen__runs">
           <li v-for="(t, i) in nextRuns" :key="i">{{ t }}</li>
         </ol>

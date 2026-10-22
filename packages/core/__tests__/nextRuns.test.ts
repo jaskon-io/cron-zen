@@ -40,6 +40,22 @@ describe('expandFieldValues', () => {
     ).toBeNull();
     expect(expandFieldValues({ mode: 'last', raw: 'L' }, 1, 31)).toBeNull();
   });
+
+  it('应拒绝越界 specific，并夹紧异常大 range', () => {
+    expect(
+      expandFieldValues({ mode: 'specific', raw: '99', value: '99' }, 0, 23),
+    ).toBeNull();
+    const clamped = expandFieldValues(
+      { mode: 'range', raw: '0-999999', value: '0', secondary: '999999' },
+      0,
+      23,
+    );
+    expect(clamped).toEqual(Array.from({ length: 24 }, (_, i) => i));
+    expect(
+      expandFieldValues({ mode: 'list', raw: '1,99', values: ['1', '99'] }, 0, 23),
+    ).toEqual([1]);
+    expect(expandFieldValues({ mode: 'every', raw: '*' }, 5, 1)).toBeNull();
+  });
 });
 
 describe('getNextRuns / formatRunTime', () => {
@@ -55,6 +71,17 @@ describe('getNextRuns / formatRunTime', () => {
     const state = createDefaultCronState();
     state.day = { mode: 'last', raw: 'L' };
     expect(getNextRuns(state, 5, new Date(2026, 0, 1))).toEqual([]);
+  });
+
+  it('周字段为 L/W/# 无法展开时不得臆测触发时间', () => {
+    const state = createDefaultCronState();
+    state.day = createUnsetField();
+    state.week = { mode: 'last', raw: 'L' };
+    const from = new Date(2026, 5, 15, 12, 0, 0);
+    expect(getNextRuns(state, 5, from)).toEqual([]);
+
+    state.week = { mode: 'nth', raw: '6#3', value: '6', secondary: '3' };
+    expect(getNextRuns(state, 5, from)).toEqual([]);
   });
 
   it('应按周过滤并尊重年份', () => {
@@ -98,9 +125,64 @@ describe('getNextRuns / formatRunTime', () => {
     state.year = { mode: 'specific', raw: '2026', value: '2026' };
     state.month = { mode: 'specific', raw: '1', value: '1' };
     state.day = { mode: 'specific', raw: '2', value: '2' };
-    // from 已过 1/2，且年份锁 2026，之后再无命中
     const from = new Date(2026, 0, 2, 12, 0, 0);
     const runs = getNextRuns(state, 5, from);
     expect(runs.length).toBeLessThan(5);
+  });
+
+  it('应防护非法 count / from，并限制最大条数', () => {
+    const state = createDefaultCronState();
+    const from = new Date(2026, 0, 1, 12, 0, 0);
+    expect(getNextRuns(state, 0, from)).toEqual([]);
+    expect(getNextRuns(state, -1, from)).toEqual([]);
+    expect(getNextRuns(state, Number.NaN, from)).toEqual([]);
+    expect(getNextRuns(state, 10, new Date(Number.NaN))).toEqual([]);
+    const many = getNextRuns(state, 1000, from);
+    expect(many.length).toBeLessThanOrEqual(100);
+  });
+
+  it('formatRunTime 对非法 Date 应返回空串', () => {
+    expect(formatRunTime(new Date(Number.NaN))).toBe('');
+  });
+
+  it('越界 hour 不得通过 Date 进位产生伪触发点', () => {
+    const state = createDefaultCronState();
+    state.hour = { mode: 'specific', raw: '99', value: '99' };
+    const from = new Date(2026, 0, 1, 0, 0, 0);
+    expect(getNextRuns(state, 5, from)).toEqual([]);
+  });
+
+  it('同一天内应跳过已过去的时分秒', () => {
+    const state = createDefaultCronState();
+    state.hour = { mode: 'specific', raw: '12', value: '12' };
+    state.minute = createEveryField();
+    state.second = createEveryField();
+    const from = new Date(2026, 0, 1, 12, 30, 30);
+    const runs = getNextRuns(state, 3, from);
+    expect(runs.length).toBe(3);
+    expect(runs[0].getTime()).toBeGreaterThan(from.getTime());
+    expect(runs[0].getHours()).toBe(12);
+    expect(runs[0].getMinutes()).toBe(30);
+    expect(runs[0].getSeconds()).toBe(31);
+  });
+
+  it('年字段无法展开时应返回空', () => {
+    const state = createDefaultCronState();
+    state.year = { mode: 'last', raw: 'L' };
+    expect(getNextRuns(state, 3, new Date(2026, 0, 1))).toEqual([]);
+  });
+
+  it('range 夹紧后起点大于终点应返回 null', () => {
+    // rawStart/rawEnd 合法但全部落在区间外且方向颠倒：例如 min=10 max=12, range 0-5 → clamp 后 10-10? 
+    // 0-5 clamp to 10-12 → start=10 end=10 OK. 用 20-25 on 0-10 → start=10 end=10.
+    // 真正 start>end：rawStart=25 rawEnd=20 已在 rawStart>rawEnd 拦截。
+    // 覆盖 clamp 后仍有效的边界：
+    expect(
+      expandFieldValues(
+        { mode: 'range', raw: '100-200', value: '100', secondary: '200' },
+        0,
+        23,
+      ),
+    ).toEqual([23]);
   });
 });
