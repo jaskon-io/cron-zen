@@ -23,22 +23,34 @@ describe('有值回显 / 无值默认', () => {
     expect(state.value.minute.secondary).toBe('5');
   });
 
-  it('CronZen 挂载有值时秒应为指定且勾选 0', async () => {
+  it('CronZen 挂载 0 */5 时应落在分钟 Tab 并回显间隔', async () => {
     const wrapper = mount(CronZen, {
       props: { modelValue: '0 */5 * * * ? *', debounceMs: 0, showPreview: false },
     });
     await flushPromises();
     await nextTick();
-    expect(wrapper.find('.cz-field').exists()).toBe(true);
-    // 指定 radio checked
+    expect(wrapper.findAll('.cron-zen__tab')[1].classes()).toContain('is-active');
+    expect(wrapper.text()).toContain('间隔');
+    const radios = wrapper.findAll('.cz-row input[type="radio"]');
+    expect((radios[2].element as HTMLInputElement).checked).toBe(true);
+  });
+
+  it('CronZen 挂载 0 1,11 时应落在分钟 Tab 并勾选 1 与 11', async () => {
+    const wrapper = mount(CronZen, {
+      props: { modelValue: '0 1,11 * * * ? *', debounceMs: 0, showPreview: false },
+    });
+    await flushPromises();
+    await nextTick();
+    expect(wrapper.findAll('.cron-zen__tab')[1].classes()).toContain('is-active');
     const listRadio = wrapper.find('.cz-row__head input[type="radio"]');
     expect((listRadio.element as HTMLInputElement).checked).toBe(true);
-    const checked = wrapper.findAll('.cz-grid input[type="checkbox"]').filter(
-      (c) => (c.element as HTMLInputElement).checked,
-    );
-    expect(checked.length).toBe(1);
-    expect(checked[0].element.parentElement?.textContent).toContain('00');
+    const labels = wrapper
+      .findAll('.cz-grid__check')
+      .filter((l) => l.classes().includes('is-active'))
+      .map((l) => l.text());
+    expect(labels).toEqual(expect.arrayContaining(['01', '11']));
   });
+
 
   it('CronZen 无值/默认应选中每秒而非指定', async () => {
     const wrapper = mount(CronZen, {
@@ -53,21 +65,22 @@ describe('有值回显 / 无值默认', () => {
     expect(checked.length).toBe(0);
   });
 
-  it('切换到分钟 Tab 应回显间隔 */5', async () => {
+  it('从秒 Tab 再切回分钟应仍回显间隔 */5', async () => {
     const wrapper = mount(CronZen, {
       props: { modelValue: '0 */5 * * * ? *', debounceMs: 0, showPreview: false },
     });
     await flushPromises();
+    await wrapper.findAll('.cron-zen__tab')[0].trigger('click');
+    await nextTick();
     await wrapper.findAll('.cron-zen__tab')[1].trigger('click');
     await nextTick();
     expect(wrapper.text()).toContain('间隔');
     const radios = wrapper.findAll('.cz-row input[type="radio"]');
-    // 每分钟, 周期, 间隔, 指定 — 间隔 is index 2
     expect((radios[2].element as HTMLInputElement).checked).toBe(true);
     const nums = wrapper.findAll('input[type="number"]');
-    // rangeStart, rangeEnd, stepBase, stepValue
     expect(Number((nums[3].element as HTMLInputElement).value)).toBe(5);
   });
+
 
   it('FieldEditor step */5 应选中间隔且 step=5', () => {
     const wrapper = mount(FieldEditor, {
@@ -85,6 +98,27 @@ describe('有值回显 / 无值默认', () => {
     const { activeTab, state } = useCronZen({ modelValue: model, debounceMs: 0 });
     expect(activeTab.value).toBe('minute');
     expect(state.value.minute.mode).toBe('step');
+  });
+
+  it('秒为占位 0、分钟为 1,11 时应切到分钟 Tab', () => {
+    const model = ref('0 1,11 * * * ? *');
+    const { activeTab, state } = useCronZen({ modelValue: model, debounceMs: 0 });
+    expect(activeTab.value).toBe('minute');
+    expect(state.value.minute.mode).toBe('list');
+    expect(state.value.minute.values).toEqual(['1', '11']);
+  });
+
+  it('秒为占位 0、分钟为 */5 时应切到分钟 Tab', () => {
+    const model = ref('0 */5 * * * ? *');
+    const { activeTab, state } = useCronZen({ modelValue: model, debounceMs: 0 });
+    expect(activeTab.value).toBe('minute');
+    expect(state.value.minute.mode).toBe('step');
+  });
+
+  it('秒为非 0 具体值时应留在秒 Tab', () => {
+    const model = ref('15 * * * * ? *');
+    const { activeTab } = useCronZen({ modelValue: model, debounceMs: 0 });
+    expect(activeTab.value).toBe('second');
   });
 
   it('空 v-model 不应被默认表达式写回', () => {

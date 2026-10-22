@@ -33,20 +33,59 @@ import {
 const DEFAULT_EXPRESSION = '* * * * * ? *';
 
 /**
- * @description 按表达式状态选中首个「有具体配置」的 Tab，便于打开弹窗时看到回显
+ * @description 秒/分/时仅为「0」时视为 Quartz 常见占位（如每5分钟表达式的秒位），回显时跳过
+ * @param {CronFieldState} f - 字段状态
+ * @returns {boolean} 是否为占位 0
+ */
+function isTrivialZero(f: CronFieldState): boolean {
+  if (f.mode === 'specific' && (f.value === '0' || f.raw === '0')) return true;
+  if (
+    (f.mode === 'list' || f.mode === 'specific') &&
+    f.values?.length === 1 &&
+    f.values[0] === '0'
+  ) {
+    return true;
+  }
+  return false;
+}
+
+/**
+ * @description 字段是否算「有具体配置」
+ * @param {CronFieldName} name - 字段名
+ * @param {CronFieldState} f - 状态
+ * @returns {boolean} 是否具体
+ */
+function isEchoConcrete(name: CronFieldName, f: CronFieldState): boolean {
+  if (name === 'week' || name === 'year') {
+    return f.mode !== 'every' && f.mode !== 'unset';
+  }
+  return f.mode !== 'every';
+}
+
+/**
+ * @description 选中回显 Tab：跳过秒/分/时的占位 0，优先落到更有信息的字段（如分钟 list/step）
  * @param {CronState} s - 状态
  * @returns {CronFieldName} Tab 字段名
+ * @example
+ * // '0 1,11 * * * ? *' → minute（而非 second）
+ * // '0 0/5 * * * ? *' → minute
+ * // '15 * * * * ? *' → second
  */
 function pickEchoTab(s: CronState): CronFieldName {
+  let fallback: CronFieldName | null = null;
   for (const name of FIELD_ORDER) {
     const f = s[name];
-    if (name === 'week' || name === 'year') {
-      if (f.mode !== 'every' && f.mode !== 'unset') return name;
-    } else if (f.mode !== 'every') {
-      return name;
+    if (!isEchoConcrete(name, f)) continue;
+    if (
+      (name === 'second' || name === 'minute' || name === 'hour') &&
+      isTrivialZero(f)
+    ) {
+      if (fallback == null) fallback = name;
+      continue;
     }
+    return name;
   }
-  return 'second';
+  return fallback ?? 'second';
 }
 
 export type { CronTabMeta, WeekFormat };
