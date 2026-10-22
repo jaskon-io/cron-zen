@@ -5,7 +5,7 @@
 import { ref } from 'vue';
 import { CronZenPicker } from '@cron-zen/vue3';
 
-const cron = ref('0 0 2 * * ? *');
+const cron = ref('* * * * * ? *');
 const cronCustom = ref('0 */5 * * * ? *');
 </script>
 

@@ -37,7 +37,7 @@ export default Vue.extend({
     /**
      * @description 双向绑定的 Cron 表达式（v-model / value）
      */
-    value: { type: String, default: '0 0 0 * * ? *' },
+    value: { type: String, default: '* * * * * ? *' },
     /**
      * @description 生成防抖毫秒数
      */
@@ -51,7 +51,7 @@ export default Vue.extend({
     return {
       state: createDefaultCronState() as CronState,
       activeTab: 'second' as CronFieldName,
-      expression: '0 0 0 * * ? *',
+      expression: '* * * * * ? *',
       description: '',
       nextRuns: [] as string[],
       validation: { valid: true, errors: [], warnings: [] } as ValidateResult,

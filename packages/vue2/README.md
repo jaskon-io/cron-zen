@@ -39,7 +39,7 @@ export default {
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
-| `value` | `string` | `0 0 0 * * ? *` | Cron 表达式（v-model） |
+| `value` | `string` | `* * * * * ? *` | Cron 表达式（v-model） |
 | `debounceMs` | `number` | `300` | 配置变更防抖 |
 | `nextCount` | `number` | `10` | 预览最近触发次数 |
 
