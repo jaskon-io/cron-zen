@@ -1,4 +1,4 @@
-import type { CronFieldState, CronState } from '@cron-zen/core';
+import type { CronFieldState, CronState } from './types';
 
 const WEEK_LABELS = ['日', '一', '二', '三', '四', '五', '六', '日'] as const;
 
@@ -21,10 +21,14 @@ export function describeField(label: string, field: CronFieldState): string {
       return `${label} ${field.value}-${field.secondary}`;
     case 'step':
       return `每 ${field.secondary ?? '1'} ${label}（从 ${field.value || '*'}）`;
-    case 'list':
-      return `${label}为 ${(field.values ?? field.value?.split(',') ?? []).join('、')}`;
+    case 'list': {
+      const items = (field.values ?? field.value?.split(',') ?? []).filter(Boolean);
+      return items.length > 0 ? `${label}为 ${items.join('、')}` : '';
+    }
     case 'last':
-      return field.value ? `最后一个星期${WEEK_LABELS[Number(field.value) % 7] ?? field.value}` : '最后一天';
+      return field.value
+        ? `最后一个星期${WEEK_LABELS[Number(field.value) % 7] ?? field.value}`
+        : '最后一天';
     case 'weekday':
       return `最接近 ${field.value} 号的工作日`;
     case 'nth':

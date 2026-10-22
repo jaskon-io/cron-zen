@@ -16,9 +16,13 @@ import {
   validateCronState,
   enforceDayWeekMutex,
   FIELD_RANGES,
+  describeCron,
+  formatRunTime,
+  getNextRuns,
+  getCronTabs,
 } from '@cron-zen/core';
-import { describeCron } from '../utils/describe';
-import { formatRunTime, getNextRuns } from '../utils/nextRuns';
+export type { CronTabMeta } from '@cron-zen/core';
+export { getCronTabs, FIELD_RANGES };
 
 /**
  * @description useCronZen 配置项
@@ -63,16 +67,6 @@ export interface UseCronZenReturn {
   /** @description 重置为默认状态 */
   reset: () => void;
 }
-
-const TABS: CronFieldName[] = [
-  'second',
-  'minute',
-  'hour',
-  'day',
-  'month',
-  'week',
-  'year',
-];
 
 /**
  * @description CronZen 核心组合式 API：shallowRef 状态、300ms 防抖生成、日周互斥、销毁清理
@@ -239,46 +233,3 @@ export function useCronZen(options: UseCronZenOptions = {}): UseCronZenReturn {
     reset,
   };
 }
-
-/**
- * @description Tab 元数据（供 UI 渲染）
- */
-export interface CronTabMeta {
-  /** @description 字段名 */
-  name: CronFieldName;
-  /** @description 显示标签 */
-  label: string;
-  /** @description 合法最小值 */
-  min: number;
-  /** @description 合法最大值 */
-  max: number;
-}
-
-/**
- * @description 获取七段 Tab 元数据列表
- * @returns {CronTabMeta[]} Tab 列表
- * @example
- * const tabs = getCronTabs();
- */
-export function getCronTabs(): CronTabMeta[] {
-  const labels: Record<CronFieldName, string> = {
-    second: '秒',
-    minute: '分',
-    hour: '时',
-    day: '日',
-    month: '月',
-    week: '周',
-    year: '年',
-  };
-  return TABS.map((name) => ({
-    name,
-    label: labels[name],
-    min: FIELD_RANGES[name].min,
-    max: FIELD_RANGES[name].max,
-  }));
-}
-
-/**
- * @description 暴露字段范围常量，便于模板使用
- */
-export { FIELD_RANGES, TABS };

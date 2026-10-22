@@ -54,6 +54,8 @@ const res = generateCron(createDefaultCronState());
 - `parseField` / `stringifyField` — 单字段解析 / 序列化
 - `escapeCronPercent` / `unescapeCronPercent` — `%` 转义
 - `enforceDayWeekMutex` / `assertDayWeekMutex` — 日周互斥
+- `describeCron` / `getNextRuns` — 自然语言与最近触发时间
+- `getCronTabs` — UI Tab 元数据
 - `createDefaultCronState` — 默认 UI 状态
 - `generateCronOrThrow` — 生成失败时抛错
 

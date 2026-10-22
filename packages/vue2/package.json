@@ -1,0 +1,53 @@
+{
+  "name": "@cron-zen/vue2",
+  "version": "0.1.0",
+  "description": "Vue 2 adapter for cron-zen visual Cron expression generator",
+  "license": "MIT",
+  "main": "./dist/cron-zen-vue2.umd.cjs",
+  "module": "./dist/cron-zen-vue2.mjs",
+  "types": "./dist/index.d.ts",
+  "style": "./dist/cron-zen-vue2.css",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/cron-zen-vue2.mjs",
+      "require": "./dist/cron-zen-vue2.umd.cjs"
+    },
+    "./style.css": "./dist/cron-zen-vue2.css"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "keywords": [
+    "cron",
+    "vue",
+    "vue2",
+    "cron-expression",
+    "cron-zen"
+  ],
+  "scripts": {
+    "build": "vite build && tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.build.json --noEmit",
+    "prepublishOnly": "pnpm run typecheck && pnpm run build"
+  },
+  "peerDependencies": {
+    "vue": "^2.7.0"
+  },
+  "dependencies": {
+    "@cron-zen/core": "workspace:*"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue2": "^2.3.3",
+    "typescript": "^5.7.2",
+    "vite": "^5.4.11",
+    "vue": "^2.7.16"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "sideEffects": [
+    "**/*.css"
+  ]
+}

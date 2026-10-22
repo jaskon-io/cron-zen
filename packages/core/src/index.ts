@@ -47,3 +47,14 @@ export {
   generateCronOrThrow,
   stringifyField,
 } from './generator';
+
+export { describeCron, describeField } from './describe';
+
+export {
+  expandFieldValues,
+  getNextRuns,
+  formatRunTime,
+} from './nextRuns';
+
+export type { CronTabMeta } from './tabs';
+export { getCronTabs } from './tabs';

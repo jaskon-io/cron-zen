@@ -1,7 +1,7 @@
-import type { CronFieldState, CronState } from '@cron-zen/core';
+import type { CronFieldState, CronState } from './types';
 
 /**
- * @description 将字段状态展开为候选数值集合（骨架版：覆盖 every / specific / list / range / step）
+ * @description 将字段状态展开为候选数值集合（覆盖 every / specific / list / range / step）
  * @param {CronFieldState} field - 字段状态
  * @param {number} min - 最小值
  * @param {number} max - 最大值
@@ -25,7 +25,7 @@ export function expandFieldValues(
     case 'list': {
       const values = (field.values ?? field.value?.split(',') ?? [])
         .map((v) => Number(v))
-        .filter((n: number) => Number.isFinite(n));
+        .filter((n) => Number.isFinite(n));
       return values.length > 0 ? values : null;
     }
     case 'range': {
@@ -49,7 +49,7 @@ export function expandFieldValues(
 }
 
 /**
- * @description 估算最近 N 次触发时间（从 from 起按日推进，早停）
+ * @description 估算最近 N 次触发时间（从 from 起按日推进，早停；L/W/nth 无法展开时返回空）
  * @param {CronState} state - 可视化状态
  * @param {number} [count=10] - 返回条数
  * @param {Date} [from] - 起始时间（默认当前）
@@ -57,7 +57,11 @@ export function expandFieldValues(
  * @example
  * getNextRuns(createDefaultCronState(), 3);
  */
-export function getNextRuns(state: CronState, count = 10, from: Date = new Date()): Date[] {
+export function getNextRuns(
+  state: CronState,
+  count = 10,
+  from: Date = new Date(),
+): Date[] {
   const seconds = expandFieldValues(state.second, 0, 59);
   const minutes = expandFieldValues(state.minute, 0, 59);
   const hours = expandFieldValues(state.hour, 0, 23);
@@ -83,7 +87,6 @@ export function getNextRuns(state: CronState, count = 10, from: Date = new Date(
   const sortedMinutes = [...minutes].sort((a, b) => a - b);
   const sortedHours = [...hours].sort((a, b) => a - b);
 
-  // 从 from 当天起，最多向前看 366 * 5 天
   const cursor = new Date(from.getFullYear(), from.getMonth(), from.getDate());
   const maxDays = 366 * 5;
 

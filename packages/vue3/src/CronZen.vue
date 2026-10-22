@@ -6,7 +6,8 @@
  */
 import { computed, toRef } from 'vue';
 import type { CronFieldName, CronFieldState } from '@cron-zen/core';
-import { getCronTabs, useCronZen } from './composables/useCronZen';
+import { getCronTabs } from '@cron-zen/core';
+import { useCronZen } from './composables/useCronZen';
 import FieldEditor from './components/FieldEditor.vue';
 import './styles/cron-zen.css';
 

@@ -6,12 +6,23 @@ import type { App, Plugin } from 'vue';
 import CronZen from './CronZen.vue';
 
 export { CronZen };
-export { useCronZen, getCronTabs } from './composables/useCronZen';
-export type { UseCronZenOptions, UseCronZenReturn, CronTabMeta } from './composables/useCronZen';
-export { describeCron, describeField } from './utils/describe';
-export { getNextRuns, expandFieldValues, formatRunTime } from './utils/nextRuns';
+export { useCronZen } from './composables/useCronZen';
+export type { UseCronZenOptions, UseCronZenReturn } from './composables/useCronZen';
+export {
+  describeCron,
+  describeField,
+  getNextRuns,
+  expandFieldValues,
+  formatRunTime,
+  getCronTabs,
+} from '@cron-zen/core';
 
-export type { CronState, CronFieldState, CronFieldName } from '@cron-zen/core';
+export type {
+  CronState,
+  CronFieldState,
+  CronFieldName,
+  CronTabMeta,
+} from '@cron-zen/core';
 
 /**
  * @description Vue 插件安装函数
