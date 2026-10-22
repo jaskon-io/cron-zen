@@ -42,16 +42,34 @@ const emit = defineEmits<{
   (e: 'update:modelValue', value: number[]): void;
 }>();
 
+/** 防止异常 min/max 生成海量 DOM 导致内存/卡顿 */
+const MAX_GRID_CELLS = 120;
+
 const selected = computed(() => new Set(props.modelValue));
+
+/**
+ * @description 在安全上限内生成连续格子
+ * @param {number} a - 起
+ * @param {number} b - 止
+ * @returns {number[]} 数值列表
+ */
+function safeRange(a: number, b: number): number[] {
+  if (!Number.isFinite(a) || !Number.isFinite(b) || a > b) return [];
+  const list: number[] = [];
+  const end = Math.min(b, a + MAX_GRID_CELLS - 1);
+  for (let i = a; i <= end; i++) list.push(i);
+  return list;
+}
 
 const flatCells = computed(() => {
   if (props.order && props.order.length > 0) {
-    return props.order.filter((n) => n >= props.min && n <= props.max);
+    return props.order
+      .filter((n) => n >= props.min && n <= props.max)
+      .slice(0, MAX_GRID_CELLS);
   }
-  const list: number[] = [];
-  for (let i = props.min; i <= props.max; i++) list.push(i);
-  return list;
+  return safeRange(props.min, props.max);
 });
+
 
 /**
  * @description 格式化格子文案
@@ -85,10 +103,14 @@ function toggle(n: number): void {
  * @param {number} b - 止
  * @returns {number[]} 数值列表
  */
+/**
+ * @description 分组内单元格（带上限）
+ * @param {number} a - 起
+ * @param {number} b - 止
+ * @returns {number[]} 数值列表
+ */
 function rangeCells(a: number, b: number): number[] {
-  const list: number[] = [];
-  for (let i = a; i <= b; i++) list.push(i);
-  return list;
+  return safeRange(a, b);
 }
 </script>
 

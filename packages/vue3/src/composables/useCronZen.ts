@@ -278,7 +278,14 @@ export function useCronZen(options: UseCronZenOptions = {}): UseCronZenReturn {
     const parsed = parseCron(expr);
     if (!parsed.success) {
       hint.value = parsed.error ?? 'Cron 表达式无效';
-      expression.value = expr;
+      // 失败时仅回显短且无尖括号的输入，避免超长/注入串进入预览
+      if (
+        expr.length > 0 &&
+        expr.length <= 256 &&
+        !/[<>]/.test(expr)
+      ) {
+        expression.value = expr;
+      }
       return;
     }
     if (parsed.state) {

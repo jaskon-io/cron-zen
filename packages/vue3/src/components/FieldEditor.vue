@@ -356,7 +356,9 @@ function onWeekFormat(format: WeekFormat): void {
 function onList(vals: number[]): void {
   if (props.disabled) return;
   syncingFromProp = false;
-  listVals.value = vals;
+  // 限制指定列表长度，避免异常入参撑爆表达式
+  const span = Math.max(1, gridMax.value - gridMin.value + 1);
+  listVals.value = vals.slice(0, span);
   if (mode.value !== 'list') mode.value = 'list';
   emitState();
 }
