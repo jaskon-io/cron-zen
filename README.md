@@ -33,11 +33,15 @@ pnpm dev
 ```ts
 import { parseCron } from '@cron-zen/core';
 
-const res = parseCron('0 0 2 * * ? *');
+const res = parseCron('0 0 2 * * ?'); // 6 段：年不指定
 if (res.success) {
   console.log(res.state?.hour); // { mode: 'specific', raw: '2', value: '2' }
 }
 ```
+
+### `@cron-zen/vue3` 使用
+
+见 [`packages/vue3/README.md`](./packages/vue3/README.md)（`CronZen` / `CronZenPicker` / `useCronZen`）。
 
 ## Features (core)
 
