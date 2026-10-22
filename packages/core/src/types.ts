@@ -257,10 +257,10 @@ export function createUnsetField(raw = '?'): CronFieldState {
 
 /**
  * @description 创建默认 Cron 可视化状态（对齐 cron.ren：秒/分/时/日/月为 *，周为 ?，年为不指定）
- * @returns {CronState} 默认状态 → 表达式 `* * * * * ? *`
+ * @returns {CronState} 默认状态 → 表达式 `* * * * * ?`（年不指定，不补默认 *）
  * @example
  * const state = createDefaultCronState();
- * // second/minute/hour/day/month = *, week = ?, year = unset(*)
+ * // second/minute/hour/day/month = *, week = ?, year = unset（省略）
  */
 export function createDefaultCronState(): CronState {
   return {

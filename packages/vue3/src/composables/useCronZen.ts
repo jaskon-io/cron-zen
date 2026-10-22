@@ -27,10 +27,11 @@ import {
   getNextRuns,
   getCronTabs,
   stringifyField,
+  weekTokenUsesAbbr,
 } from '@cron-zen/core';
 
-/** 默认 7 段表达式（与 createDefaultCronState 一致） */
-const DEFAULT_EXPRESSION = '* * * * * ? *';
+/** 默认表达式（对齐 cron.ren：年不指定，不补默认 *） */
+const DEFAULT_EXPRESSION = '* * * * * ?';
 
 /**
  * @description 秒/分/时仅为「0」时视为 Quartz 常见占位（如每5分钟表达式的秒位），回显时跳过
@@ -50,16 +51,13 @@ function isTrivialZero(f: CronFieldState): boolean {
 }
 
 /**
- * @description 字段是否算「有具体配置」
- * @param {CronFieldName} name - 字段名
+ * @description 字段是否算「有具体配置」（every / unset 都不算，避免日=? 抢回显 Tab）
+ * @param {CronFieldName} _name - 字段名（保留签名便于调用方）
  * @param {CronFieldState} f - 状态
  * @returns {boolean} 是否具体
  */
-function isEchoConcrete(name: CronFieldName, f: CronFieldState): boolean {
-  if (name === 'week' || name === 'year') {
-    return f.mode !== 'every' && f.mode !== 'unset';
-  }
-  return f.mode !== 'every';
+function isEchoConcrete(_name: CronFieldName, f: CronFieldState): boolean {
+  return f.mode !== 'every' && f.mode !== 'unset';
 }
 
 /**
@@ -372,6 +370,21 @@ export function useCronZen(options: UseCronZenOptions = {}): UseCronZenReturn {
   };
 
   /**
+   * @description 恢复为空值原始态：UI 可选，表达式保持空，不注入默认 Cron
+   * @returns {void}
+   */
+  const resetToEmpty = (): void => {
+    state.value = createDefaultCronState();
+    weekFormat.value = 'number';
+    activeTab.value = 'second';
+    hint.value = '';
+    expression.value = '';
+    description.value = '';
+    nextRuns.value = [];
+    validation.value = { valid: true, errors: [], warnings: [] };
+  };
+
+  /**
    * @description 从 Cron 表达式反解析到 UI 状态
    * @param {string} expr - Cron 表达式
    * @returns {void}
@@ -379,13 +392,9 @@ export function useCronZen(options: UseCronZenOptions = {}): UseCronZenReturn {
   const loadExpression = (expr: string): void => {
     if (typeof expr !== 'string') return;
     const trimmed = expr.trim();
-    // 空串：恢复默认原始状态（每* / 周?），不把空写进表达式预览
+    // 空串：UI 回到每* 原始态，表达式保持空（不注入默认 Cron）
     if (!trimmed) {
-      state.value = createDefaultCronState();
-      weekFormat.value = 'number';
-      activeTab.value = 'second';
-      hint.value = '';
-      applyLocal({ immediateNextRuns: true });
+      resetToEmpty();
       return;
     }
     const parsed = parseCron(trimmed);
@@ -399,11 +408,11 @@ export function useCronZen(options: UseCronZenOptions = {}): UseCronZenReturn {
     }
     if (parsed.state) {
       state.value = parsed.state;
-      // 以原始输入判断周写法：英文→abbr，含数字→number（?/* 不强制改）
+      // 以原始输入判断周写法：SUN…SAT → abbr；6L/L/# 等特殊符不算 abbr
       const weekPart = trimmed.split(/\s+/)[5] ?? '';
-      if (/[A-Za-z]/.test(weekPart)) {
+      if (weekTokenUsesAbbr(weekPart)) {
         weekFormat.value = 'abbr';
-      } else if (/\d/.test(weekPart)) {
+      } else if (/\d/.test(weekPart) || /^[L?]$/i.test(weekPart.trim())) {
         weekFormat.value = 'number';
       }
       expression.value = parsed.expression ?? trimmed;
@@ -414,7 +423,7 @@ export function useCronZen(options: UseCronZenOptions = {}): UseCronZenReturn {
   };
 
   /**
-   * @description 重置为默认（对齐 cron.ren：`* * * * * ? *`，周写法还原 number）
+   * @description 重置为默认（对齐 cron.ren：`* * * * * ?`，年不指定；周写法还原 number）
    * @returns {void}
    */
   const reset = (): void => {
@@ -425,11 +434,15 @@ export function useCronZen(options: UseCronZenOptions = {}): UseCronZenReturn {
   };
 
   // 先同步初始 v-model，再挂 watch，避免首帧用默认态把有值回显冲掉
+  const hasModelBinding = options.modelValue != null;
   const initialModel = options.modelValue?.value;
   if (typeof initialModel === 'string' && initialModel.trim()) {
     loadExpression(initialModel);
+  } else if (hasModelBinding) {
+    // 绑定了空 v-model：UI 原始态，表达式保持空，绝不写回默认 Cron
+    resetToEmpty();
   } else {
-    // 无值：保持原始默认态，且不把默认表达式写回空的 v-model
+    // 无 v-model：独立使用，内部保留可编辑的默认表达式
     applyLocal({ immediateNextRuns: true });
   }
 
@@ -440,13 +453,8 @@ export function useCronZen(options: UseCronZenOptions = {}): UseCronZenReturn {
         if (syncingOut) return;
         const next = val ?? '';
         if (!String(next).trim()) {
-          // 外部清空：回到原始默认态，且不把默认表达式写回空 v-model
-          state.value = createDefaultCronState();
-          weekFormat.value = 'number';
-          activeTab.value = 'second';
-          hint.value = '';
-          applyLocal({ immediateNextRuns: true });
-          expression.value = DEFAULT_EXPRESSION;
+          // 外部清空：回到空值原始态，不注入默认表达式
+          resetToEmpty();
           return;
         }
         if (next !== expression.value) {

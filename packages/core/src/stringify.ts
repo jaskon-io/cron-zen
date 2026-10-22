@@ -43,9 +43,9 @@ export function stringifyField(
 ): string {
   const { weekFormat = 'number', fieldName } = options;
 
-  // 年「不指定」在 Quartz 中输出 *
+  // 年「不指定」不输出占位（由 generateCron 省略第 7 段）；此处若被单独调用则返回空串
   if (fieldName === 'year' && field.mode === 'unset') {
-    return '*';
+    return '';
   }
 
   const weekAbbr = fieldName === 'week' && weekFormat === 'abbr';

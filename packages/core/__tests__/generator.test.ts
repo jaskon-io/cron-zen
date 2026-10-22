@@ -51,10 +51,10 @@ describe('stringifyField', () => {
 });
 
 describe('generateCron', () => {
-  it('默认状态应对齐 cron.ren 生成 * * * * * ? *', () => {
+  it('默认状态应对齐 cron.ren 生成 * * * * * ?（年不指定不补 *）', () => {
     const res = generateCron(createDefaultCronState());
     expect(res.success).toBe(true);
-    expect(res.expression).toBe('* * * * * ? *');
+    expect(res.expression).toBe('* * * * * ?');
   });
 
 
@@ -72,7 +72,7 @@ describe('generateCron', () => {
     state.week = { mode: 'specific', raw: '6', value: '6' };
     const res = generateCron(state);
     expect(res.success).toBe(true);
-    expect(res.expression).toBe('* * * 15 * ? *');
+    expect(res.expression).toBe('* * * 15 * ?');
     expect(res.warning).toContain('周字段设为');
   });
 
@@ -105,16 +105,16 @@ describe('generateCron', () => {
     const state = createDefaultCronState();
     state.day = { mode: 'last', raw: 'L' };
     state.week = createUnsetField();
-    expect(generateCron(state).expression).toBe('* * * L * ? *');
+    expect(generateCron(state).expression).toBe('* * * L * ?');
 
     const weekState = createDefaultCronState();
     weekState.day = createUnsetField();
     weekState.week = { mode: 'nth', raw: '6#3', value: '6', secondary: '3' };
-    expect(generateCron(weekState).expression).toBe('* * * ? * 6#3 *');
+    expect(generateCron(weekState).expression).toBe('* * * ? * 6#3');
 
     const wState = createDefaultCronState();
     wState.day = { mode: 'weekday', raw: '15W', value: '15' };
-    expect(generateCron(wState).expression).toBe('* * * 15W * ? *');
+    expect(generateCron(wState).expression).toBe('* * * 15W * ?');
   });
 
   it('月为 * 且日为 31 时应成功并带 warning', () => {
@@ -122,7 +122,7 @@ describe('generateCron', () => {
     state.day = { mode: 'specific', raw: '31', value: '31' };
     const res = generateCron(state);
     expect(res.success).toBe(true);
-    expect(res.expression).toBe('* * * 31 * ? *');
+    expect(res.expression).toBe('* * * 31 * ?');
     expect(res.warning).toContain('31');
   });
 
@@ -130,7 +130,13 @@ describe('generateCron', () => {
     const state = createDefaultCronState();
     const res = generateCron(state, { escapePercent: false });
     expect(res.success).toBe(true);
-    expect(res.expression).toBe('* * * * * ? *');
+    expect(res.expression).toBe('* * * * * ?');
+  });
+
+  it('选「每年」时应输出第 7 段 *', () => {
+    const state = createDefaultCronState();
+    state.year = createEveryField();
+    expect(generateCron(state).expression).toBe('* * * * * ? *');
   });
 
 
@@ -148,7 +154,7 @@ describe('generateCron', () => {
 
 describe('generateCronOrThrow', () => {
   it('成功时应返回字符串', () => {
-    expect(generateCronOrThrow(createDefaultCronState())).toBe('* * * * * ? *');
+    expect(generateCronOrThrow(createDefaultCronState())).toBe('* * * * * ?');
   });
 
 

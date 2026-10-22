@@ -251,16 +251,25 @@ describe('validateDayWeekMutex / enforceDayWeekMutex', () => {
     expect(enforceDayWeekMutex(withWeek).state.day.mode).toBe('unset');
   });
 
-  it('双方 every / unset 应按惯例规范化', () => {
-    const bothEvery = createDefaultCronState();
-    bothEvery.day = createEveryField();
-    bothEvery.week = createEveryField();
-    expect(enforceDayWeekMutex(bothEvery).state.week.mode).toBe('unset');
+  it('双方 every：默认 prefer=day 将周改为 ?；prefer=week 将日改为 ?', () => {
+    const both = createDefaultCronState();
+    both.day = createEveryField();
+    both.week = createEveryField();
+    const asDay = enforceDayWeekMutex(both);
+    expect(asDay.state.day.mode).toBe('every');
+    expect(asDay.state.week.mode).toBe('unset');
 
+    const asWeek = enforceDayWeekMutex(both, { prefer: 'week' });
+    expect(asWeek.state.day.mode).toBe('unset');
+    expect(asWeek.state.week.mode).toBe('every');
+  });
+
+  it('双方 unset 应按惯例将日改为 *', () => {
     const bothUnset = createDefaultCronState();
     bothUnset.day = createUnsetField();
     bothUnset.week = createUnsetField();
     expect(enforceDayWeekMutex(bothUnset).state.day.mode).toBe('every');
+    expect(enforceDayWeekMutex(bothUnset).state.week.mode).toBe('unset');
   });
 
   it('已合法状态不应被修改', () => {

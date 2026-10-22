@@ -27,7 +27,9 @@ describe('ValueGrid', () => {
       },
     });
     const inputs = wrapper.findAll('input[type="checkbox"]');
-    await inputs[1].trigger('change'); // toggle 2
+    // 按 DOM checked 态同步（对齐真实点击：先勾选再 change）
+    await inputs[1].setValue(true);
+    await inputs[1].trigger('change');
     const emitted = wrapper.emitted('update:modelValue');
     expect(emitted?.at(-1)?.[0]).toEqual([1, 2]);
   });

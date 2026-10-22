@@ -14,6 +14,7 @@ import { isYearLikeToken, normalizeWeekFieldToken } from './week';
 import { enforceDayWeekMutex } from './validator';
 import { escapeCronPercent, unescapeCronPercent } from './escape';
 import { stringifyField } from './stringify';
+import { generateCron } from './generator';
 
 export { escapeCronPercent, unescapeCronPercent };
 
@@ -184,8 +185,8 @@ export function assertDayWeekMutex(
 
 /**
  * @description 将字段段数组规范化为 7 段（支持 5/6/7 段输入）
- * - 5 段：补秒=0、年=*（分 时 日 月 周）
- * - 6 段：若首段像秒则补年=*，否则视为无秒并补秒=0
+ * - 5 段：补秒=0；年用 `?` 表示不指定（对齐 cron.ren，不默认塞 *）
+ * - 6 段：末段像年 → 无秒，补秒=0；否则无年，年用 `?` 表示不指定
  * - 7 段：原样
  * @param {string[]} parts - 空白分割后的字段
  * @returns {{ parts: string[]; warning?: string } | { error: string }} 规范化结果
@@ -198,19 +199,22 @@ function normalizeParts(
   }
   if (parts.length === 6) {
     // 末段像年 → 视为「无秒」的 6 段（分 时 日 月 周 年），补秒=0
-    // 否则视为「无年」的 6 段（秒 分 时 日 月 周），补年=*
+    // 否则视为「无年」的 6 段（秒 分 时 日 月 周），年不指定（?），不注入默认 *
     if (isYearLikeToken(parts[5])) {
       return {
         parts: ['0', ...parts],
         warning: '检测到 6 段表达式（含年），已自动补全秒字段为 0',
       };
     }
-    return { parts: [...parts, '*'], warning: '检测到 6 段表达式，已自动补全年字段为 *' };
+    return {
+      parts: [...parts, '?'],
+      warning: '检测到 6 段表达式，年视为不指定（不补默认 *）',
+    };
   }
   if (parts.length === 5) {
     return {
-      parts: ['0', ...parts, '*'],
-      warning: '检测到 5 段表达式，已自动补全秒=0、年=*',
+      parts: ['0', ...parts, '?'],
+      warning: '检测到 5 段表达式，已自动补全秒=0；年不指定',
     };
   }
   return {
@@ -309,11 +313,21 @@ export function parseCron(expression: string): ParseResult {
     warnings.push(mutexNorm.warning);
   }
 
-  const partsOut = FIELD_ORDER.map((name) =>
-    stringifyField(mutexNorm.state[name], { fieldName: name }),
-  );
-
-  const expressionOut = escapeCronPercent(partsOut.join(' '));
+  // 与 generateCron 一致：年不指定时省略第 7 段，不注入默认 *
+  const genOut = generateCron(mutexNorm.state, {
+    enforceMutex: false,
+    escapePercent: true,
+  });
+  const expressionOut =
+    genOut.success && genOut.expression
+      ? genOut.expression
+      : escapeCronPercent(
+          FIELD_ORDER.map((name) =>
+            stringifyField(mutexNorm.state[name], { fieldName: name }),
+          )
+            .filter((p) => p.length > 0)
+            .join(' '),
+        );
   const hasSoftWarning = warnings.length > 0;
 
   return {

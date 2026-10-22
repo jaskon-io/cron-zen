@@ -131,6 +131,22 @@ export function matchesQuartzWeek(jsDay: number, quartzWeeks: number[]): boolean
 }
 
 /**
+ * @description 周字段 token 是否使用英文缩写写法（SUN…SAT）
+ * @param {string} weekToken - 周字段原始串（如 `MON-FRI`、`6L`、`FRIL`、`?`）
+ * @returns {boolean} 含星期英文缩写则为 true；`6L` / `L` / `#` 等不含缩写时为 false
+ * @example
+ * weekTokenUsesAbbr('MON-FRI'); // true
+ * weekTokenUsesAbbr('FRIL'); // true
+ * weekTokenUsesAbbr('6L'); // false（L 是特殊符，不是 abbr）
+ * weekTokenUsesAbbr('6#3'); // false
+ */
+export function weekTokenUsesAbbr(weekToken: string): boolean {
+  if (!weekToken) return false;
+  // 不用 \b：FRIL / FRI#2 中 FRI 后紧跟 L/#，词边界会失效
+  return /(SUN|MON|TUE|WED|THU|FRI|SAT)/i.test(weekToken.trim());
+}
+
+/**
  * @description 判断 token 是否像「年」字段（用于 6 段表达式启发式）
  * @param {string} token - 字段原始串
  * @returns {boolean} 是否像年

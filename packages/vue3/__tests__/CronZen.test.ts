@@ -72,7 +72,7 @@ describe('CronZen', () => {
     await resetBtn!.trigger('click');
     await nextTick();
     expect(wrapper.findAll('.cron-zen__tab')[0].classes()).toContain('is-active');
-    expect(wrapper.emitted('update:modelValue')?.flat().at(-1)).toBe('* * * * * ? *');
+    expect(wrapper.emitted('update:modelValue')?.flat().at(-1)).toBe('* * * * * ?');
   });
 
   it('切换 Tab 后配置区文案应隔离（无串字段）', async () => {

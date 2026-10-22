@@ -32,7 +32,8 @@ const props = withDefaults(
     showPreview?: boolean;
   }>(),
   {
-    modelValue: '* * * * * ? *',
+    // 无值保持空，不注入默认表达式；UI 仍用「每*」原始态供编辑
+    modelValue: '',
     // 对齐 cron.ren：配置即时反映到表达式；需要节流时可显式传 debounceMs
     debounceMs: 0,
     nextCount: 10,

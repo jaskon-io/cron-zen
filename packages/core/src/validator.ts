@@ -309,8 +309,18 @@ export function enforceDayWeekMutex(
     };
   }
 
-  // 双方皆 every 时，规范为 日=* 周=?（Quartz 惯例）
+  // 双方皆 every（*/*）时按 prefer 保留一侧为 *，另一侧改为 ?
+  // - prefer=day（默认）：日=* 周=?（Quartz / cron.ren 默认态）
+  // - prefer=week：日=? 周=*（用户点「每周」时应能站住，不能静默打回不指定）
   if (next.day.mode === 'every' && next.week.mode === 'every') {
+    if (prefer === 'week') {
+      next.day = createUnsetField();
+      return {
+        state: next,
+        changed: true,
+        warning: '日与周均为 *，已按「周」优先将日字段调整为 ?',
+      };
+    }
     next.week = createUnsetField();
     return {
       state: next,

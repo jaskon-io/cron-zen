@@ -36,7 +36,7 @@ const cron = ref('0 0 2 * * ? *');
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
-| `modelValue` | `string` | `* * * * * ? *` | Cron 表达式（v-model） |
+| `modelValue` | `string` | `''` | Cron 表达式（v-model；空值不注入默认） |
 | `debounceMs` | `number` | `0` | 配置变更防抖（默认即时；本地预览始终即时，仅 v-model 可防抖） |
 | `nextCount` | `number` | `10` | 预览最近触发次数 |
 

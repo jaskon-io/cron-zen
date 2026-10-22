@@ -12,13 +12,13 @@ import { stringifyField } from './stringify';
 export { stringifyField } from './stringify';
 
 /**
- * @description 由可视化状态生成 7 段 Cron 表达式（自动日周互斥、可选 `%` 转义）
+ * @description 由可视化状态生成 Cron 表达式（自动日周互斥、可选 `%` 转义）
  * @param {CronState} state - 可视化状态
  * @param {GenerateOptions} [options] - 生成选项
  * @returns {GenerateResult} 生成结果（success / expression / warning）
  * @example
  * const res = generateCron(createDefaultCronState());
- * // { success: true, expression: '* * * * * ? *' }
+ * // { success: true, expression: '* * * * * ?' } 年不指定时不补默认 *
  */
 export function generateCron(
   state: CronState,
@@ -60,7 +60,10 @@ export function generateCron(
   }
 
   const weekFormat = options.weekFormat ?? 'number';
-  const parts = FIELD_ORDER.map((name) =>
+  // 对齐 cron.ren：年「不指定」不注入默认 *，输出 6 段；选「每年」才带第 7 段 *
+  const fieldNames =
+    working.year.mode === 'unset' ? FIELD_ORDER.slice(0, 6) : FIELD_ORDER;
+  const parts = fieldNames.map((name) =>
     stringifyField(working[name], { fieldName: name, weekFormat }),
   );
   let expression = parts.join(' ');

@@ -16,6 +16,7 @@ import {
   parseField,
   weekAbbrToNumber,
   weekNumberToAbbr,
+  weekTokenUsesAbbr,
   QUARTZ_WEEK_LABELS,
   enforceDayWeekMutex,
 } from '../src';
@@ -75,13 +76,14 @@ describe('Quartz / cron.ren 对齐', () => {
   });
 
   describe('年字段不指定', () => {
-    it('year unset 应生成 * 而非 ?', () => {
+    it('year unset 应省略年段（不注入默认 *）', () => {
       const state = createDefaultCronState();
       state.year = { mode: 'unset', raw: '?' };
       const gen = generateCron(state);
       expect(gen.success).toBe(true);
-      expect(gen.expression?.split(' ')[6]).toBe('*');
-      expect(gen.expression).not.toMatch(/\?$/);
+      expect(gen.expression?.split(/\s+/)).toHaveLength(6);
+      expect(gen.expression).toBe('* * * * * ?');
+      expect(gen.expression).not.toMatch(/\*$/);
     });
 
     it('validateCronState 对 year unset 应通过', () => {
@@ -124,10 +126,11 @@ describe('Quartz / cron.ren 对齐', () => {
       expect(parsed.expression).toBe('0 0 0 2 * ? 2024');
     });
 
-    it('末段为 ? 时应补年 *', () => {
+    it('末段为 ? 的 6 段应年不指定（不补默认 *）', () => {
       const parsed = parseCron('0 0 2 * * ?');
       expect(parsed.success).toBe(true);
-      expect(parsed.expression).toBe('0 0 2 * * ? *');
+      expect(parsed.state?.year.mode).toBe('unset');
+      expect(parsed.expression).toBe('0 0 2 * * ?');
     });
   });
 
@@ -208,11 +211,11 @@ describe('Quartz / cron.ren 对齐', () => {
       ).toBeNull();
     });
 
-    it('年字段为 ? 的 7 段应归一为年 *', () => {
+    it('年字段为 ? 的 7 段应归一为年不指定（省略年段）', () => {
       const parsed = parseCron('0 0 0 * * ? ?');
       expect(parsed.success).toBe(true);
       expect(parsed.state?.year.mode).toBe('unset');
-      expect(parsed.expression?.endsWith(' *')).toBe(true);
+      expect(parsed.expression).toBe('0 0 0 * * ?');
     });
 
     it('nth 缺 value 时应降级文案', () => {
@@ -235,6 +238,17 @@ describe('Quartz / cron.ren 对齐', () => {
       expect(weekNumberToAbbr('6')).toBe('FRI');
       expect(weekNumberToAbbr(Number.NaN)).toBe('NaN');
       expect(weekNumberToAbbr(99)).toBe('99');
+    });
+
+    it('weekTokenUsesAbbr：6L/L 不算 abbr，SUN…SAT 才算', () => {
+      expect(weekTokenUsesAbbr('6L')).toBe(false);
+      expect(weekTokenUsesAbbr('L')).toBe(false);
+      expect(weekTokenUsesAbbr('6#3')).toBe(false);
+      expect(weekTokenUsesAbbr('?')).toBe(false);
+      expect(weekTokenUsesAbbr('MON-FRI')).toBe(true);
+      expect(weekTokenUsesAbbr('FRIL')).toBe(true);
+      expect(weekTokenUsesAbbr('FRI#2')).toBe(true);
+      expect(weekTokenUsesAbbr('SAT,SUN')).toBe(true);
     });
 
     it('stringifyField abbr 应覆盖 list/last/nth/step 区间', () => {

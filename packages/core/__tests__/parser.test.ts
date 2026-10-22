@@ -147,7 +147,8 @@ describe('parseCron', () => {
 
     const six = parseCron('0 0 2 * * ?');
     expect(six.success).toBe(true);
-    expect(six.state?.year.mode).toBe('every');
+    expect(six.state?.year.mode).toBe('unset');
+    expect(six.expression).toBe('0 0 2 * * ?');
     expect(six.warning).toContain('6 段');
   });
 

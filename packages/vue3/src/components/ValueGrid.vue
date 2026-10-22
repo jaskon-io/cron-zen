@@ -83,18 +83,24 @@ function labelOf(n: number): string {
 }
 
 /**
- * @description 切换选中（多选）
+ * @description 按复选框最终勾选态同步多选（兼容真实点击与测试 setValue）
  * @param {number} n - 数值
+ * @param {Event} e - change 事件
  * @returns {void}
  */
-function toggle(n: number): void {
+function onCheck(n: number, e: Event): void {
   if (props.disabled) return;
+  const checked = (e.target as HTMLInputElement | null)?.checked;
   const next = new Set(props.modelValue);
-  if (next.has(n)) next.delete(n);
+  // 优先信 DOM 勾选态；无 target 时回退 toggle
+  if (checked === true) next.add(n);
+  else if (checked === false) next.delete(n);
+  else if (next.has(n)) next.delete(n);
   else next.add(n);
   const values = [...next].sort((a, b) => a - b);
-  // 至少保留一个，避免空 list 生成非法字段
-  emit('update:modelValue', values.length > 0 ? values : [props.min]);
+  // 至少保留一个，避免空 list；有自定义 order 时取首格（周：周一=2，对齐 cron.ren）
+  const fallback = props.order?.[0] ?? props.min;
+  emit('update:modelValue', values.length > 0 ? values : [fallback]);
 }
 
 /**
@@ -130,7 +136,7 @@ function rangeCells(a: number, b: number): number[] {
               type="checkbox"
               :checked="selected.has(n)"
               :disabled="disabled"
-              @change="toggle(n)"
+              @change="onCheck(n, $event)"
             />
             <span>{{ labelOf(n) }}</span>
           </label>
@@ -148,7 +154,7 @@ function rangeCells(a: number, b: number): number[] {
           type="checkbox"
           :checked="selected.has(n)"
           :disabled="disabled"
-          @change="toggle(n)"
+          @change="onCheck(n, $event)"
         />
         <span>{{ labelOf(n) }}</span>
       </label>

@@ -182,15 +182,15 @@ describe('CronZenPicker', () => {
     expect(wrapper.find('.cz-picker__draft').text()).toContain('*/5');
   });
 
-  it('无值打开再用取消，不应写回默认表达式', async () => {
+  it('无值打开应保持空草稿，取消不写回', async () => {
     const wrapper = mount(CronZenPicker, {
       props: { modelValue: '', debounceMs: 0 },
     });
     const vm = wrapper.vm as unknown as { open: () => void; getDraft: () => string };
     vm.open();
     await nextTick();
-    // 弹窗内用默认态编辑
-    expect(vm.getDraft()).toBe('* * * * * ? *');
+    // 无值不注入默认 Cron
+    expect(vm.getDraft()).toBe('');
     await wrapper.findAll('button').find((b) => b.text() === '取消')!.trigger('click');
     await nextTick();
     expect(wrapper.emitted('update:modelValue')).toBeUndefined();

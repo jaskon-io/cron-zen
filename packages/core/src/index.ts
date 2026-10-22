@@ -72,6 +72,7 @@ export {
   weekAbbrToNumber,
   normalizeWeekFieldToken,
   matchesQuartzWeek,
+  weekTokenUsesAbbr,
   isYearLikeToken,
 } from './week';
 

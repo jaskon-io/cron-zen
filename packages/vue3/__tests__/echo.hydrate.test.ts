@@ -6,7 +6,7 @@ import { useCronZen } from '../src/composables/useCronZen';
 import CronZen from '../src/CronZen.vue';
 import FieldEditor from '../src/components/FieldEditor.vue';
 
-describe('有值回显 / 无值默认', () => {
+describe('有值回显 / 无值不注入默认', () => {
   it('parse 0 */5 分钟应为 step * /5', () => {
     const p = parseCron('0 */5 * * * ? *');
     expect(p.success).toBe(true);
@@ -52,9 +52,9 @@ describe('有值回显 / 无值默认', () => {
   });
 
 
-  it('CronZen 无值/默认应选中每秒而非指定', async () => {
+  it('CronZen 空值应选中每秒而非指定，且不展示默认表达式', async () => {
     const wrapper = mount(CronZen, {
-      props: { modelValue: '* * * * * ? *', debounceMs: 0, showPreview: false },
+      props: { modelValue: '', debounceMs: 0, showPreview: false },
     });
     await flushPromises();
     const everyRadio = wrapper.findAll('.cz-row input[type="radio"]')[0];
@@ -63,6 +63,13 @@ describe('有值回显 / 无值默认', () => {
       (c) => (c.element as HTMLInputElement).checked,
     );
     expect(checked.length).toBe(0);
+  });
+
+  it('空 modelValue 时内部 expression 也应为空', () => {
+    const model = ref('');
+    const { expression } = useCronZen({ modelValue: model, debounceMs: 0 });
+    expect(expression.value).toBe('');
+    expect(model.value).toBe('');
   });
 
   it('从秒 Tab 再切回分钟应仍回显间隔 */5', async () => {
@@ -119,6 +126,14 @@ describe('有值回显 / 无值默认', () => {
     const model = ref('15 * * * * ? *');
     const { activeTab } = useCronZen({ modelValue: model, debounceMs: 0 });
     expect(activeTab.value).toBe('second');
+  });
+
+  it('日=? 周=2 时应落在周 Tab（日 unset 不算具体）', () => {
+    const model = ref('0 0 0 ? * 2 *');
+    const { activeTab, state } = useCronZen({ modelValue: model, debounceMs: 0 });
+    expect(state.value.day.mode).toBe('unset');
+    expect(state.value.week.mode).toBe('specific');
+    expect(activeTab.value).toBe('week');
   });
 
   it('空 v-model 不应被默认表达式写回', () => {

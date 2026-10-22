@@ -35,7 +35,7 @@ describe('types helpers', () => {
     expect(createEveryField('ALL')).toEqual({ mode: 'every', raw: 'ALL' });
   });
 
-  it('createDefaultCronState 应对齐 cron.ren（* * * * * ? *）', () => {
+  it('createDefaultCronState 应对齐 cron.ren（年不指定）', () => {
     const state = createDefaultCronState();
     expect(state.second.mode).toBe('every');
     expect(state.minute.mode).toBe('every');

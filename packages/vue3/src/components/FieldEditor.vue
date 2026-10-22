@@ -118,6 +118,10 @@ const gridMax = computed(() => {
   if (props.name === 'week') return 7;
   return range.value.max;
 });
+/** 指定模式空选时的默认勾选项（周对齐 cron.ren：周一=2） */
+const listDefaultValue = computed(() =>
+  props.name === 'week' ? QUARTZ_WEEK_UI_ORDER[0] : gridMin.value,
+);
 
 let syncingFromProp = false;
 
@@ -153,7 +157,7 @@ function resetLocalDefaults(): void {
   nthOrder.value = 1;
   nthWeekday.value = 2;
   lastWeekday.value = 2;
-  listVals.value = [gridMin.value];
+  listVals.value = [listDefaultValue.value];
 }
 
 /**
@@ -167,8 +171,23 @@ function hydrate(v: CronFieldState): void {
   resetLocalDefaults();
 
   if (v.mode === 'range') {
-    rangeStart.value = Number(v.value) || rangeStart.value;
-    rangeEnd.value = Number(v.secondary) || rangeEnd.value;
+    const a = Number(v.value);
+    const b = Number(v.secondary);
+    // 生成侧会把起止排序成 min-max；若与本地只是顺序不同，保留用户正在编辑的起止，
+    // 避免「终点尚小、起点改大」时被回写成对调值（如 9 与 2 → 2-9 冲掉 9）
+    const localMin = Math.min(rangeStart.value, rangeEnd.value);
+    const localMax = Math.max(rangeStart.value, rangeEnd.value);
+    if (
+      Number.isFinite(a) &&
+      Number.isFinite(b) &&
+      a === localMin &&
+      b === localMax
+    ) {
+      // keep rangeStart / rangeEnd
+    } else {
+      if (Number.isFinite(a)) rangeStart.value = a;
+      if (Number.isFinite(b)) rangeEnd.value = b;
+    }
   } else if (v.mode === 'step') {
     // */n → 起点按字段最小值回显（对齐 cron.ren「从 0 开始」观感），步长取 secondary
     if (v.value && v.value !== '*') {
@@ -273,7 +292,9 @@ function emitState(): void {
     }
     case 'list':
     case 'specific': {
-      const values = (listVals.value.length ? listVals.value : [gridMin.value]).map(String);
+      const values = (
+        listVals.value.length ? listVals.value : [listDefaultValue.value]
+      ).map(String);
       next = {
         mode: 'list',
         raw: values.join(','),
@@ -312,7 +333,7 @@ function selectMode(m: UiMode): void {
   syncingFromProp = false;
   mode.value = m;
   if ((m === 'list' || m === 'specific') && listVals.value.length === 0) {
-    listVals.value = [gridMin.value];
+    listVals.value = [listDefaultValue.value];
   }
   // 周字段缺省区间：周一-周二（Quartz 2-3）
   if (m === 'range' && props.name === 'week') {
