@@ -18,7 +18,7 @@ export { stringifyField } from './stringify';
  * @returns {GenerateResult} 生成结果（success / expression / warning）
  * @example
  * const res = generateCron(createDefaultCronState());
- * // { success: true, expression: '0 0 0 * * ? *' }
+ * // { success: true, expression: '* * * * * ? *' }
  */
 export function generateCron(
   state: CronState,

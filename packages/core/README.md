@@ -46,7 +46,7 @@ console.log(res.valid, res.errors, res.warnings);
 import { generateCron, createDefaultCronState } from '@cron-zen/core';
 
 const res = generateCron(createDefaultCronState());
-// { success: true, expression: '0 0 0 * * ? *' }
+// { success: true, expression: '* * * * * ? *' }
 ```
 
 ### 其他导出

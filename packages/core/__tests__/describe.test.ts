@@ -39,11 +39,11 @@ describe('describeField', () => {
 });
 
 describe('describeCron', () => {
-  it('默认状态应描述为每天 0 点', () => {
+  it('默认状态应描述为每天', () => {
     const text = describeCron(createDefaultCronState());
-    expect(text).toContain('每天');
-    expect(text).toContain('0 时');
+    expect(text).toBe('每天');
   });
+
 
   it('应描述周模式与复杂时间', () => {
     const state = createDefaultCronState();

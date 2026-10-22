@@ -256,20 +256,20 @@ export function createUnsetField(raw = '?'): CronFieldState {
 }
 
 /**
- * @description 创建默认 Cron 可视化状态：每天 0 点 0 分 0 秒（`0 0 0 * * ? *`）
- * @returns {CronState} 默认状态
+ * @description 创建默认 Cron 可视化状态（对齐 cron.ren：秒/分/时/日/月为 *，周为 ?，年为不指定）
+ * @returns {CronState} 默认状态 → 表达式 `* * * * * ? *`
  * @example
  * const state = createDefaultCronState();
- * // second/minute/hour = 0, day/month/year = *, week = ?
+ * // second/minute/hour/day/month = *, week = ?, year = unset(*)
  */
 export function createDefaultCronState(): CronState {
   return {
-    second: { mode: 'specific', raw: '0', value: '0' },
-    minute: { mode: 'specific', raw: '0', value: '0' },
-    hour: { mode: 'specific', raw: '0', value: '0' },
+    second: createEveryField(),
+    minute: createEveryField(),
+    hour: createEveryField(),
     day: createEveryField(),
     month: createEveryField(),
     week: createUnsetField(),
-    year: createEveryField(),
+    year: createUnsetField(),
   };
 }

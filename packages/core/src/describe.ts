@@ -42,7 +42,7 @@ export function describeField(label: string, field: CronFieldState): string {
  * @param {CronState} state - 可视化状态
  * @returns {string} 自然语言描述
  * @example
- * describeCron(createDefaultCronState()); // '每天 0 时 0 分 0 秒'
+ * describeCron(createDefaultCronState()); // '每天'
  */
 export function describeCron(state: CronState): string {
   const parts: string[] = [];

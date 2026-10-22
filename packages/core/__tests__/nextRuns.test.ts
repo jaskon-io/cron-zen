@@ -59,13 +59,15 @@ describe('expandFieldValues', () => {
 });
 
 describe('getNextRuns / formatRunTime', () => {
-  it('默认每天 0 点应返回未来触发点', () => {
+  it('默认 * * * * * ? * 应返回连续秒级触发点', () => {
     const from = new Date(2026, 0, 1, 12, 0, 0);
     const runs = getNextRuns(createDefaultCronState(), 3, from);
     expect(runs).toHaveLength(3);
-    expect(runs[0].getHours()).toBe(0);
-    expect(formatRunTime(runs[0])).toMatch(/^\d{4}-\d{2}-\d{2} 00:00:00$/);
+    expect(formatRunTime(runs[0])).toBe('2026-01-01 12:00:01');
+    expect(formatRunTime(runs[1])).toBe('2026-01-01 12:00:02');
+    expect(formatRunTime(runs[2])).toBe('2026-01-01 12:00:03');
   });
+
 
   it('无法展开的字段应返回空数组', () => {
     const state = createDefaultCronState();
@@ -86,6 +88,9 @@ describe('getNextRuns / formatRunTime', () => {
 
   it('应按 Quartz 周过滤并尊重年份（1=周日）', () => {
     const state = createDefaultCronState();
+    state.second = { mode: 'specific', raw: '0', value: '0' };
+    state.minute = { mode: 'specific', raw: '0', value: '0' };
+    state.hour = { mode: 'specific', raw: '0', value: '0' };
     state.day = createUnsetField();
     state.week = { mode: 'specific', raw: '1', value: '1' }; // Quartz 周日
     state.year = { mode: 'specific', raw: '2026', value: '2026' };
@@ -99,6 +104,9 @@ describe('getNextRuns / formatRunTime', () => {
 
   it('月不匹配时应跳过', () => {
     const state = createDefaultCronState();
+    state.second = { mode: 'specific', raw: '0', value: '0' };
+    state.minute = { mode: 'specific', raw: '0', value: '0' };
+    state.hour = { mode: 'specific', raw: '0', value: '0' };
     state.month = { mode: 'specific', raw: '12', value: '12' };
     const from = new Date(2026, 0, 1, 0, 0, 0);
     const runs = getNextRuns(state, 1, from);
@@ -107,6 +115,9 @@ describe('getNextRuns / formatRunTime', () => {
 
   it('日具体值应过滤', () => {
     const state = createDefaultCronState();
+    state.second = { mode: 'specific', raw: '0', value: '0' };
+    state.minute = { mode: 'specific', raw: '0', value: '0' };
+    state.hour = { mode: 'specific', raw: '0', value: '0' };
     state.day = { mode: 'specific', raw: '15', value: '15' };
     const from = new Date(2026, 0, 1, 0, 0, 0);
     const runs = getNextRuns(state, 1, from);
@@ -115,6 +126,9 @@ describe('getNextRuns / formatRunTime', () => {
 
   it('年份不匹配时应跳过直至命中', () => {
     const state = createDefaultCronState();
+    state.second = { mode: 'specific', raw: '0', value: '0' };
+    state.minute = { mode: 'specific', raw: '0', value: '0' };
+    state.hour = { mode: 'specific', raw: '0', value: '0' };
     state.year = { mode: 'specific', raw: '2028', value: '2028' };
     const from = new Date(2026, 0, 1, 0, 0, 0);
     const runs = getNextRuns(state, 1, from);
@@ -123,6 +137,9 @@ describe('getNextRuns / formatRunTime', () => {
 
   it('扫描窗口内不足 count 时应返回已有结果', () => {
     const state = createDefaultCronState();
+    state.second = { mode: 'specific', raw: '0', value: '0' };
+    state.minute = { mode: 'specific', raw: '0', value: '0' };
+    state.hour = { mode: 'specific', raw: '0', value: '0' };
     state.year = { mode: 'specific', raw: '2026', value: '2026' };
     state.month = { mode: 'specific', raw: '1', value: '1' };
     state.day = { mode: 'specific', raw: '2', value: '2' };

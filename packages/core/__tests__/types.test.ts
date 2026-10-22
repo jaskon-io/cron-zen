@@ -35,13 +35,15 @@ describe('types helpers', () => {
     expect(createEveryField('ALL')).toEqual({ mode: 'every', raw: 'ALL' });
   });
 
-  it('createDefaultCronState 应为每天 0 点', () => {
+  it('createDefaultCronState 应对齐 cron.ren（* * * * * ? *）', () => {
     const state = createDefaultCronState();
-    expect(state.second).toEqual({ mode: 'specific', raw: '0', value: '0' });
-    expect(state.minute.value).toBe('0');
-    expect(state.hour.value).toBe('0');
+    expect(state.second.mode).toBe('every');
+    expect(state.minute.mode).toBe('every');
+    expect(state.hour.mode).toBe('every');
     expect(state.day.mode).toBe('every');
+    expect(state.month.mode).toBe('every');
     expect(state.week.mode).toBe('unset');
-    expect(state.year.mode).toBe('every');
+    expect(state.year.mode).toBe('unset');
   });
 });
+
