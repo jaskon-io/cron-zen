@@ -148,14 +148,58 @@ export function useCronZen(options: UseCronZenOptions = {}): UseCronZenReturn {
   const weekFormat = shallowRef<WeekFormat>(resolveWeekFormat(options.weekFormat));
 
   let timer: ReturnType<typeof setTimeout> | null = null;
+  /** 近 N 次预估防抖（表达式即时，重计算延后，避免拖垮输入） */
+  let nextRunsTimer: ReturnType<typeof setTimeout> | null = null;
   /** 正在由内部写回 v-model，忽略外部 watch，避免解析↔生成回环 */
   let syncingOut = false;
 
+  /** 近 N 次预估延迟毫秒 */
+  const NEXT_RUNS_DEFER_MS = 48;
+
   /**
-   * @description 根据 state 刷新本地表达式 / 描述 / 预览（不写回 v-model）
+   * @description 计算并写回近 N 次执行时间
    * @returns {void}
    */
-  const applyLocal = (): void => {
+  const refreshNextRuns = (): void => {
+    if (!showPreview) {
+      nextRuns.value = [];
+      return;
+    }
+    nextRuns.value = getNextRuns(state.value, nextCount)
+      .map(formatRunTime)
+      .filter(Boolean);
+  };
+
+  /**
+   * @description 防抖调度近 N 次预估
+   * @param {boolean} immediate - 是否立即计算
+   * @returns {void}
+   */
+  const scheduleNextRuns = (immediate: boolean): void => {
+    if (!showPreview) {
+      nextRuns.value = [];
+      return;
+    }
+    if (nextRunsTimer != null) {
+      clearTimeout(nextRunsTimer);
+      nextRunsTimer = null;
+    }
+    if (immediate) {
+      refreshNextRuns();
+      return;
+    }
+    nextRunsTimer = setTimeout(() => {
+      nextRunsTimer = null;
+      refreshNextRuns();
+    }, NEXT_RUNS_DEFER_MS);
+  };
+
+  /**
+   * @description 根据 state 刷新本地表达式 / 描述 / 预览（不写回 v-model）
+   * @param {{ immediateNextRuns?: boolean }} [opts] - immediateNextRuns 为 true 时同步算近 N 次
+   * @returns {void}
+   */
+  const applyLocal = (opts: { immediateNextRuns?: boolean } = {}): void => {
     const gen = generateCron(state.value, { weekFormat: weekFormat.value });
     if (gen.state) {
       state.value = gen.state;
@@ -165,9 +209,7 @@ export function useCronZen(options: UseCronZenOptions = {}): UseCronZenReturn {
 
     if (showPreview) {
       description.value = describeCron(state.value);
-      nextRuns.value = getNextRuns(state.value, nextCount)
-        .map(formatRunTime)
-        .filter(Boolean);
+      scheduleNextRuns(opts.immediateNextRuns === true);
     } else {
       description.value = '';
       nextRuns.value = [];
@@ -211,7 +253,7 @@ export function useCronZen(options: UseCronZenOptions = {}): UseCronZenReturn {
       clearTimeout(timer);
       timer = null;
     }
-    applyLocal();
+    applyLocal({ immediateNextRuns: true });
     syncModel();
   };
 
@@ -220,7 +262,8 @@ export function useCronZen(options: UseCronZenOptions = {}): UseCronZenReturn {
    * @returns {void}
    */
   const scheduleRefresh = (): void => {
-    applyLocal();
+    // 输入路径：表达式即时，近 N 次延后，避免每次按键都全量扫日历
+    applyLocal({ immediateNextRuns: false });
     if (debounceMs <= 0) {
       syncModel();
       return;
@@ -230,7 +273,7 @@ export function useCronZen(options: UseCronZenOptions = {}): UseCronZenReturn {
     }
     timer = setTimeout(() => {
       timer = null;
-      applyLocal();
+      applyLocal({ immediateNextRuns: true });
       syncModel();
     }, debounceMs);
   };
@@ -346,6 +389,10 @@ export function useCronZen(options: UseCronZenOptions = {}): UseCronZenReturn {
       if (timer != null) {
         clearTimeout(timer);
         timer = null;
+      }
+      if (nextRunsTimer != null) {
+        clearTimeout(nextRunsTimer);
+        nextRunsTimer = null;
       }
     });
   }
