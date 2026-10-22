@@ -13,7 +13,8 @@ import type {
 import { FIELD_RANGES, QUARTZ_WEEK_LABELS, QUARTZ_WEEK_UI_ORDER } from '@cron-zen/core';
 import ValueGrid from './ValueGrid.vue';
 
-/** 同页多实例时避免周写法 radio name 冲突 */
+/** 同页多实例时避免 radio name 冲突 */
+const modeRadioGroup = `cz-mode-${Math.random().toString(36).slice(2, 9)}`;
 const weekFormatGroup = `cz-week-fmt-${Math.random().toString(36).slice(2, 9)}`;
 
 const props = withDefaults(
@@ -369,6 +370,7 @@ function onList(vals: number[]): void {
     <label v-if="name === 'year'" class="cz-row">
       <input
         type="radio"
+        :name="modeRadioGroup"
         :checked="mode === 'unset'"
         :disabled="disabled"
         @change="selectMode('unset')"
@@ -383,6 +385,7 @@ function onList(vals: number[]): void {
     <label class="cz-row">
       <input
         type="radio"
+        :name="modeRadioGroup"
         :checked="mode === 'every'"
         :disabled="disabled"
         @change="selectMode('every')"
@@ -397,6 +400,7 @@ function onList(vals: number[]): void {
     <label v-if="name === 'day' || name === 'week'" class="cz-row">
       <input
         type="radio"
+        :name="modeRadioGroup"
         :checked="mode === 'unset'"
         :disabled="disabled"
         @change="selectMode('unset')"
@@ -410,6 +414,7 @@ function onList(vals: number[]): void {
     <label class="cz-row">
       <input
         type="radio"
+        :name="modeRadioGroup"
         :checked="mode === 'range'"
         :disabled="disabled"
         @change="selectMode('range')"
@@ -467,6 +472,7 @@ function onList(vals: number[]): void {
     <label v-if="name !== 'week'" class="cz-row">
       <input
         type="radio"
+        :name="modeRadioGroup"
         :checked="mode === 'step'"
         :disabled="disabled"
         @change="selectMode('step')"
@@ -503,6 +509,7 @@ function onList(vals: number[]): void {
     <label v-if="name === 'day'" class="cz-row">
       <input
         type="radio"
+        :name="modeRadioGroup"
         :checked="mode === 'weekday'"
         :disabled="disabled"
         @change="selectMode('weekday')"
@@ -527,6 +534,7 @@ function onList(vals: number[]): void {
     <label v-if="name === 'day'" class="cz-row">
       <input
         type="radio"
+        :name="modeRadioGroup"
         :checked="mode === 'last'"
         :disabled="disabled"
         @change="selectMode('last')"
@@ -538,6 +546,7 @@ function onList(vals: number[]): void {
     <label v-if="name === 'week'" class="cz-row">
       <input
         type="radio"
+        :name="modeRadioGroup"
         :checked="mode === 'nth'"
         :disabled="disabled"
         @change="selectMode('nth')"
@@ -570,6 +579,7 @@ function onList(vals: number[]): void {
     <label v-if="name === 'week'" class="cz-row">
       <input
         type="radio"
+        :name="modeRadioGroup"
         :checked="mode === 'last'"
         :disabled="disabled"
         @change="selectMode('last')"
@@ -592,6 +602,7 @@ function onList(vals: number[]): void {
       <label class="cz-row__head">
         <input
           type="radio"
+          :name="modeRadioGroup"
           :checked="mode === 'list' || mode === 'specific'"
           :disabled="disabled"
           @change="selectMode('list')"
