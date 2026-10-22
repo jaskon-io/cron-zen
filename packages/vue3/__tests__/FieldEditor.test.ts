@@ -186,5 +186,66 @@ describe('FieldEditor', () => {
     });
     expect(wrapper.text()).not.toContain('执行一次');
   });
+
+  it('秒字段周期默认应为 1-2', async () => {
+    const wrapper = mount(FieldEditor, {
+      props: {
+        name: 'second',
+        modelValue: { mode: 'every', raw: '*' },
+      },
+    });
+    const row = wrapper.findAll('.cz-row').find((l) => l.text().includes('周期'));
+    const radio = row!.find('input[type="radio"]');
+    await radio.setValue(true);
+    await radio.trigger('change');
+    const last = wrapper.emitted('update:modelValue')!.at(-1)![0] as { raw: string };
+    expect(last.raw).toBe('1-2');
+  });
+
+  it('小时指定区应含 AM/PM 分组', () => {
+    const wrapper = mount(FieldEditor, {
+      props: {
+        name: 'hour',
+        modelValue: { mode: 'every', raw: '*' },
+      },
+    });
+    expect(wrapper.text()).toContain('AM:');
+    expect(wrapper.text()).toContain('PM:');
+  });
+
+  it('日工作日应 emit weekday', async () => {
+    const wrapper = mount(FieldEditor, {
+      props: {
+        name: 'day',
+        modelValue: { mode: 'every', raw: '*' },
+      },
+    });
+    const row = wrapper.findAll('.cz-row').find((l) => l.text().includes('最近的那个工作日'));
+    const radio = row!.find('input[type="radio"]');
+    await radio.setValue(true);
+    await radio.trigger('change');
+    const last = wrapper.emitted('update:modelValue')!.at(-1)![0] as {
+      mode: string;
+      raw: string;
+    };
+    expect(last.mode).toBe('weekday');
+    expect(last.raw).toBe('1W');
+  });
+
+  it('模式 radio 应共享 name 保证互斥', () => {
+    const wrapper = mount(FieldEditor, {
+      props: {
+        name: 'minute',
+        modelValue: { mode: 'every', raw: '*' },
+      },
+    });
+    const names = wrapper
+      .findAll('.cz-row input[type="radio"]')
+      .map((r) => r.attributes('name'))
+      .filter(Boolean);
+    expect(names.length).toBeGreaterThan(1);
+    expect(new Set(names).size).toBe(1);
+  });
 });
+
 

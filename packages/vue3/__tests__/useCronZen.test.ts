@@ -82,26 +82,33 @@ describe('useCronZen', () => {
     expect(expression.value).toBe('* * * * * ? *');
   });
 
-  it('非日周字段应防抖后再写回表达式', () => {
+  it('非日周字段：预览即时更新，v-model 按防抖写回', () => {
     const model = ref('* * * * * ? *');
     const { updateField, expression } = useCronZen({
       modelValue: model,
       debounceMs: 300,
     });
     updateField('hour', { mode: 'specific', raw: '8', value: '8' });
-    expect(expression.value).toBe('* * * * * ? *');
-    vi.advanceTimersByTime(300);
+    // 本地表达式立即更新（对齐 cron.ren 联动），外部 v-model 仍防抖
     expect(expression.value).toBe('* * 8 * * ? *');
+    expect(model.value).toBe('* * * * * ? *');
+    vi.advanceTimersByTime(300);
     expect(model.value).toBe('* * 8 * * ? *');
   });
 
-  it('flush 应立即刷新防抖中的变更', () => {
-    const { updateField, flush, expression } = useCronZen({ debounceMs: 500 });
+  it('flush 应立即写回防抖中的 v-model', () => {
+    const model = ref('* * * * * ? *');
+    const { updateField, flush, expression } = useCronZen({
+      modelValue: model,
+      debounceMs: 500,
+    });
     updateField('minute', { mode: 'step', raw: '0/5', value: '0', secondary: '5' });
-    expect(expression.value).toBe('* * * * * ? *');
-    flush();
     expect(expression.value).toBe('* 0/5 * * * ? *');
+    expect(model.value).toBe('* * * * * ? *');
+    flush();
+    expect(model.value).toBe('* 0/5 * * * ? *');
   });
+
 
   it('list 选周一三五应为 2,4,6', () => {
     const { updateField, expression } = useCronZen({ debounceMs: 0 });
@@ -154,4 +161,43 @@ describe('useCronZen', () => {
     expect(state.value.week.mode).toBe('unset');
     expect(expression.value).toBe('* * * L * ? *');
   });
+
+  it('加载数字周表达式应把 weekFormat 切回 number', () => {
+    const { loadExpression, setWeekFormat, weekFormat, expression } = useCronZen({
+      debounceMs: 0,
+    });
+    setWeekFormat('abbr');
+    loadExpression('0 0 9 ? * 2 *');
+    expect(weekFormat.value).toBe('number');
+    expect(expression.value.split(' ')[5]).toBe('2');
+  });
+
+  it('reset 应将 weekFormat 还原为 number', () => {
+    const { updateField, setWeekFormat, reset, weekFormat, expression } = useCronZen({
+      debounceMs: 0,
+    });
+    updateField('week', { mode: 'specific', raw: '2', value: '2' });
+    setWeekFormat('abbr');
+    expect(expression.value).toContain('MON');
+    reset();
+    expect(weekFormat.value).toBe('number');
+    expect(expression.value).toBe('* * * * * ? *');
+  });
+
+  it('经典 cron.ren 表达式应可 load 并保持关键字段', () => {
+    const classics = [
+      '0 0/5 * * * ? *',
+      '0 0 2 ? * SAT,SUN *',
+      '0 0 9-18 ? * MON-FRI *',
+      '0 0 0 L * ? *',
+      '0 15 10 ? * 6L 2024-2030',
+    ];
+    for (const expr of classics) {
+      const { loadExpression, expression, hint } = useCronZen({ debounceMs: 0 });
+      loadExpression(expr);
+      expect(hint.value === '' || !hint.value.includes('无效')).toBe(true);
+      expect(expression.value.split(/\s+/).length).toBeGreaterThanOrEqual(6);
+    }
+  });
 });
+

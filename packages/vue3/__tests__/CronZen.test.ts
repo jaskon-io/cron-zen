@@ -129,5 +129,31 @@ describe('CronZen', () => {
     expect(wrapper.findAll('.cron-zen__tab')[4].classes()).toContain('is-active');
     expect(wrapper.text()).toContain('每月');
   });
+
+  it('默认 debounceMs=0 时改秒应立即写回 v-model', async () => {
+    const wrapper = mount(CronZen, {
+      props: { modelValue: '* * * * * ? *' },
+    });
+    const radios = wrapper.findAll('.cz-row input[type="radio"]');
+    const rangeRadio = radios[1]; // 周期
+    await rangeRadio.setValue(true);
+    await rangeRadio.trigger('change');
+    await flushPromises();
+    await nextTick();
+    const last = wrapper.emitted('update:modelValue')?.flat().at(-1) as string;
+    expect(last.startsWith('1-2 ')).toBe(true);
+  });
+
+  it('外部传入 MON 表达式后预览周应为 MON 或等价', async () => {
+    const wrapper = mount(CronZen, {
+      props: { modelValue: '0 0 9 ? * MON *', debounceMs: 0 },
+    });
+    await flushPromises();
+    vi.runAllTimers();
+    await nextTick();
+    const vals = wrapper.findAll('.cron-zen__field-val code').map((c) => c.text());
+    expect(vals[5]).toMatch(/^(MON|2)$/);
+    expect(vals[3]).toBe('?');
+  });
 });
 
