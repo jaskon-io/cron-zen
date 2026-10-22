@@ -48,15 +48,15 @@ describe('FieldEditor 控件联动', () => {
       expect(Number((nums[3].element as HTMLInputElement).value)).toBe(15);
     });
 
-    it('改周期数字应 emit range（起>止时输出会排序）', async () => {
+    it('改周期数字应 emit range（起>止保留原序，对齐 cron.ren）', async () => {
       const wrapper = mountField('second', { mode: 'every', raw: '*' });
       const nums = wrapper.findAll('input[type="number"]');
-      // 默认终点 2，起点改 3 → 表达式侧排序为 2-3
+      // 默认终点 2，起点改 3 → 输出 3-2（不强制排序）
       await nums[0].setValue(3);
       await nums[0].trigger('input');
       expect(lastEmit(wrapper).mode).toBe('range');
-      expect(lastEmit(wrapper).raw).toBe('2-3');
-      // 再把终点调到 10，起点本地应仍为 3（不被排序回写冲掉）
+      expect(lastEmit(wrapper).raw).toBe('3-2');
+      // 再把终点调到 10
       await nums[1].setValue(10);
       await nums[1].trigger('input');
       expect(lastEmit(wrapper).raw).toBe('3-10');

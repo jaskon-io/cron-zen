@@ -92,7 +92,7 @@ describe('isConcreteField / extractNumericValues', () => {
 });
 
 describe('validateFieldRange', () => {
-  it('应拦截超范围与非法区间', () => {
+  it('应拦截超范围与非法步长；倒序区间仅 warning（对齐 cron.ren）', () => {
     expect(
       validateFieldRange('hour', { mode: 'specific', raw: '25', value: '25' })[0],
     ).toContain('超出范围');
@@ -102,8 +102,18 @@ describe('validateFieldRange', () => {
         raw: '10-5',
         value: '10',
         secondary: '5',
-      })[0],
-    ).toContain('起点不能大于终点');
+      }),
+    ).toEqual([]);
+    const state = createDefaultCronState();
+    state.minute = {
+      mode: 'range',
+      raw: '10-5',
+      value: '10',
+      secondary: '5',
+    };
+    const full = validateCronState(state);
+    expect(full.valid).toBe(true);
+    expect(full.warnings.some((w) => w.includes('起点大于终点'))).toBe(true);
     expect(
       validateFieldRange('second', {
         mode: 'step',

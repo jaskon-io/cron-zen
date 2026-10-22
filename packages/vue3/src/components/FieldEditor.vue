@@ -242,10 +242,9 @@ function emitState(): void {
       next = { mode: 'unset', raw: '?' };
       break;
     case 'range': {
-      const a = clamp(rangeStart.value);
-      const b = clamp(rangeEnd.value);
-      const start = Math.min(a, b);
-      const end = Math.max(a, b);
+      // 对齐 cron.ren：保留用户起止顺序，不强制排序（如周 周六→周二 → 7-3）
+      const start = clamp(rangeStart.value);
+      const end = clamp(rangeEnd.value);
       next = {
         mode: 'range',
         raw: `${start}-${end}`,

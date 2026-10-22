@@ -124,9 +124,8 @@ export function validateFieldRange(name: CronFieldName, field: CronFieldState): 
     }
   }
 
-  if (field.mode === 'range' && nums.length === 2 && nums[0] > nums[1]) {
-    errors.push(`${name} 字段区间起点不能大于终点: ${field.raw}`);
-  }
+  // 起 > 止：对齐 cron.ren 允许输出（如周 7-3），不在此硬拦截；
+  // validateCronState 会记 warning，expandFieldValues 可能无法展开。
 
   if (field.mode === 'nth') {
     const weekDay = field.value != null ? Number(field.value) : NaN;
@@ -371,6 +370,16 @@ export function validateCronState(state: CronState): ValidateResult {
       continue;
     }
     errors.push(...validateFieldRange(name, field));
+    if (
+      field.mode === 'range' &&
+      field.value != null &&
+      field.secondary != null &&
+      Number(field.value) > Number(field.secondary)
+    ) {
+      warnings.push(
+        `${name} 字段区间起点大于终点（${field.value}-${field.secondary}），已按原样输出；近 N 次预估可能不可用`,
+      );
+    }
   }
 
   if (fieldsComplete) {
