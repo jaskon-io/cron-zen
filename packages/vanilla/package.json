@@ -52,7 +52,7 @@
     "prepublishOnly": "pnpm run typecheck && pnpm run test && pnpm run build"
   },
   "dependencies": {
-    "@cron-zen/core": "0.2.4"
+    "@cron-zen/core": "workspace:*"
   },
   "devDependencies": {
     "jsdom": "^25.0.1",

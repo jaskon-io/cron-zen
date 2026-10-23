@@ -46,7 +46,7 @@
     "vue": "^2.7.0"
   },
   "dependencies": {
-    "@cron-zen/core": "0.2.4"
+    "@cron-zen/core": "workspace:*"
   },
   "devDependencies": {
     "@vitejs/plugin-vue2": "^2.3.3",

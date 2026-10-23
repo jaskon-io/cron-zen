@@ -54,7 +54,7 @@
     }
   },
   "dependencies": {
-    "@cron-zen/core": "0.2.4"
+    "@cron-zen/core": "workspace:*"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^5.2.1",
