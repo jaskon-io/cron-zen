@@ -88,6 +88,8 @@ export function stringifyField(
     case 'last':
       if (!field.value) return 'L';
       return `${formatWeekPart(field.value, weekFormat, weekAbbr)}L`;
+    case 'lastWeekday':
+      return 'LW';
     case 'weekday':
       return `${field.value ?? '1'}W`;
     case 'nth': {

@@ -27,6 +27,7 @@ describe('stringifyField', () => {
     expect(stringifyField({ mode: 'list', raw: '1,3', value: '1,3' })).toBe('1,3');
     expect(stringifyField({ mode: 'last', raw: 'L' })).toBe('L');
     expect(stringifyField({ mode: 'last', raw: '6L', value: '6' })).toBe('6L');
+    expect(stringifyField({ mode: 'lastWeekday', raw: 'LW' })).toBe('LW');
     expect(stringifyField({ mode: 'weekday', raw: '15W', value: '15' })).toBe('15W');
     expect(
       stringifyField({ mode: 'nth', raw: '6#3', value: '6', secondary: '3' }),
@@ -101,11 +102,16 @@ describe('generateCron', () => {
     expect(res.error).toContain('无效');
   });
 
-  it('复杂模式（L / W / nth）应正确生成', () => {
+  it('复杂模式（L / LW / W / nth）应正确生成', () => {
     const state = createDefaultCronState();
     state.day = { mode: 'last', raw: 'L' };
     state.week = createUnsetField();
     expect(generateCron(state).expression).toBe('* * * L * ?');
+
+    const lwState = createDefaultCronState();
+    lwState.day = { mode: 'lastWeekday', raw: 'LW' };
+    lwState.week = createUnsetField();
+    expect(generateCron(lwState).expression).toBe('* * * LW * ?');
 
     const weekState = createDefaultCronState();
     weekState.day = createUnsetField();

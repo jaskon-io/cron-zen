@@ -50,6 +50,38 @@ describe('getNextRuns 性能', () => {
     }
   });
 
+  it('日字段 L 近 24 次应 < 100ms', () => {
+    const state = createDefaultCronState();
+    state.second = { mode: 'specific', raw: '0', value: '0' };
+    state.minute = { mode: 'specific', raw: '0', value: '0' };
+    state.hour = { mode: 'specific', raw: '0', value: '0' };
+    state.day = { mode: 'last', raw: 'L' };
+    state.week = createUnsetField();
+    const from = new Date(2026, 0, 1, 0, 0, 0);
+    const t0 = performance.now();
+    const runs = getNextRuns(state, 24, from);
+    const ms = performance.now() - t0;
+    expect(runs).toHaveLength(24);
+    expect(runs[0].getDate()).toBe(31);
+    expect(ms).toBeLessThan(100);
+  });
+
+  it('日字段 LW 近 24 次应 < 100ms', () => {
+    const state = createDefaultCronState();
+    state.second = { mode: 'specific', raw: '0', value: '0' };
+    state.minute = { mode: 'specific', raw: '0', value: '0' };
+    state.hour = { mode: 'specific', raw: '9', value: '9' };
+    state.day = { mode: 'lastWeekday', raw: 'LW' };
+    state.week = createUnsetField();
+    const from = new Date(2026, 0, 1, 0, 0, 0);
+    const t0 = performance.now();
+    const runs = getNextRuns(state, 24, from);
+    const ms = performance.now() - t0;
+    expect(runs).toHaveLength(24);
+    expect(runs[0].getDate()).toBe(30); // 2026-01-31 六 → 30
+    expect(ms).toBeLessThan(100);
+  });
+
   it('step=超大时不死循环且结果有限', () => {
     const out = expandFieldValues(
       { mode: 'step', raw: '0/999999', value: '0', secondary: '999999' },
@@ -93,6 +125,17 @@ describe('parse / generate 吞吐', () => {
     const t0 = performance.now();
     for (let i = 0; i < 1000; i++) {
       expect(parseCron(expr).success).toBe(true);
+    }
+    expect(performance.now() - t0).toBeLessThan(500);
+  });
+
+  it('parseCron 含 LW 1000 次 < 500ms', () => {
+    const expr = '0 0 9 LW * ? *';
+    const t0 = performance.now();
+    for (let i = 0; i < 1000; i++) {
+      const res = parseCron(expr);
+      expect(res.success).toBe(true);
+      expect(res.state?.day.mode).toBe('lastWeekday');
     }
     expect(performance.now() - t0).toBeLessThan(500);
   });

@@ -56,6 +56,8 @@ export function describeField(label: string, field: CronFieldState): string {
       return field.value
         ? `最后一个星期${quartzWeekShortLabel(field.value)}`
         : '最后一天';
+    case 'lastWeekday':
+      return '本月最后一个工作日';
     case 'weekday':
       return `最接近 ${field.value} 号的工作日`;
     case 'nth':

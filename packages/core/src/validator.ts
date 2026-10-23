@@ -50,6 +50,7 @@ export function extractNumericValues(field: CronFieldState): number[] {
     case 'every':
     case 'unset':
     case 'last':
+    case 'lastWeekday':
     case 'weekday':
     case 'nth':
       return [];
@@ -143,6 +144,10 @@ export function validateFieldRange(name: CronFieldName, field: CronFieldState): 
     if (!Number.isNaN(day) && (day < 1 || day > 31)) {
       errors.push(`day 字段 W 值非法: ${field.value}`);
     }
+  }
+
+  if (field.mode === 'lastWeekday' && name !== 'day') {
+    errors.push(`${name} 字段不支持 LW（仅日字段）`);
   }
 
   return errors;

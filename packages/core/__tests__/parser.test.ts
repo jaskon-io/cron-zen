@@ -68,8 +68,13 @@ describe('parseField', () => {
     });
   });
 
-  it('应解析 L / W / nth', () => {
+  it('应解析 L / LW / W / nth', () => {
     expect(parseField('L', 'day').state.mode).toBe('last');
+    expect(parseField('LW', 'day').state).toMatchObject({
+      mode: 'lastWeekday',
+      raw: 'LW',
+    });
+    expect(parseField('lw', 'day').state.mode).toBe('lastWeekday');
     expect(parseField('6L', 'week').state).toMatchObject({
       mode: 'last',
       value: '6',
@@ -83,6 +88,13 @@ describe('parseField', () => {
       value: '6',
       secondary: '3',
     });
+  });
+
+  it('应整段解析日 LW 表达式', () => {
+    const res = parseCron('0 0 9 LW * ? *');
+    expect(res.success).toBe(true);
+    expect(res.state?.day).toMatchObject({ mode: 'lastWeekday', raw: 'LW' });
+    expect(res.state?.week.mode).toBe('unset');
   });
 
   it('超范围 / 异常格式应降级并给出 warning', () => {

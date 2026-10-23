@@ -17,8 +17,9 @@ export type CronFieldName =
  * - step: 步长（如星号/5 或 0/5）
  * - list: 枚举列表（如 1,3,5）
  * - specific: 指定单个值
- * - last: 最后一天 / 最后一个星期几（L）
- * - weekday: 最接近工作日（W）
+ * - last: 最后一天 / 最后一个星期几（L / nL）
+ * - lastWeekday: 本月最后一个工作日（LW，仅日字段）
+ * - weekday: 最接近工作日（nW）
  * - nth: 第几个星期几（如 6#3）
  * - unset: 未指定 / 使用 ?（日周互斥占位）
  */
@@ -29,6 +30,7 @@ export type CronFieldMode =
   | 'list'
   | 'specific'
   | 'last'
+  | 'lastWeekday'
   | 'weekday'
   | 'nth'
   | 'unset';
