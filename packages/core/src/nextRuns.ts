@@ -329,6 +329,22 @@ function nextRunsEverySecond(limit: number, fromTs: number): Date[] {
 }
 
 /**
+ * @description 全量时分秒时的「已触发」快路径：按秒递减
+ * @param {number} limit - 条数
+ * @param {number} fromTs - 起始时间戳
+ * @returns {Date[]} 最近已触发（新→旧）
+ */
+function prevRunsEverySecond(limit: number, fromTs: number): Date[] {
+  const results: Date[] = new Array(limit);
+  let t = fromTs - 1000;
+  for (let i = 0; i < limit; i++) {
+    results[i] = new Date(t);
+    t -= 1000;
+  }
+  return results;
+}
+
+/**
  * @description 估算最近 N 次触发时间（从 from 起按日推进，早停）
  * 支持日 `L` / `LW` / `nW`，周 `nL` / `n#m`；周裸 `L` 按 Quartz 视为每周六。
  * 传入 `timeZone` 时按该 IANA 时区的墙上时钟解释 Cron 字段。
@@ -624,6 +640,299 @@ export function getNextRuns(
     }
 
     advanceDay();
+  }
+
+  return results;
+}
+
+/**
+ * @description 估算近 N 次**已触发**时间（从 from 往回按日推进，早停）
+ * 返回顺序为**新→旧**（最近一次在前）。支持能力与 {@link getNextRuns} 一致。
+ * @param {CronState} state - 可视化状态
+ * @param {number} [count=10] - 返回条数（1-100）
+ * @param {Date} [from] - 截止时间（默认当前；不含该时刻本身）
+ * @param {TimeZoneOptions} [options] - 时区选项
+ * @returns {Date[]} 已触发时间列表（新→旧）
+ * @example
+ * getPrevRuns(createDefaultCronState(), 3);
+ * getPrevRuns(state, 5, new Date(), { timeZone: 'Asia/Shanghai' });
+ */
+export function getPrevRuns(
+  state: CronState,
+  count = 10,
+  from: Date = new Date(),
+  options?: TimeZoneOptions,
+): Date[] {
+  const limit = normalizeCount(count);
+  if (limit === 0) return [];
+  if (!(from instanceof Date) || Number.isNaN(from.getTime())) return [];
+
+  const tz =
+    options?.timeZone && isValidTimeZone(options.timeZone)
+      ? options.timeZone.trim()
+      : undefined;
+
+  const seconds =
+    expandFieldValues(state.second, 0, 59)?.slice().sort((a, b) => b - a) ?? null;
+  const minutes =
+    expandFieldValues(state.minute, 0, 59)?.slice().sort((a, b) => b - a) ?? null;
+  const hours =
+    expandFieldValues(state.hour, 0, 23)?.slice().sort((a, b) => b - a) ?? null;
+  const months = expandFieldValues(state.month, 1, 12);
+
+  const dayIsLast = state.day.mode === 'last' && !state.day.value;
+  const dayIsLW = state.day.mode === 'lastWeekday';
+  const weekdayNear =
+    state.day.mode === 'weekday' ? Number(state.day.value) : Number.NaN;
+  const dayIsWeekday =
+    state.day.mode === 'weekday' &&
+    Number.isFinite(weekdayNear) &&
+    weekdayNear >= 1 &&
+    weekdayNear <= 31;
+  const daySpecial = dayIsLast || dayIsLW || dayIsWeekday;
+  const daysExpanded = daySpecial ? null : expandFieldValues(state.day, 1, 31);
+
+  if (!seconds || !minutes || !hours || !months) {
+    return [];
+  }
+  if (state.day.mode === 'weekday' && !dayIsWeekday) {
+    return [];
+  }
+  if (!daySpecial && daysExpanded == null) {
+    return [];
+  }
+  const days = daysExpanded ?? [];
+
+  const weekConcrete = state.week.mode !== 'every' && state.week.mode !== 'unset';
+  const dayConcrete = state.day.mode !== 'every' && state.day.mode !== 'unset';
+
+  const weekLastQ =
+    state.week.mode === 'last' && state.week.value != null && state.week.value !== ''
+      ? Number(state.week.value)
+      : Number.NaN;
+  const weekIsLast =
+    state.week.mode === 'last' &&
+    Number.isFinite(weekLastQ) &&
+    weekLastQ >= 0 &&
+    weekLastQ <= 7;
+  const weekIsBareL = state.week.mode === 'last' && !weekIsLast;
+  const weekNthQ = state.week.mode === 'nth' ? Number(state.week.value) : Number.NaN;
+  const weekNthN = state.week.mode === 'nth' ? Number(state.week.secondary) : Number.NaN;
+  const weekIsNth =
+    state.week.mode === 'nth' &&
+    Number.isFinite(weekNthQ) &&
+    weekNthQ >= 0 &&
+    weekNthQ <= 7 &&
+    Number.isFinite(weekNthN) &&
+    weekNthN >= 1 &&
+    weekNthN <= 5;
+
+  let weeks: number[] | null = null;
+  if (weekConcrete) {
+    if (weekIsLast || weekIsNth) {
+      weeks = null;
+    } else if (weekIsBareL) {
+      weeks = [7];
+    } else {
+      weeks = expandFieldValues(state.week, 0, 7);
+      if (weeks == null) return [];
+    }
+    if (state.week.mode === 'last' && !weekIsLast && !weekIsBareL) return [];
+    if (state.week.mode === 'nth' && !weekIsNth) return [];
+  }
+
+  const yearCandidates =
+    state.year.mode === 'every' || state.year.mode === 'unset'
+      ? null
+      : expandFieldValues(state.year, 1970, 2099);
+
+  if (
+    state.year.mode !== 'every' &&
+    state.year.mode !== 'unset' &&
+    yearCandidates == null
+  ) {
+    return [];
+  }
+
+  const fromTs = from.getTime();
+
+  const denseCalendar =
+    !weekConcrete &&
+    !dayConcrete &&
+    yearCandidates == null &&
+    months.length === 12 &&
+    !daySpecial &&
+    days.length === 31;
+  const denseTime = hours.length === 24 && minutes.length === 60 && seconds.length === 60;
+  if (denseCalendar && denseTime && !tz) {
+    return prevRunsEverySecond(limit, fromTs);
+  }
+
+  const monthSet = new Set(months);
+  const daySet = dayConcrete && !daySpecial ? new Set(days) : null;
+  const yearSet = yearCandidates ? new Set(yearCandidates) : null;
+  const sortedYearsDesc = yearCandidates
+    ? [...yearCandidates].sort((a, b) => b - a)
+    : null;
+  const monthsDesc = [...months].sort((a, b) => b - a);
+
+  const results: Date[] = [];
+
+  let cursorY: number;
+  let cursorM: number;
+  let cursorD: number;
+  let fromY: number;
+  let fromMo: number;
+  let fromD: number;
+  let fromH: number;
+  let fromMi: number;
+
+  if (tz) {
+    const zp = getZonedParts(from, tz);
+    if (!zp) return [];
+    cursorY = zp.year;
+    cursorM = zp.month;
+    cursorD = zp.day;
+    fromY = zp.year;
+    fromMo = zp.month;
+    fromD = zp.day;
+    fromH = zp.hour;
+    fromMi = zp.minute;
+  } else {
+    cursorY = from.getFullYear();
+    cursorM = from.getMonth() + 1;
+    cursorD = from.getDate();
+    fromY = cursorY;
+    fromMo = cursorM;
+    fromD = cursorD;
+    fromH = from.getHours();
+    fromMi = from.getMinutes();
+  }
+
+  const retreatDay = (): void => {
+    if (tz) {
+      const noon = zonedWallTimeToUtc(cursorY, cursorM, cursorD, 12, 0, 0, tz);
+      if (!noon) {
+        const tmp = new Date(Date.UTC(cursorY, cursorM - 1, cursorD - 1, 12));
+        cursorY = tmp.getUTCFullYear();
+        cursorM = tmp.getUTCMonth() + 1;
+        cursorD = tmp.getUTCDate();
+        return;
+      }
+      const prev = getZonedParts(new Date(noon.getTime() - 24 * 3600 * 1000), tz);
+      if (!prev) return;
+      cursorY = prev.year;
+      cursorM = prev.month;
+      cursorD = prev.day;
+    } else {
+      const cursor = new Date(cursorY, cursorM - 1, cursorD);
+      cursor.setDate(cursor.getDate() - 1);
+      cursorY = cursor.getFullYear();
+      cursorM = cursor.getMonth() + 1;
+      cursorD = cursor.getDate();
+    }
+  };
+
+  const setCursor = (y: number, m: number, d: number): void => {
+    cursorY = y;
+    cursorM = m;
+    cursorD = d;
+  };
+
+  const jsWeekday = (): number => {
+    if (tz) {
+      const noon = zonedWallTimeToUtc(cursorY, cursorM, cursorD, 12, 0, 0, tz);
+      if (!noon) return 0;
+      return getZonedParts(noon, tz)?.weekday ?? 0;
+    }
+    return new Date(cursorY, cursorM - 1, cursorD).getDay();
+  };
+
+  for (let i = 0; i < MAX_SCAN_DAYS && results.length < limit; i++) {
+    const year = cursorY;
+    const month = cursorM;
+    const day = cursorD;
+    const sameDayAsFrom = year === fromY && month === fromMo && day === fromD;
+
+    if (yearSet && !yearSet.has(year)) {
+      const prevY = sortedYearsDesc!.find((y) => y < year);
+      if (prevY == null) break;
+      setCursor(prevY, 12, 31);
+      continue;
+    }
+    if (!monthSet.has(month)) {
+      let jumped = false;
+      for (const m of monthsDesc) {
+        if (m < month) {
+          setCursor(year, m, lastDayOfMonth(year, m));
+          jumped = true;
+          break;
+        }
+      }
+      if (!jumped) {
+        const m = monthsDesc[0] ?? 12;
+        setCursor(year - 1, m, lastDayOfMonth(year - 1, m));
+      }
+      continue;
+    }
+    if (dayIsLast) {
+      if (day !== lastDayOfMonth(year, month)) {
+        retreatDay();
+        continue;
+      }
+    } else if (dayIsLW) {
+      if (day !== lastWeekdayOfMonth(year, month)) {
+        retreatDay();
+        continue;
+      }
+    } else if (dayIsWeekday) {
+      const target = nearestWeekdayOfMonth(year, month, weekdayNear);
+      if (target == null || day !== target) {
+        retreatDay();
+        continue;
+      }
+    } else if (daySet && !daySet.has(day)) {
+      retreatDay();
+      continue;
+    }
+    if (weekIsLast) {
+      const target = lastQuartzWeekdayOfMonth(year, month, weekLastQ);
+      if (target == null || day !== target) {
+        retreatDay();
+        continue;
+      }
+    } else if (weekIsNth) {
+      const target = nthQuartzWeekdayOfMonth(year, month, weekNthQ, weekNthN);
+      if (target == null || day !== target) {
+        retreatDay();
+        continue;
+      }
+    } else if (weekConcrete && weeks) {
+      if (!matchesQuartzWeek(jsWeekday(), weeks)) {
+        retreatDay();
+        continue;
+      }
+    }
+
+    for (const hour of hours) {
+      if (sameDayAsFrom && hour > fromH) continue;
+      for (const minute of minutes) {
+        if (sameDayAsFrom && hour === fromH && minute > fromMi) {
+          continue;
+        }
+        for (const second of seconds) {
+          const dt = tz
+            ? zonedWallTimeToUtc(year, month, day, hour, minute, second, tz)
+            : new Date(year, month - 1, day, hour, minute, second, 0);
+          if (!dt || Number.isNaN(dt.getTime())) continue;
+          if (dt.getTime() >= fromTs) continue;
+          results.push(dt);
+          if (results.length >= limit) return results;
+        }
+      }
+    }
+
+    retreatDay();
   }
 
   return results;

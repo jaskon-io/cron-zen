@@ -92,6 +92,32 @@
   border-top: 1px solid var(--cz-border);
 }
 
+.cron-zen__presets {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin: 0 0 12px;
+  font-size: 13px;
+  color: var(--cz-muted, #64748b);
+}
+
+.cron-zen__presets-label {
+  font-weight: 600;
+  color: var(--cz-ink, #0f172a);
+}
+
+.cron-zen__presets-select {
+  min-width: 180px;
+  max-width: 100%;
+  padding: 6px 10px;
+  border: 1px solid var(--cz-border, #e2e8f0);
+  border-radius: 6px;
+  background: var(--cz-surface, #fff);
+  color: var(--cz-ink, #0f172a);
+  font: inherit;
+}
+
 .cron-zen__mutex {
   margin: 0 0 12px;
   padding: 8px 10px;

@@ -81,12 +81,13 @@ describe('CronZen', () => {
     });
     await wrapper.findAll('.cron-zen__tab')[2].trigger('click'); // 小时
     await nextTick();
-    expect(wrapper.text()).toContain('每小时');
+    expect(wrapper.find('.cz-field').text()).toContain('每小时');
     await wrapper.findAll('.cron-zen__tab')[5].trigger('click'); // 周
     await nextTick();
-    expect(wrapper.text()).toContain('每周');
-    expect(wrapper.text()).toContain('周字段写法');
-    expect(wrapper.text()).not.toContain('每小时');
+    const fieldText = wrapper.find('.cz-field').text();
+    expect(fieldText).toContain('每周');
+    expect(fieldText).toContain('周字段写法');
+    expect(fieldText).not.toContain('每小时');
   });
 
   it('配置周具体值后日预览应为 ?，并显示互斥提示', async () => {

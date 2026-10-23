@@ -1,6 +1,6 @@
 {
   "name": "@cron-zen/react",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "description": "React 18/19 Cron visual editor for cron-zen — thin wrapper over @cron-zen/vanilla",
   "license": "MIT",
   "repository": {
@@ -44,8 +44,8 @@
     "prepublishOnly": "pnpm run typecheck && pnpm run test && pnpm run build"
   },
   "dependencies": {
-    "@cron-zen/core": "workspace:*",
-    "@cron-zen/vanilla": "workspace:*"
+    "@cron-zen/core": "0.2.4",
+    "@cron-zen/vanilla": "0.2.4"
   },
   "peerDependencies": {
     "react": "^18.0.0 || ^19.0.0",

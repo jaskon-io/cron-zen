@@ -11,6 +11,15 @@
 
 ---
 
+## [0.2.4] - 2026-10-23
+
+### Added
+
+- **常用模板**：`getCronPresets` / `listCronPresetDefs`；编辑器顶部下拉一键套用（每分钟 / 工作日 9 点 / 月末…）；中英标签
+- **`getPrevRuns`**：近 N 次已触发（新→旧），与 `getNextRuns` 对称；预览区同步展示（vue3 / vue2 / vanilla / react）
+
+---
+
 ## [0.2.3] - 2026-10-23
 
 ### Added

@@ -8,6 +8,7 @@ import {
   expandFieldValues,
   formatRunTime,
   getNextRuns,
+  getPrevRuns,
   lastDayOfMonth,
   lastWeekdayOfMonth,
   nearestWeekdayOfMonth,
@@ -151,6 +152,30 @@ describe('getNextRuns / formatRunTime', () => {
     expect(formatRunTime(runs[0])).toBe('2026-01-01 12:00:01');
     expect(formatRunTime(runs[1])).toBe('2026-01-01 12:00:02');
     expect(formatRunTime(runs[2])).toBe('2026-01-01 12:00:03');
+  });
+
+  it('getPrevRuns 默认态应返回新→旧的已触发秒', () => {
+    const from = new Date(2026, 0, 1, 12, 0, 0);
+    const runs = getPrevRuns(createDefaultCronState(), 3, from);
+    expect(runs).toHaveLength(3);
+    expect(formatRunTime(runs[0])).toBe('2026-01-01 11:59:59');
+    expect(formatRunTime(runs[1])).toBe('2026-01-01 11:59:58');
+    expect(formatRunTime(runs[2])).toBe('2026-01-01 11:59:57');
+  });
+
+  it('getPrevRuns 每天 9 点应对齐往回推', () => {
+    const state = createDefaultCronState();
+    state.second = { mode: 'specific', raw: '0', value: '0' };
+    state.minute = { mode: 'specific', raw: '0', value: '0' };
+    state.hour = { mode: 'specific', raw: '9', value: '9' };
+    state.day = createEveryField();
+    state.week = createUnsetField();
+    const from = new Date(2026, 0, 5, 10, 0, 0);
+    const runs = getPrevRuns(state, 3, from);
+    expect(runs).toHaveLength(3);
+    expect(formatRunTime(runs[0])).toBe('2026-01-05 09:00:00');
+    expect(formatRunTime(runs[1])).toBe('2026-01-04 09:00:00');
+    expect(formatRunTime(runs[2])).toBe('2026-01-03 09:00:00');
   });
 
 

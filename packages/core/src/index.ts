@@ -57,6 +57,7 @@ export type { DescribeOptions } from './describe';
 export {
   expandFieldValues,
   getNextRuns,
+  getPrevRuns,
   formatRunTime,
   lastDayOfMonth,
   lastWeekdayOfMonth,
@@ -65,6 +66,13 @@ export {
   nthQuartzWeekdayOfMonth,
 } from './nextRuns';
 export type { TimeZoneOptions } from './nextRuns';
+
+export {
+  listCronPresetDefs,
+  getCronPresets,
+  getCronPreset,
+} from './presets';
+export type { CronPresetDef, CronPreset, CronPresetId } from './presets';
 
 export {
   isValidTimeZone,

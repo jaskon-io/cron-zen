@@ -124,6 +124,8 @@ describeCron(createDefaultCronState(), { locale: 'en-US' }) // 'Every day'
 | `QUARTZ_MONTH_LABELS` / `quartzMonthLabel` | 月中文标签 |
 | `getCronTabs` | Tab 元数据 |
 | `getUiMessages` | FieldEditor / 预览壳 UI 文案 |
+| `getCronPresets` / `listCronPresetDefs` | 常用 Cron 模板 |
+| `getPrevRuns` | 近 N 次已触发（新→旧） |
 | `createDefaultCronState` | 默认状态 |
 | `generateCronOrThrow` | 失败抛错 |
 

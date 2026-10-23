@@ -37,8 +37,10 @@ export interface UseCronZenReturn {
   expression: string;
   /** @description 自然语言 */
   description: string;
-  /** @description 近 N 次（格式化） */
+  /** @description 近 N 次即将触发（格式化） */
   nextRuns: string[];
+  /** @description 近 N 次已触发（格式化，新→旧） */
+  prevRuns: string[];
   /** @description 提示 */
   hint: string;
   /** @description 底层控制器（挂载后可用） */
@@ -137,6 +139,7 @@ export function useCronZen(options: UseCronZenOptions = {}): UseCronZenReturn {
     expression: snap?.expression ?? '',
     description: snap?.description ?? '',
     nextRuns: snap?.nextRuns ?? [],
+    prevRuns: snap?.prevRuns ?? [],
     hint: snap?.hint ?? '',
     controller: ctrlRef.current,
     ...api,

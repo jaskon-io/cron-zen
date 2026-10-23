@@ -13,7 +13,7 @@ import {
   toRef,
 } from 'vue';
 import type { CronFieldName, CronFieldState, WeekFormat } from '@cron-zen/core';
-import { getCronTabs, getUiMessages } from '@cron-zen/core';
+import { getCronPresets, getCronTabs, getUiMessages } from '@cron-zen/core';
 import { displayFieldValue, useCronZen } from './composables/useCronZen';
 import FieldEditor from './components/FieldEditor.vue';
 import './styles/cron-zen.css';
@@ -71,11 +71,13 @@ export default defineComponent({
       expression,
       description,
       nextRuns,
+      prevRuns,
       validation,
       hint,
       weekFormat,
       updateField,
       setWeekFormat,
+      loadExpression,
       reset,
       flush,
     } = useCronZen({
@@ -89,9 +91,25 @@ export default defineComponent({
 
     const tabs = computed(() => getCronTabs(props.locale));
     const ui = computed(() => getUiMessages(props.locale));
+    const presets = computed(() => getCronPresets(props.locale));
+    const presetId = ref('');
     const currentField = computed(() => state.value[activeTab.value]);
     const copied = ref(false);
     let copiedTimer: ReturnType<typeof setTimeout> | null = null;
+
+    /**
+     * @description 应用常用模板
+     * @param {Event} e - select change
+     * @returns {void}
+     */
+    function onPresetChange(e: Event): void {
+      const id = (e.target as HTMLSelectElement).value;
+      presetId.value = id;
+      if (!id) return;
+      const preset = presets.value.find((p) => p.id === id);
+      if (!preset) return;
+      loadExpression(preset.expression);
+    }
 
     const fieldParts = computed(() =>
       tabs.value.map((tab) => ({
@@ -203,11 +221,14 @@ export default defineComponent({
       expression,
       description,
       nextRuns,
+      prevRuns,
       validation,
       hint,
       weekFormat,
       tabs,
       ui,
+      presets,
+      presetId,
       currentField,
       fieldParts,
       mutexTip,
@@ -216,6 +237,7 @@ export default defineComponent({
       onFieldUpdate,
       onWeekFormat,
       onReset,
+      onPresetChange,
       copyExpression,
     };
   },
@@ -238,6 +260,19 @@ export default defineComponent({
     </nav>
 
     <section class="cron-zen__body" :aria-label="ui.ariaBody">
+      <label class="cron-zen__presets">
+        <span class="cron-zen__presets-label">{{ ui.presetsLabel }}</span>
+        <select
+          class="cron-zen__presets-select"
+          :value="presetId"
+          @change="onPresetChange"
+        >
+          <option value="">{{ ui.presetsPlaceholder }}</option>
+          <option v-for="p in presets" :key="p.id" :value="p.id">
+            {{ p.label }}
+          </option>
+        </select>
+      </label>
       <p v-if="mutexTip" class="cron-zen__mutex">{{ mutexTip }}</p>
       <FieldEditor
         :key="activeTab"
@@ -305,6 +340,14 @@ export default defineComponent({
         <h3>{{ ui.nextRunsTitle(nextCount) }}</h3>
         <ol v-if="nextRuns.length" class="cron-zen__runs">
           <li v-for="(t, i) in nextRuns" :key="i">{{ t }}</li>
+        </ol>
+        <p v-else class="cron-zen__desc">{{ ui.cannotEstimate }}</p>
+      </div>
+
+      <div class="cron-zen__preview-block">
+        <h3>{{ ui.prevRunsTitle(nextCount) }}</h3>
+        <ol v-if="prevRuns.length" class="cron-zen__runs">
+          <li v-for="(t, i) in prevRuns" :key="'p' + i">{{ t }}</li>
         </ol>
         <p v-else class="cron-zen__desc">{{ ui.cannotEstimate }}</p>
       </div>

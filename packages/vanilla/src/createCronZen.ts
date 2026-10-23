@@ -15,6 +15,7 @@ import {
   describeCron,
   formatRunTime,
   getNextRuns,
+  getPrevRuns,
   stringifyField,
   weekTokenUsesAbbr,
 } from '@cron-zen/core';
@@ -62,6 +63,8 @@ export interface CronZenSnapshot {
   expression: string;
   description: string;
   nextRuns: string[];
+  /** @description 已触发（新→旧） */
+  prevRuns: string[];
   validation: ValidateResult;
   hint: string;
   weekFormat: WeekFormat;
@@ -179,6 +182,7 @@ export function createCronZen(options: CreateCronZenOptions = {}): CronZenContro
   let expression = DEFAULT_EXPRESSION;
   let description = '';
   let nextRuns: string[] = [];
+  let prevRuns: string[] = [];
   let validation: ValidateResult = { valid: true, errors: [], warnings: [] };
   let hint = '';
   let weekFormat: WeekFormat = options.weekFormat === 'abbr' ? 'abbr' : 'number';
@@ -204,6 +208,7 @@ export function createCronZen(options: CreateCronZenOptions = {}): CronZenContro
     expression,
     description,
     nextRuns,
+    prevRuns,
     validation,
     hint,
     weekFormat,
@@ -214,10 +219,15 @@ export function createCronZen(options: CreateCronZenOptions = {}): CronZenContro
   const refreshNextRuns = (): void => {
     if (!showPreview) {
       nextRuns = [];
+      prevRuns = [];
       return;
     }
     const tzOpt = timeZone ? { timeZone } : undefined;
-    nextRuns = getNextRuns(state, nextCount, new Date(), tzOpt)
+    const now = new Date();
+    nextRuns = getNextRuns(state, nextCount, now, tzOpt)
+      .map((d) => formatRunTime(d, tzOpt))
+      .filter(Boolean);
+    prevRuns = getPrevRuns(state, nextCount, now, tzOpt)
       .map((d) => formatRunTime(d, tzOpt))
       .filter(Boolean);
   };
@@ -225,6 +235,7 @@ export function createCronZen(options: CreateCronZenOptions = {}): CronZenContro
   const scheduleNextRuns = (immediate: boolean): void => {
     if (!showPreview) {
       nextRuns = [];
+      prevRuns = [];
       return;
     }
     if (nextRunsTimer != null) {
@@ -253,6 +264,7 @@ export function createCronZen(options: CreateCronZenOptions = {}): CronZenContro
     } else {
       description = '';
       nextRuns = [];
+      prevRuns = [];
     }
 
     if (gen.warning) hint = gen.warning;
@@ -338,6 +350,7 @@ export function createCronZen(options: CreateCronZenOptions = {}): CronZenContro
     expression = '';
     description = '';
     nextRuns = [];
+    prevRuns = [];
     validation = { valid: true, errors: [], warnings: [] };
     notify();
   };

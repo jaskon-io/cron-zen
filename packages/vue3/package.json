@@ -1,6 +1,6 @@
 {
   "name": "@cron-zen/vue3",
-  "version": "0.2.2",
+  "version": "0.2.4",
   "description": "Vue 3 Cron visual editor for cron-zen — CronZen / useCronZen, no Element or Ant required",
   "license": "MIT",
   "repository": {
@@ -54,7 +54,7 @@
     }
   },
   "dependencies": {
-    "@cron-zen/core": "workspace:*"
+    "@cron-zen/core": "0.2.4"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^5.2.1",
