@@ -2,7 +2,12 @@ import { enUS } from './en-US';
 import type { CronLocaleCode, CronLocaleMessages, CronUiMessages } from './types';
 import { zhCN } from './zh-CN';
 
-export type { CronLocaleCode, CronLocaleMessages, CronUiMessages } from './types';
+export type {
+  CronLocaleCode,
+  CronLocaleMessages,
+  CronUiMessages,
+  CronPresetId,
+} from './types';
 export { zhCN, enUS };
 
 const BUILTIN: Record<CronLocaleCode, CronLocaleMessages> = {

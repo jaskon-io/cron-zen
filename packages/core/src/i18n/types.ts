@@ -6,6 +6,21 @@ import type { CronFieldName } from '../types';
 export type CronLocaleCode = 'zh-CN' | 'en-US';
 
 /**
+ * @description 内置预设 id（与 presets.ts 对齐）
+ */
+export type CronPresetId =
+  | 'every-minute'
+  | 'every-5-minutes'
+  | 'every-30-minutes'
+  | 'every-hour'
+  | 'every-day-midnight'
+  | 'every-day-9am'
+  | 'weekdays-9am'
+  | 'every-monday-9am'
+  | 'first-day-month'
+  | 'last-day-month';
+
+/**
  * @description FieldEditor / 预览壳 UI 文案（与 describe 分离，避免污染自然语言）
  */
 export interface CronUiMessages {
@@ -75,10 +90,16 @@ export interface CronUiMessages {
   editField: (label: string) => string;
   /** @description 近 N 次执行时间 */
   nextRunsTitle: (n: number) => string;
+  /** @description 近 N 次已触发 */
+  prevRunsTitle: (n: number) => string;
   /** @description 无法估算 */
   cannotEstimate: string;
   /** @description 空表达式占位 */
   expressionPlaceholder: string;
+  /** @description 常用模板 */
+  presetsLabel: string;
+  /** @description 模板下拉占位 */
+  presetsPlaceholder: string;
   /** @description aria：Cron 字段 */
   ariaTabs: string;
   /** @description aria：字段配置 */
@@ -99,6 +120,8 @@ export interface CronLocaleMessages {
   fieldUnits: Record<CronFieldName, string>;
   /** @description 编辑器与预览壳文案 */
   ui: CronUiMessages;
+  /** @description 常用预设标签 */
+  presets: Record<CronPresetId, string>;
   /** @description 每周摘要默认「每天 / Every day」 */
   everyDay: string;
   /** @description 无法概括时的回退 */

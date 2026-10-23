@@ -1,6 +1,6 @@
 {
   "name": "@cron-zen/vanilla",
-  "version": "0.2.2",
+  "version": "0.2.4",
   "description": "Framework-free Cron visual editor — mount(el) / script-tag browser bundle / createCronZen",
   "license": "MIT",
   "repository": {
@@ -52,7 +52,7 @@
     "prepublishOnly": "pnpm run typecheck && pnpm run test && pnpm run build"
   },
   "dependencies": {
-    "@cron-zen/core": "workspace:*"
+    "@cron-zen/core": "0.2.4"
   },
   "devDependencies": {
     "jsdom": "^25.0.1",

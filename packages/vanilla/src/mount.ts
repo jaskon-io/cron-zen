@@ -1,5 +1,5 @@
 import type { CronFieldName, CronState, WeekFormat } from '@cron-zen/core';
-import { getCronTabs, getUiMessages } from '@cron-zen/core';
+import { getCronPresets, getCronTabs, getUiMessages } from '@cron-zen/core';
 import {
   createCronZen,
   displayFieldValue,
@@ -109,11 +109,27 @@ export function mountCronZen(
   const body = document.createElement('section');
   body.className = 'cron-zen__body';
 
+  const presetsLabel = document.createElement('label');
+  presetsLabel.className = 'cron-zen__presets';
+  const presetsLabelText = document.createElement('span');
+  presetsLabelText.className = 'cron-zen__presets-label';
+  const presetsSelect = document.createElement('select');
+  presetsSelect.className = 'cron-zen__presets-select';
+  presetsLabel.appendChild(presetsLabelText);
+  presetsLabel.appendChild(presetsSelect);
+  presetsSelect.addEventListener('change', () => {
+    const id = presetsSelect.value;
+    if (!id) return;
+    const preset = getCronPresets(ctrl.getSnapshot().locale).find((p) => p.id === id);
+    if (preset) ctrl.loadExpression(preset.expression);
+  });
+
   const mutexEl = document.createElement('p');
   mutexEl.className = 'cron-zen__mutex';
   mutexEl.hidden = true;
 
   const fieldHost = document.createElement('div');
+  body.appendChild(presetsLabel);
   body.appendChild(mutexEl);
   body.appendChild(fieldHost);
 
@@ -303,6 +319,28 @@ export function mountCronZen(
     }
     preview.appendChild(runsBlock);
 
+    const prevBlock = document.createElement('div');
+    prevBlock.className = 'cron-zen__preview-block';
+    const prevTitle = document.createElement('h3');
+    prevTitle.textContent = m.prevRunsTitle(n);
+    prevBlock.appendChild(prevTitle);
+    if (snap.prevRuns.length) {
+      const ol = document.createElement('ol');
+      ol.className = 'cron-zen__runs';
+      for (const t of snap.prevRuns) {
+        const li = document.createElement('li');
+        li.textContent = t;
+        ol.appendChild(li);
+      }
+      prevBlock.appendChild(ol);
+    } else {
+      const p = document.createElement('p');
+      p.className = 'cron-zen__desc';
+      p.textContent = m.cannotEstimate;
+      prevBlock.appendChild(p);
+    }
+    preview.appendChild(prevBlock);
+
     if (snap.hint) {
       const hint = document.createElement('p');
       hint.className = 'cron-zen__hint' + (snap.validation.valid ? '' : ' is-error');
@@ -311,11 +349,33 @@ export function mountCronZen(
     }
   };
 
+  const renderPresets = (): void => {
+    const snap = ctrl.getSnapshot();
+    const m = getUiMessages(snap.locale);
+    const selected = presetsSelect.value;
+    presetsLabelText.textContent = m.presetsLabel;
+    presetsSelect.replaceChildren();
+    const placeholder = document.createElement('option');
+    placeholder.value = '';
+    placeholder.textContent = m.presetsPlaceholder;
+    presetsSelect.appendChild(placeholder);
+    for (const p of getCronPresets(snap.locale)) {
+      const opt = document.createElement('option');
+      opt.value = p.id;
+      opt.textContent = p.label;
+      presetsSelect.appendChild(opt);
+    }
+    if ([...presetsSelect.options].some((o) => o.value === selected)) {
+      presetsSelect.value = selected;
+    }
+  };
+
   const render = (): void => {
     const snap = ctrl.getSnapshot();
     const m = getUiMessages(snap.locale);
     nav.setAttribute('aria-label', m.ariaTabs);
     body.setAttribute('aria-label', m.ariaBody);
+    renderPresets();
     const tip = mutexTip(snap);
     if (tip) {
       mutexEl.hidden = false;

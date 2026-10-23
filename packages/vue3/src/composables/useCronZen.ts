@@ -25,6 +25,7 @@ import {
   describeCron,
   formatRunTime,
   getNextRuns,
+  getPrevRuns,
   getCronTabs,
   stringifyField,
   weekTokenUsesAbbr,
@@ -135,8 +136,10 @@ export interface UseCronZenReturn {
   expression: Ref<string>;
   /** @description 自然语言描述 */
   description: Ref<string>;
-  /** @description 最近触发时间（格式化） */
+  /** @description 最近即将触发（格式化，旧→新） */
   nextRuns: Ref<string[]>;
+  /** @description 最近已触发（格式化，新→旧） */
+  prevRuns: Ref<string[]>;
   /** @description 校验结果 */
   validation: Ref<ValidateResult>;
   /** @description 警告 / 提示文案 */
@@ -224,6 +227,7 @@ export function useCronZen(options: UseCronZenOptions = {}): UseCronZenReturn {
   const expression = shallowRef(DEFAULT_EXPRESSION);
   const description = shallowRef('');
   const nextRuns = shallowRef<string[]>([]);
+  const prevRuns = shallowRef<string[]>([]);
   const validation = shallowRef<ValidateResult>({
     valid: true,
     errors: [],
@@ -250,28 +254,34 @@ export function useCronZen(options: UseCronZenOptions = {}): UseCronZenReturn {
   const NEXT_RUNS_DEFER_MS = 48;
 
   /**
-   * @description 计算并写回近 N 次执行时间
+   * @description 计算并写回近 N 次即将 / 已触发时间
    * @returns {void}
    */
   const refreshNextRuns = (): void => {
     if (!showPreview) {
       nextRuns.value = [];
+      prevRuns.value = [];
       return;
     }
     const tzOpt = timeZone.value ? { timeZone: timeZone.value } : undefined;
-    nextRuns.value = getNextRuns(state.value, nextCount, new Date(), tzOpt)
+    const now = new Date();
+    nextRuns.value = getNextRuns(state.value, nextCount, now, tzOpt)
+      .map((d) => formatRunTime(d, tzOpt))
+      .filter(Boolean);
+    prevRuns.value = getPrevRuns(state.value, nextCount, now, tzOpt)
       .map((d) => formatRunTime(d, tzOpt))
       .filter(Boolean);
   };
 
   /**
-   * @description 防抖调度近 N 次预估
+   * @description 防抖调度近 N 次预估（含已触发）
    * @param {boolean} immediate - 是否立即计算
    * @returns {void}
    */
   const scheduleNextRuns = (immediate: boolean): void => {
     if (!showPreview) {
       nextRuns.value = [];
+      prevRuns.value = [];
       return;
     }
     if (nextRunsTimer != null) {
@@ -307,6 +317,7 @@ export function useCronZen(options: UseCronZenOptions = {}): UseCronZenReturn {
     } else {
       description.value = '';
       nextRuns.value = [];
+      prevRuns.value = [];
     }
 
     if (gen.warning) {
@@ -417,6 +428,7 @@ export function useCronZen(options: UseCronZenOptions = {}): UseCronZenReturn {
     expression.value = '';
     description.value = '';
     nextRuns.value = [];
+    prevRuns.value = [];
     validation.value = { valid: true, errors: [], warnings: [] };
   };
 
@@ -552,6 +564,7 @@ export function useCronZen(options: UseCronZenOptions = {}): UseCronZenReturn {
     expression: expression as unknown as Ref<string>,
     description: description as unknown as Ref<string>,
     nextRuns: nextRuns as unknown as Ref<string[]>,
+    prevRuns: prevRuns as unknown as Ref<string[]>,
     validation: validation as unknown as Ref<ValidateResult>,
     hint: hint as unknown as Ref<string>,
     weekFormat: weekFormat as unknown as Ref<WeekFormat>,
