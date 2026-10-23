@@ -60,6 +60,8 @@ export {
   lastDayOfMonth,
   lastWeekdayOfMonth,
   nearestWeekdayOfMonth,
+  lastQuartzWeekdayOfMonth,
+  nthQuartzWeekdayOfMonth,
 } from './nextRuns';
 
 export type { CronTabMeta } from './tabs';

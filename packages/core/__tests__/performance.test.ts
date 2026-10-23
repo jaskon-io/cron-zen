@@ -98,6 +98,38 @@ describe('getNextRuns 性能', () => {
     expect(ms).toBeLessThan(100);
   });
 
+  it('周字段 6L 近 24 次应 < 100ms', () => {
+    const state = createDefaultCronState();
+    state.second = { mode: 'specific', raw: '0', value: '0' };
+    state.minute = { mode: 'specific', raw: '0', value: '0' };
+    state.hour = { mode: 'specific', raw: '0', value: '0' };
+    state.day = createUnsetField();
+    state.week = { mode: 'last', raw: '6L', value: '6' };
+    const from = new Date(2026, 0, 1, 0, 0, 0);
+    const t0 = performance.now();
+    const runs = getNextRuns(state, 24, from);
+    const ms = performance.now() - t0;
+    expect(runs).toHaveLength(24);
+    expect(runs[0].getDate()).toBe(30);
+    expect(ms).toBeLessThan(100);
+  });
+
+  it('周字段 6#3 近 24 次应 < 100ms', () => {
+    const state = createDefaultCronState();
+    state.second = { mode: 'specific', raw: '0', value: '0' };
+    state.minute = { mode: 'specific', raw: '0', value: '0' };
+    state.hour = { mode: 'specific', raw: '0', value: '0' };
+    state.day = createUnsetField();
+    state.week = { mode: 'nth', raw: '6#3', value: '6', secondary: '3' };
+    const from = new Date(2026, 0, 1, 0, 0, 0);
+    const t0 = performance.now();
+    const runs = getNextRuns(state, 24, from);
+    const ms = performance.now() - t0;
+    expect(runs).toHaveLength(24);
+    expect(runs[0].getDate()).toBe(16);
+    expect(ms).toBeLessThan(100);
+  });
+
   it('step=超大时不死循环且结果有限', () => {
     const out = expandFieldValues(
       { mode: 'step', raw: '0/999999', value: '0', secondary: '999999' },

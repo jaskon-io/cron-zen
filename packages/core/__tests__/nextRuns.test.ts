@@ -11,6 +11,8 @@ import {
   lastDayOfMonth,
   lastWeekdayOfMonth,
   nearestWeekdayOfMonth,
+  lastQuartzWeekdayOfMonth,
+  nthQuartzWeekdayOfMonth,
 } from '../src/nextRuns';
 
 describe('expandFieldValues', () => {
@@ -116,6 +118,31 @@ describe('nearestWeekdayOfMonth', () => {
   });
 });
 
+describe('lastQuartzWeekdayOfMonth / nthQuartzWeekdayOfMonth', () => {
+  it('6L 应为每月最后一个周五', () => {
+    expect(lastQuartzWeekdayOfMonth(2026, 1, 6)).toBe(30);
+    expect(lastQuartzWeekdayOfMonth(2026, 2, 6)).toBe(27);
+    expect(lastQuartzWeekdayOfMonth(2026, 5, 6)).toBe(29);
+  });
+
+  it('6#3 应为每月第三个周五', () => {
+    expect(nthQuartzWeekdayOfMonth(2026, 1, 6, 3)).toBe(16);
+    expect(nthQuartzWeekdayOfMonth(2026, 2, 6, 3)).toBe(20);
+    expect(nthQuartzWeekdayOfMonth(2026, 5, 6, 3)).toBe(15);
+  });
+
+  it('非法星期 / 序数应返回 null', () => {
+    expect(lastQuartzWeekdayOfMonth(2026, 1, 9)).toBeNull();
+    expect(nthQuartzWeekdayOfMonth(2026, 1, 6, 0)).toBeNull();
+    expect(nthQuartzWeekdayOfMonth(2026, 1, 6, 6)).toBeNull();
+  });
+
+  it('第 5 个若不存在应返回 null', () => {
+    // 2026-02 只有 4 个周五（6,13,20,27）
+    expect(nthQuartzWeekdayOfMonth(2026, 2, 6, 5)).toBeNull();
+  });
+});
+
 describe('getNextRuns / formatRunTime', () => {
   it('默认 * * * * * ? * 应返回连续秒级触发点', () => {
     const from = new Date(2026, 0, 1, 12, 0, 0);
@@ -202,15 +229,56 @@ describe('getNextRuns / formatRunTime', () => {
     expect(getNextRuns(state, 5, new Date(2026, 0, 1))).toEqual([]);
   });
 
-  it('周字段为 L/W/# 无法展开时不得臆测触发时间', () => {
+  it('周字段裸 L 应按每周六触发（Quartz ≡ SAT）', () => {
     const state = createDefaultCronState();
+    state.second = { mode: 'specific', raw: '0', value: '0' };
+    state.minute = { mode: 'specific', raw: '0', value: '0' };
+    state.hour = { mode: 'specific', raw: '0', value: '0' };
     state.day = createUnsetField();
     state.week = { mode: 'last', raw: 'L' };
-    const from = new Date(2026, 5, 15, 12, 0, 0);
-    expect(getNextRuns(state, 5, from)).toEqual([]);
+    const from = new Date(2026, 0, 1, 0, 0, 0); // 周四
+    const runs = getNextRuns(state, 2, from);
+    expect(runs).toHaveLength(2);
+    expect(runs[0].getDay()).toBe(6);
+    expect(formatRunTime(runs[0])).toBe('2026-01-03 00:00:00');
+    expect(formatRunTime(runs[1])).toBe('2026-01-10 00:00:00');
+  });
 
+  it('周字段 6L 应按每月最后一个周五触发', () => {
+    const state = createDefaultCronState();
+    state.second = { mode: 'specific', raw: '0', value: '0' };
+    state.minute = { mode: 'specific', raw: '0', value: '0' };
+    state.hour = { mode: 'specific', raw: '9', value: '9' };
+    state.day = createUnsetField();
+    state.week = { mode: 'last', raw: '6L', value: '6' };
+    const from = new Date(2026, 0, 1, 0, 0, 0);
+    const runs = getNextRuns(state, 3, from);
+    expect(runs).toHaveLength(3);
+    expect(formatRunTime(runs[0])).toBe('2026-01-30 09:00:00');
+    expect(formatRunTime(runs[1])).toBe('2026-02-27 09:00:00');
+    expect(formatRunTime(runs[2])).toBe('2026-03-27 09:00:00');
+  });
+
+  it('周字段 6#3 应按每月第三个周五触发', () => {
+    const state = createDefaultCronState();
+    state.second = { mode: 'specific', raw: '0', value: '0' };
+    state.minute = { mode: 'specific', raw: '0', value: '0' };
+    state.hour = { mode: 'specific', raw: '0', value: '0' };
+    state.day = createUnsetField();
     state.week = { mode: 'nth', raw: '6#3', value: '6', secondary: '3' };
-    expect(getNextRuns(state, 5, from)).toEqual([]);
+    const from = new Date(2026, 0, 1, 0, 0, 0);
+    const runs = getNextRuns(state, 3, from);
+    expect(runs).toHaveLength(3);
+    expect(formatRunTime(runs[0])).toBe('2026-01-16 00:00:00');
+    expect(formatRunTime(runs[1])).toBe('2026-02-20 00:00:00');
+    expect(formatRunTime(runs[2])).toBe('2026-03-20 00:00:00');
+  });
+
+  it('周字段 nth 缺参数不得臆测', () => {
+    const state = createDefaultCronState();
+    state.day = createUnsetField();
+    state.week = { mode: 'nth', raw: '#' };
+    expect(getNextRuns(state, 5, new Date(2026, 0, 1))).toEqual([]);
   });
 
   it('应按 Quartz 周过滤并尊重年份（1=周日）', () => {
