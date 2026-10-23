@@ -48,6 +48,7 @@ export default defineConfig({
           { text: '选哪个包', link: '/guide/choose-package' },
           { text: '快速开始', link: '/guide/quick-start' },
           { text: '引入方式与 Demo', link: '/guide/import-styles' },
+          { text: '在线示例 Demo', link: '/guide/examples' },
           { text: '质量与安全', link: '/guide/quality' },
           { text: '任意 UI 库集成', link: '/guide/any-ui' },
           { text: '与 cron.ren 对照', link: '/guide/vs-cron-ren' },
@@ -64,7 +65,18 @@ export default defineConfig({
           { text: '@cron-zen/react', link: '/api/react' },
         ],
       },
-      { text: 'Playground', link: '/guide/playground', activeMatch: '/guide/playground' },
+      {
+        text: '示例',
+        items: [
+          { text: '示例总览', link: '/guide/examples' },
+          { text: 'vanilla Demo', link: '/examples/vanilla.html' },
+          { text: 'react Demo', link: '/examples/react.html' },
+          { text: 'vue2 Demo', link: '/examples/vue2.html' },
+          { text: 'vue3 Demo', link: '/examples/vue3.html' },
+          { text: 'core 引擎 Demo', link: '/examples/core.html' },
+          { text: 'Playground', link: '/guide/playground' },
+        ],
+      },
       {
         text: '生态',
         items: [
@@ -91,6 +103,7 @@ export default defineConfig({
             { text: '选哪个包', link: '/guide/choose-package' },
             { text: '快速开始', link: '/guide/quick-start' },
             { text: '引入方式与 Demo', link: '/guide/import-styles' },
+            { text: '在线示例 Demo', link: '/guide/examples' },
           ],
         },
         {
@@ -103,7 +116,10 @@ export default defineConfig({
         },
         {
           text: '示例',
-          items: [{ text: '在线 Playground', link: '/guide/playground' }],
+          items: [
+            { text: '示例总览（四包 + core）', link: '/guide/examples' },
+            { text: '在线 Playground', link: '/guide/playground' },
+          ],
         },
       ],
       '/api/': [

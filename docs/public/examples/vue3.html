@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>cron-zen · vue3 Demo</title>
+    <link rel="stylesheet" href="./demo.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/@cron-zen/vue3@0.2.4/dist/cron-zen-vue3.css"
+    />
+    <script type="importmap">
+      {
+        "imports": {
+          "vue": "https://cdn.jsdelivr.net/npm/vue@3.5.13/+esm",
+          "@cron-zen/core": "https://cdn.jsdelivr.net/npm/@cron-zen/core@0.2.4/+esm",
+          "@cron-zen/vue3": "https://cdn.jsdelivr.net/npm/@cron-zen/vue3@0.2.4/+esm"
+        }
+      }
+    </script>
+  </head>
+  <body>
+    <main>
+      <h1>@cron-zen/vue3</h1>
+      <p class="lead">Vue 3 · ESM CDN · <code>v-model</code> + 模板 / prevRuns。</p>
+      <nav class="nav" aria-label="示例导航">
+        <a href="./vanilla.html">vanilla</a>
+        <a href="./react.html">react</a>
+        <a href="./vue2.html">vue2</a>
+        <a href="./vue3.html" class="is-current">vue3</a>
+        <a href="./core.html">core 引擎</a>
+        <a href="/cron-zen/guide/examples">文档 · 示例总览</a>
+      </nav>
+
+      <div id="app"></div>
+    </main>
+
+    <script type="module">
+      import { createApp, ref, h } from 'vue'
+      import { CronZen } from '@cron-zen/vue3'
+
+      createApp({
+        setup() {
+          const cron = ref('0 0 9 ? * 2-6')
+          return () =>
+            h('div', [
+              h('div', { class: 'panel' }, [
+                h(CronZen, {
+                  modelValue: cron.value,
+                  'onUpdate:modelValue': (v) => {
+                    cron.value = v
+                  },
+                  locale: 'zh-CN',
+                  timeZone: 'Asia/Shanghai',
+                  nextCount: 5,
+                  showPreview: true,
+                }),
+              ]),
+              h('p', { class: 'out' }, [
+                h('strong', null, 'expression'),
+                ' · ',
+                cron.value || '（空）',
+              ]),
+            ])
+        },
+      }).mount('#app')
+    </script>
+  </body>
+</html>

@@ -4,7 +4,7 @@
 按运行时选包：无框架 → <strong>vanilla</strong>；React → <strong>react</strong>；Vue 2 → <strong>vue2</strong>；Vue 3 → <strong>vue3</strong>。只要引擎 → <strong>core</strong>。支持 TypeScript 与纯 JavaScript（ESM / CJS）。
 </p>
 
-完整对照 → [选哪个包](./choose-package) · 引入写法 → [引入方式与 Demo](./import-styles) · [纯 HTML 示例页](/examples/script-tag.html)
+完整对照 → [选哪个包](./choose-package) · 引入写法 → [引入方式与 Demo](./import-styles) · **在线 Demo** → [示例总览](./examples)（[vanilla](/examples/vanilla.html) / [react](/examples/react.html) / [vue2](/examples/vue2.html) / [vue3](/examples/vue3.html) / [core](/examples/core.html)）
 
 ## 1. 无框架 → `@cron-zen/vanilla`
 
@@ -167,6 +167,9 @@ const { parseCron, generateCron } = require('@cron-zen/core')
 
 :::
 
+每个导出函数（`getNextRuns` / `getPrevRuns` / `describeCron` / 模板 / 时区…）的参数与示例 → **[API · core](/api/core)**  
+可点击试玩 → **[examples/core.html](/examples/core.html)**
+
 ## 弹窗 / 其它 UI 库
 
 - **Vue 3 / React**：壳用 dialog / Modal，内嵌组件即可 → [任意 UI 库集成](./any-ui)
@@ -193,7 +196,8 @@ const cron = ref('')
 
 ## 下一步
 
+- [在线示例 Demo](./examples)（四包 + core）
 - [选哪个包](./choose-package)
 - [引入方式与 Demo](./import-styles)
-- [质量与安全](./quality)
+- [API · core](/api/core)
 - [Playground](./playground)
