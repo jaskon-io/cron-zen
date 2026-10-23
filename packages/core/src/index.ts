@@ -59,6 +59,7 @@ export {
   formatRunTime,
   lastDayOfMonth,
   lastWeekdayOfMonth,
+  nearestWeekdayOfMonth,
 } from './nextRuns';
 
 export type { CronTabMeta } from './tabs';
@@ -78,4 +79,13 @@ export {
   weekTokenUsesAbbr,
   isYearLikeToken,
 } from './week';
+
+export {
+  QUARTZ_MONTH_LABELS,
+  QUARTZ_MONTH_ABBR,
+  QUARTZ_MONTH_ABBR_TO_NUM,
+  quartzMonthLabel,
+  monthNumberToAbbr,
+  monthAbbrToNumber,
+} from './month';
 

@@ -10,6 +10,7 @@ import {
   getNextRuns,
   lastDayOfMonth,
   lastWeekdayOfMonth,
+  nearestWeekdayOfMonth,
 } from '../src/nextRuns';
 
 describe('expandFieldValues', () => {
@@ -89,6 +90,32 @@ describe('lastDayOfMonth / lastWeekdayOfMonth', () => {
   });
 });
 
+describe('nearestWeekdayOfMonth', () => {
+  it('工作日应原样返回', () => {
+    // 2026-01-15 周四
+    expect(nearestWeekdayOfMonth(2026, 1, 15)).toBe(15);
+  });
+
+  it('周六应回退周五；1 号周六应进到周一', () => {
+    // 2026-01-31 周六 → 30
+    expect(nearestWeekdayOfMonth(2026, 1, 31)).toBe(30);
+    // 2026-08-01 周六 → 3（周一）
+    expect(nearestWeekdayOfMonth(2026, 8, 1)).toBe(3);
+  });
+
+  it('周日应前进周一；月末周日应退到周五', () => {
+    // 2026-02-01 周日 → 2
+    expect(nearestWeekdayOfMonth(2026, 2, 1)).toBe(2);
+    // 2026-05-31 周日 → 29
+    expect(nearestWeekdayOfMonth(2026, 5, 31)).toBe(29);
+  });
+
+  it('越界日号应返回 null', () => {
+    expect(nearestWeekdayOfMonth(2026, 2, 30)).toBeNull();
+    expect(nearestWeekdayOfMonth(2026, 1, 0)).toBeNull();
+  });
+});
+
 describe('getNextRuns / formatRunTime', () => {
   it('默认 * * * * * ? * 应返回连续秒级触发点', () => {
     const from = new Date(2026, 0, 1, 12, 0, 0);
@@ -129,6 +156,43 @@ describe('getNextRuns / formatRunTime', () => {
     expect(formatRunTime(runs[0])).toBe('2026-01-30 09:00:00');
     expect(formatRunTime(runs[1])).toBe('2026-02-27 09:00:00');
     expect(formatRunTime(runs[2])).toBe('2026-03-31 09:00:00');
+  });
+
+  it('日字段 15W 应按最接近 15 号的工作日触发', () => {
+    const state = createDefaultCronState();
+    state.second = { mode: 'specific', raw: '0', value: '0' };
+    state.minute = { mode: 'specific', raw: '0', value: '0' };
+    state.hour = { mode: 'specific', raw: '0', value: '0' };
+    state.day = { mode: 'weekday', raw: '15W', value: '15' };
+    state.week = createUnsetField();
+    const from = new Date(2026, 0, 1, 0, 0, 0);
+    const runs = getNextRuns(state, 3, from);
+    expect(runs).toHaveLength(3);
+    // 1/15 四→15；2/15 日→16；3/15 日→16
+    expect(formatRunTime(runs[0])).toBe('2026-01-15 00:00:00');
+    expect(formatRunTime(runs[1])).toBe('2026-02-16 00:00:00');
+    expect(formatRunTime(runs[2])).toBe('2026-03-16 00:00:00');
+  });
+
+  it('日字段 1W 在 1 号为周六时应收到周一（不跨月）', () => {
+    const state = createDefaultCronState();
+    state.second = { mode: 'specific', raw: '0', value: '0' };
+    state.minute = { mode: 'specific', raw: '0', value: '0' };
+    state.hour = { mode: 'specific', raw: '0', value: '0' };
+    state.day = { mode: 'weekday', raw: '1W', value: '1' };
+    state.month = { mode: 'specific', raw: '8', value: '8' };
+    state.week = createUnsetField();
+    const from = new Date(2026, 6, 1, 0, 0, 0); // Jul 1
+    const runs = getNextRuns(state, 1, from);
+    expect(runs).toHaveLength(1);
+    expect(formatRunTime(runs[0])).toBe('2026-08-03 00:00:00');
+  });
+
+  it('日字段 weekday 缺 value 应返回空', () => {
+    const state = createDefaultCronState();
+    state.day = { mode: 'weekday', raw: 'W' };
+    state.week = createUnsetField();
+    expect(getNextRuns(state, 3, new Date(2026, 0, 1))).toEqual([]);
   });
 
   it('日字段 nL（带 value）仍无法展开，应返回空', () => {
