@@ -229,6 +229,75 @@ export function nearestWeekdayOfMonth(
 }
 
 /**
+ * @description Quartz 周数字 → JS Date.getDay()（0=周日…6=周六）
+ * @param {number} quartzWeekDay - 0/1=周日，2=周一…7=周六
+ * @returns {number | null} JS 星期；非法返回 null
+ */
+function quartzWeekToJsDay(quartzWeekDay: number): number | null {
+  if (!Number.isFinite(quartzWeekDay)) return null;
+  const q = Math.floor(quartzWeekDay);
+  if (q === 0 || q === 1) return 0;
+  if (q >= 2 && q <= 7) return q - 1;
+  return null;
+}
+
+/**
+ * @description 某月最后一个指定 Quartz 星期（nL，如 6L=最后一个周五）
+ * @param {number} year - 年
+ * @param {number} month - 月（1-12）
+ * @param {number} quartzWeekDay - Quartz 周数字（0/1=日…7=六）
+ * @returns {number | null} 日号；非法星期返回 null
+ * @example
+ * lastQuartzWeekdayOfMonth(2026, 1, 6); // 30（最后一个周五）
+ */
+export function lastQuartzWeekdayOfMonth(
+  year: number,
+  month: number,
+  quartzWeekDay: number,
+): number | null {
+  const jsTarget = quartzWeekToJsDay(quartzWeekDay);
+  if (jsTarget == null) return null;
+  let day = lastDayOfMonth(year, month);
+  while (day >= 1) {
+    if (new Date(year, month - 1, day).getDay() === jsTarget) return day;
+    day -= 1;
+  }
+  return null;
+}
+
+/**
+ * @description 某月第 n 个指定 Quartz 星期（n#m，如 6#3=第三个周五）
+ * @param {number} year - 年
+ * @param {number} month - 月（1-12）
+ * @param {number} quartzWeekDay - Quartz 周数字
+ * @param {number} nth - 第几个（1-5）
+ * @returns {number | null} 日号；该月不存在第 n 个时返回 null
+ * @example
+ * nthQuartzWeekdayOfMonth(2026, 1, 6, 3); // 16
+ */
+export function nthQuartzWeekdayOfMonth(
+  year: number,
+  month: number,
+  quartzWeekDay: number,
+  nth: number,
+): number | null {
+  if (!Number.isFinite(nth)) return null;
+  const n = Math.floor(nth);
+  if (n < 1 || n > 5) return null;
+  const jsTarget = quartzWeekToJsDay(quartzWeekDay);
+  if (jsTarget == null) return null;
+
+  const last = lastDayOfMonth(year, month);
+  let day = 1;
+  while (day <= last && new Date(year, month - 1, day).getDay() !== jsTarget) {
+    day += 1;
+  }
+  if (day > last) return null;
+  const result = day + (n - 1) * 7;
+  return result <= last ? result : null;
+}
+
+/**
  * @description 全量时分秒（每秒触发）时的快速路径：按秒递增，避免 86400 次嵌套 Date
  * @param {number} limit - 条数
  * @param {number} fromTs - 起始时间戳
@@ -246,7 +315,7 @@ function nextRunsEverySecond(limit: number, fromTs: number): Date[] {
 
 /**
  * @description 估算最近 N 次触发时间（从 from 起按日推进，早停）
- * 支持日字段 `L` / `LW` / `nW`；周字段 `L`/`#` 等仍无法展开时返回空
+ * 支持日 `L` / `LW` / `nW`，周 `nL` / `n#m`；周裸 `L` 按 Quartz 视为每周六
  * @param {CronState} state - 可视化状态
  * @param {number} [count=10] - 返回条数（1-100）
  * @param {Date} [from] - 起始时间（默认当前）
@@ -297,11 +366,44 @@ export function getNextRuns(
 
   const weekConcrete = state.week.mode !== 'every' && state.week.mode !== 'unset';
   const dayConcrete = state.day.mode !== 'every' && state.day.mode !== 'unset';
-  const weeks = weekConcrete ? expandFieldValues(state.week, 0, 7) : null;
 
-  // 周字段是具体模式但无法展开（L / W / # 等）→ 不可臆测，返回空
-  if (weekConcrete && weeks == null) {
-    return [];
+  /** 周 nL：本月最后一个星期 x */
+  const weekLastQ =
+    state.week.mode === 'last' && state.week.value != null && state.week.value !== ''
+      ? Number(state.week.value)
+      : Number.NaN;
+  const weekIsLast =
+    state.week.mode === 'last' &&
+    Number.isFinite(weekLastQ) &&
+    weekLastQ >= 0 &&
+    weekLastQ <= 7;
+  /** 周裸 L：Quartz 视为每周六（7） */
+  const weekIsBareL = state.week.mode === 'last' && !weekIsLast;
+  /** 周 n#m：第 m 个星期 n */
+  const weekNthQ = state.week.mode === 'nth' ? Number(state.week.value) : Number.NaN;
+  const weekNthN = state.week.mode === 'nth' ? Number(state.week.secondary) : Number.NaN;
+  const weekIsNth =
+    state.week.mode === 'nth' &&
+    Number.isFinite(weekNthQ) &&
+    weekNthQ >= 0 &&
+    weekNthQ <= 7 &&
+    Number.isFinite(weekNthN) &&
+    weekNthN >= 1 &&
+    weekNthN <= 5;
+
+  let weeks: number[] | null = null;
+  if (weekConcrete) {
+    if (weekIsLast || weekIsNth) {
+      weeks = null;
+    } else if (weekIsBareL) {
+      // Quartz：日-of-week 单独 L ≡ SAT
+      weeks = [7];
+    } else {
+      weeks = expandFieldValues(state.week, 0, 7);
+      if (weeks == null) return [];
+    }
+    if (state.week.mode === 'last' && !weekIsLast && !weekIsBareL) return [];
+    if (state.week.mode === 'nth' && !weekIsNth) return [];
   }
 
   const yearCandidates =
@@ -392,7 +494,19 @@ export function getNextRuns(
       cursor.setDate(cursor.getDate() + 1);
       continue;
     }
-    if (weekConcrete && weeks) {
+    if (weekIsLast) {
+      const target = lastQuartzWeekdayOfMonth(year, month, weekLastQ);
+      if (target == null || day !== target) {
+        cursor.setDate(cursor.getDate() + 1);
+        continue;
+      }
+    } else if (weekIsNth) {
+      const target = nthQuartzWeekdayOfMonth(year, month, weekNthQ, weekNthN);
+      if (target == null || day !== target) {
+        cursor.setDate(cursor.getDate() + 1);
+        continue;
+      }
+    } else if (weekConcrete && weeks) {
       // Quartz：1=周日…7=周六（0=周日）；勿按 ISO/JS 直接比
       if (!matchesQuartzWeek(cursor.getDay(), weeks)) {
         cursor.setDate(cursor.getDate() + 1);
