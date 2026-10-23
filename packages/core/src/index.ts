@@ -79,12 +79,14 @@ export { getCronTabs } from './tabs';
 export {
   resolveLocale,
   listLocales,
+  getUiMessages,
   zhCN,
   enUS,
 } from './i18n';
 export type {
   CronLocaleCode,
   CronLocaleMessages,
+  CronUiMessages,
   CronLocaleInput,
 } from './i18n';
 

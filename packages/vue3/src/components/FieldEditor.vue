@@ -10,12 +10,7 @@ import type {
   CronFieldState,
   WeekFormat,
 } from '@cron-zen/core';
-import {
-  FIELD_RANGES,
-  QUARTZ_MONTH_LABELS,
-  QUARTZ_WEEK_LABELS,
-  QUARTZ_WEEK_UI_ORDER,
-} from '@cron-zen/core';
+import { FIELD_RANGES, QUARTZ_WEEK_UI_ORDER, getUiMessages } from '@cron-zen/core';
 import ValueGrid from './ValueGrid.vue';
 
 /** 同页多实例时避免 radio name 冲突 */
@@ -34,10 +29,13 @@ const props = withDefaults(
     disabledReason?: string;
     /** @description 周字段输出写法（仅 week） */
     weekFormat?: WeekFormat;
+    /** @description UI 语言 zh-CN | en-US */
+    locale?: string;
   }>(),
   {
     disabled: false,
     weekFormat: 'number' as WeekFormat,
+    locale: 'zh-CN',
   },
 );
 
@@ -58,18 +56,12 @@ const range = computed(() => FIELD_RANGES[props.name]);
 const yearNow = new Date().getFullYear();
 const yearMax = yearNow + 23;
 
-const unitLabel = computed(() => {
-  const map: Record<CronFieldName, string> = {
-    second: '秒',
-    minute: '分钟',
-    hour: '小时',
-    day: '日',
-    month: '月',
-    week: '周',
-    year: '年',
-  };
-  return map[props.name];
-});
+const ui = computed(() => getUiMessages(props.locale));
+const unitLabel = computed(() => ui.value.editorUnits[props.name]);
+const everyLabel = computed(() => ui.value.every(unitLabel.value));
+const stepOnceUnit = computed(() =>
+  props.name === 'day' ? ui.value.dayStepUnit : unitLabel.value,
+);
 
 const wildcards = computed(() => {
   if (props.name === 'day') return '[, - * / L LW W]';
@@ -100,14 +92,16 @@ const listVals = ref<number[]>(
 );
 
 /** Quartz / cron.ren：1=周日 … 7=周六；UI 文案按周一→周日排列 */
-const weekOptions = QUARTZ_WEEK_UI_ORDER.map((value) => ({
-  value,
-  label: QUARTZ_WEEK_LABELS[value],
-}));
+const weekOptions = computed(() =>
+  QUARTZ_WEEK_UI_ORDER.map((value) => ({
+    value,
+    label: ui.value.weekDayEditor[value],
+  })),
+);
 
-const weekLabels: Record<number, string> = { ...QUARTZ_WEEK_LABELS };
+const weekLabels = computed(() => ({ ...ui.value.weekDayEditor }));
 const weekOrder = [...QUARTZ_WEEK_UI_ORDER];
-const monthLabels: Record<number, string> = { ...QUARTZ_MONTH_LABELS };
+const monthLabels = computed(() => ({ ...ui.value.monthEditor }));
 
 const hourGroups = [
   { label: 'AM:', min: 0, max: 11 },
@@ -416,8 +410,8 @@ function onList(vals: number[]): void {
         @change="selectMode('unset')"
       />
       <span>
-        <strong>不指定</strong>
-        <em>允许的通配符{{ wildcards }} 非必填</em>
+        <strong>{{ ui.unset }}</strong>
+        <em>{{ ui.wildcardsAllowed(wildcards) }} {{ ui.yearOptional }}</em>
       </span>
     </label>
 
@@ -431,8 +425,8 @@ function onList(vals: number[]): void {
         @change="selectMode('every')"
       />
       <span>
-        <strong>每{{ unitLabel }}</strong>
-        <em v-if="name !== 'year'">允许的通配符{{ wildcards }}</em>
+        <strong>{{ everyLabel }}</strong>
+        <em v-if="name !== 'year'">{{ ui.wildcardsAllowed(wildcards) }}</em>
       </span>
     </label>
 
@@ -446,7 +440,7 @@ function onList(vals: number[]): void {
         @change="selectMode('unset')"
       />
       <span>
-        <strong>不指定</strong>
+        <strong>{{ ui.unset }}</strong>
       </span>
     </label>
 
@@ -460,8 +454,8 @@ function onList(vals: number[]): void {
         @change="selectMode('range')"
       />
       <span class="cz-row__inline">
-        <strong>周期</strong>
-        从
+        <strong>{{ ui.range }}</strong>
+        {{ ui.from }}
         <template v-if="name === 'week'">
           <select
             v-model.number="rangeStart"
@@ -518,8 +512,8 @@ function onList(vals: number[]): void {
         @change="selectMode('step')"
       />
       <span class="cz-row__inline">
-        <strong>间隔</strong>
-        从
+        <strong>{{ ui.step }}</strong>
+        {{ ui.from }}
         <input
           v-model.number="stepBase"
           type="number"
@@ -530,7 +524,7 @@ function onList(vals: number[]): void {
           @change="controlInput('step')"
           @input="controlInput('step')"
         />
-        {{ unitLabel }}开始, 每
+        {{ ui.stepStart(unitLabel) }}
         <input
           v-model.number="stepValue"
           type="number"
@@ -541,7 +535,7 @@ function onList(vals: number[]): void {
           @change="controlInput('step')"
           @input="controlInput('step')"
         />
-        {{ name === 'day' ? '天' : unitLabel }}执行一次
+        {{ ui.stepOnce(stepOnceUnit) }}
       </span>
     </label>
 
@@ -555,7 +549,7 @@ function onList(vals: number[]): void {
         @change="selectMode('weekday')"
       />
       <span class="cz-row__inline">
-        每月
+        {{ ui.nearestWorkdayPrefix }}
         <input
           v-model.number="weekdayNear"
           type="number"
@@ -566,7 +560,7 @@ function onList(vals: number[]): void {
           @change="controlInput('weekday')"
           @input="controlInput('weekday')"
         />
-        号最近的那个工作日
+        {{ ui.nearestWorkdaySuffix }}
       </span>
     </label>
 
@@ -579,7 +573,7 @@ function onList(vals: number[]): void {
         :disabled="disabled"
         @change="selectMode('last')"
       />
-      <span><strong>每月最后一天</strong></span>
+      <span><strong>{{ ui.lastDayOfMonth }}</strong></span>
     </label>
 
     <!-- 日：最后工作日 LW -->
@@ -591,7 +585,7 @@ function onList(vals: number[]): void {
         :disabled="disabled"
         @change="selectMode('lastWeekday')"
       />
-      <span><strong>本月最后一个工作日</strong></span>
+      <span><strong>{{ ui.lastWorkdayOfMonth }}</strong></span>
     </label>
 
     <!-- 周：第 n 个星期 x -->
@@ -604,7 +598,7 @@ function onList(vals: number[]): void {
         @change="selectMode('nth')"
       />
       <span class="cz-row__inline">
-        第
+        {{ ui.nthPrefix }}
         <input
           v-model.number="nthOrder"
           type="number"
@@ -615,7 +609,7 @@ function onList(vals: number[]): void {
           @change="controlInput('nth')"
           @input="controlInput('nth')"
         />
-        个
+        {{ ui.nthMiddle }}
         <select
           v-model.number="nthWeekday"
           :disabled="disabled"
@@ -637,7 +631,7 @@ function onList(vals: number[]): void {
         @change="selectMode('last')"
       />
       <span class="cz-row__inline">
-        本月最后一个
+        {{ ui.lastWeekdayPrefix }}
         <select
           v-model.number="lastWeekday"
           :disabled="disabled"
@@ -659,7 +653,7 @@ function onList(vals: number[]): void {
           :disabled="disabled"
           @change="selectMode('list')"
         />
-        <strong>指定</strong>
+        <strong>{{ ui.specific }}</strong>
       </label>
       <ValueGrid
         :min="gridMin"
@@ -678,8 +672,13 @@ function onList(vals: number[]): void {
     </div>
 
     <!-- 周字段写法（对齐 cron.ren） -->
-    <div v-if="name === 'week'" class="cz-week-format" role="radiogroup" aria-label="周字段写法">
-      <span class="cz-week-format__label">周字段写法：</span>
+    <div
+      v-if="name === 'week'"
+      class="cz-week-format"
+      role="radiogroup"
+      :aria-label="ui.weekFormatAria"
+    >
+      <span class="cz-week-format__label">{{ ui.weekFormatLabel }}</span>
       <label class="cz-week-format__opt">
         <input
           type="radio"
@@ -688,7 +687,7 @@ function onList(vals: number[]): void {
           :disabled="disabled"
           @change="onWeekFormat('number')"
         />
-        数字 1~7（1=周日，2=周一，…，7=周六）
+        {{ ui.weekFormatNumber }}
       </label>
       <label class="cz-week-format__opt">
         <input
@@ -698,7 +697,7 @@ function onList(vals: number[]): void {
           :disabled="disabled"
           @change="onWeekFormat('abbr')"
         />
-        英文 SUN、MON、TUE、WED、THU、FRI、SAT
+        {{ ui.weekFormatAbbr }}
       </label>
     </div>
   </div>

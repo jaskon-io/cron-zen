@@ -11,6 +11,15 @@
 
 ---
 
+## [0.2.2] - 2026-10-23
+
+### Added
+
+- **FieldEditor / 预览壳 i18n**：`getUiMessages(locale)`；`locale="en-US"` 时「每秒 / 周期 / 间隔 / 复制…」与 Tab、describe 一致英文化（vue3 / vue2 / vanilla）。**默认仍为 `zh-CN`**
+- 文档：`/examples/script-tag.html` 复制即用的纯 HTML + CDN 示例页（含中英切换）
+
+---
+
 ## [0.2.1] - 2026-10-23
 
 ### Added

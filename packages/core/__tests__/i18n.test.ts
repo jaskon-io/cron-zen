@@ -3,6 +3,7 @@ import {
   describeCron,
   describeField,
   getCronTabs,
+  getUiMessages,
   resolveLocale,
   listLocales,
   createDefaultCronState,
@@ -69,5 +70,37 @@ describe('getCronTabs locale', () => {
   it('en-US Tab', () => {
     expect(getCronTabs('en-US')[0].label).toBe('Second');
     expect(getCronTabs('en-US')[2].label).toBe('Hour');
+  });
+});
+
+describe('getUiMessages FieldEditor', () => {
+  it('默认中文：每秒 / 周期 / 间隔', () => {
+    const ui = getUiMessages();
+    expect(ui.every(ui.editorUnits.second)).toBe('每秒');
+    expect(ui.range).toBe('周期');
+    expect(ui.step).toBe('间隔');
+    expect(ui.specific).toBe('指定');
+    expect(ui.mutexDayOccupied).toContain('日周互斥');
+  });
+
+  it('en-US：Every second / Range / Interval', () => {
+    const ui = getUiMessages('en-US');
+    expect(ui.every(ui.editorUnits.second)).toBe('Every second');
+    expect(ui.range).toBe('Range');
+    expect(ui.step).toBe('Interval');
+    expect(ui.specific).toBe('Specific');
+    expect(ui.copy).toBe('Copy');
+    expect(ui.weekDayEditor[2]).toBe('Monday');
+    expect(ui.monthEditor[1]).toBe('Jan');
+    expect(ui.mutexDayOccupied).toMatch(/mutex/i);
+  });
+
+  it('自定义包缺 ui 时应回退内置', () => {
+    const partial = {
+      ...resolveLocale('zh-CN'),
+      ui: undefined as unknown as ReturnType<typeof getUiMessages>,
+    };
+    delete (partial as { ui?: unknown }).ui;
+    expect(resolveLocale(partial).ui.every('秒')).toBe('每秒');
   });
 });

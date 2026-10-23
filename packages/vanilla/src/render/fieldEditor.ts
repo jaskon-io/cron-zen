@@ -4,12 +4,7 @@ import type {
   CronFieldState,
   WeekFormat,
 } from '@cron-zen/core';
-import {
-  FIELD_RANGES,
-  QUARTZ_MONTH_LABELS,
-  QUARTZ_WEEK_LABELS,
-  QUARTZ_WEEK_UI_ORDER,
-} from '@cron-zen/core';
+import { FIELD_RANGES, QUARTZ_WEEK_UI_ORDER, getUiMessages } from '@cron-zen/core';
 
 const MAX_GRID = 120;
 
@@ -37,6 +32,8 @@ export function mountFieldEditor(
     name: CronFieldName;
     field: CronFieldState;
     weekFormat: WeekFormat;
+    /** @description UI 语言 zh-CN | en-US */
+    locale?: string;
     onChange: (field: CronFieldState) => void;
     onWeekFormat?: (format: WeekFormat) => void;
   },
@@ -46,6 +43,7 @@ export function mountFieldEditor(
   const uid = Math.random().toString(36).slice(2, 9);
   const radioName = `cz-mode-${uid}`;
   const weekFmtName = `cz-week-fmt-${uid}`;
+  const ui = () => getUiMessages(opts.locale);
 
   let mode: UiMode = opts.field.mode;
   let weekFormat = opts.weekFormat;
@@ -62,16 +60,9 @@ export function mountFieldEditor(
     .map(Number)
     .filter((n) => Number.isFinite(n));
 
-  const unitMap: Record<CronFieldName, string> = {
-    second: '秒',
-    minute: '分钟',
-    hour: '小时',
-    day: '日',
-    month: '月',
-    week: '周',
-    year: '年',
-  };
-  const unitLabel = unitMap[opts.name];
+  const unitLabel = (): string => ui().editorUnits[opts.name];
+  const stepOnceUnit = (): string =>
+    opts.name === 'day' ? ui().dayStepUnit : unitLabel();
 
   const gridMin = opts.name === 'week' ? 1 : range.min;
   const gridMax =
@@ -179,10 +170,11 @@ export function mountFieldEditor(
     render();
   };
 
-  const weekOptions = QUARTZ_WEEK_UI_ORDER.map((v) => ({
-    value: v,
-    label: QUARTZ_WEEK_LABELS[v] ?? String(v),
-  }));
+  const weekOptions = () =>
+    QUARTZ_WEEK_UI_ORDER.map((v) => ({
+      value: v,
+      label: ui().weekDayEditor[v] ?? String(v),
+    }));
 
   const el = (tag: string, className?: string, text?: string): HTMLElement => {
     const node = document.createElement(tag);
@@ -222,7 +214,7 @@ export function mountFieldEditor(
     m: UiMode,
   ): HTMLSelectElement => {
     const sel = document.createElement('select');
-    for (const o of weekOptions) {
+    for (const o of weekOptions()) {
       const opt = document.createElement('option');
       opt.value = String(o.value);
       opt.textContent = o.label;
@@ -277,8 +269,8 @@ export function mountFieldEditor(
         render();
       });
       const span = el('span');
-      if (opts.name === 'week') span.textContent = QUARTZ_WEEK_LABELS[n] ?? String(n);
-      else if (opts.name === 'month') span.textContent = QUARTZ_MONTH_LABELS[n] ?? String(n);
+      if (opts.name === 'week') span.textContent = ui().weekDayEditor[n] ?? String(n);
+      else if (opts.name === 'month') span.textContent = ui().monthEditor[n] ?? String(n);
       else if (opts.name === 'year') span.textContent = String(n);
       else span.textContent = String(n).padStart(2, '0');
       lab.appendChild(cb);
@@ -291,29 +283,34 @@ export function mountFieldEditor(
   const render = (): void => {
     host.replaceChildren();
     const root = el('div', 'cz-field');
+    const m = ui();
+    const unit = unitLabel();
 
     if (opts.name === 'year') {
       const body = el('span');
-      body.innerHTML = '<strong>不指定</strong><em> 非必填</em>';
+      const strong = el('strong', undefined, m.unset);
+      const em = el('em', undefined, ` ${m.yearOptional}`);
+      body.appendChild(strong);
+      body.appendChild(em);
       root.appendChild(rowRadio('unset', body));
     }
 
     {
       const body = el('span');
-      body.innerHTML = `<strong>每${unitLabel}</strong>`;
+      body.appendChild(el('strong', undefined, m.every(unit)));
       root.appendChild(rowRadio('every', body));
     }
 
     if (opts.name === 'day' || opts.name === 'week') {
       const body = el('span');
-      body.innerHTML = '<strong>不指定</strong>';
+      body.appendChild(el('strong', undefined, m.unset));
       root.appendChild(rowRadio('unset', body));
     }
 
     {
       const body = el('span', 'cz-row__inline');
-      body.appendChild(el('strong', undefined, '周期'));
-      body.appendChild(document.createTextNode(' 从 '));
+      body.appendChild(el('strong', undefined, m.range));
+      body.appendChild(document.createTextNode(` ${m.from} `));
       if (opts.name === 'week') {
         body.appendChild(
           weekSelect(rangeStart, (v) => {
@@ -338,61 +335,59 @@ export function mountFieldEditor(
             rangeEnd = v;
           }, 'range'),
         );
-        body.appendChild(document.createTextNode(` ${unitLabel}`));
+        body.appendChild(document.createTextNode(` ${unit}`));
       }
       root.appendChild(rowRadio('range', body));
     }
 
     if (opts.name !== 'week') {
       const body = el('span', 'cz-row__inline');
-      body.appendChild(el('strong', undefined, '间隔'));
-      body.appendChild(document.createTextNode(' 从 '));
+      body.appendChild(el('strong', undefined, m.step));
+      body.appendChild(document.createTextNode(` ${m.from} `));
       body.appendChild(
         numInput(stepBase, range.min, range.max, (v) => {
           stepBase = v;
         }, 'step'),
       );
-      body.appendChild(document.createTextNode(` ${unitLabel}开始, 每 `));
+      body.appendChild(document.createTextNode(` ${m.stepStart(unit)} `));
       body.appendChild(
         numInput(stepValue, 1, range.max, (v) => {
           stepValue = v;
         }, 'step'),
       );
-      body.appendChild(
-        document.createTextNode(` ${opts.name === 'day' ? '天' : unitLabel}执行一次`),
-      );
+      body.appendChild(document.createTextNode(` ${m.stepOnce(stepOnceUnit())}`));
       root.appendChild(rowRadio('step', body));
     }
 
     if (opts.name === 'day') {
       const bodyW = el('span', 'cz-row__inline');
-      bodyW.appendChild(document.createTextNode('每月 '));
+      bodyW.appendChild(document.createTextNode(`${m.nearestWorkdayPrefix} `));
       bodyW.appendChild(
         numInput(weekdayNear, 1, 31, (v) => {
           weekdayNear = v;
         }, 'weekday'),
       );
-      bodyW.appendChild(document.createTextNode(' 号最近的那个工作日'));
+      bodyW.appendChild(document.createTextNode(` ${m.nearestWorkdaySuffix}`));
       root.appendChild(rowRadio('weekday', bodyW));
 
       const bodyL = el('span');
-      bodyL.innerHTML = '<strong>每月最后一天</strong>';
+      bodyL.appendChild(el('strong', undefined, m.lastDayOfMonth));
       root.appendChild(rowRadio('last', bodyL));
 
       const bodyLW = el('span');
-      bodyLW.innerHTML = '<strong>本月最后一个工作日</strong>';
+      bodyLW.appendChild(el('strong', undefined, m.lastWorkdayOfMonth));
       root.appendChild(rowRadio('lastWeekday', bodyLW));
     }
 
     if (opts.name === 'week') {
       const bodyN = el('span', 'cz-row__inline');
-      bodyN.appendChild(document.createTextNode('第 '));
+      bodyN.appendChild(document.createTextNode(`${m.nthPrefix} `));
       bodyN.appendChild(
         numInput(nthOrder, 1, 5, (v) => {
           nthOrder = v;
         }, 'nth'),
       );
-      bodyN.appendChild(document.createTextNode(' 个 '));
+      bodyN.appendChild(document.createTextNode(` ${m.nthMiddle} `));
       bodyN.appendChild(
         weekSelect(nthWeekday, (v) => {
           nthWeekday = v;
@@ -401,7 +396,7 @@ export function mountFieldEditor(
       root.appendChild(rowRadio('nth', bodyN));
 
       const bodyLast = el('span', 'cz-row__inline');
-      bodyLast.appendChild(document.createTextNode('本月最后一个 '));
+      bodyLast.appendChild(document.createTextNode(`${m.lastWeekdayPrefix} `));
       bodyLast.appendChild(
         weekSelect(lastWeekday, (v) => {
           lastWeekday = v;
@@ -418,7 +413,7 @@ export function mountFieldEditor(
     listRadio.checked = mode === 'list' || mode === 'specific';
     listRadio.addEventListener('change', () => selectMode('list'));
     head.appendChild(listRadio);
-    head.appendChild(el('strong', undefined, '指定'));
+    head.appendChild(el('strong', undefined, m.specific));
     listBlock.appendChild(head);
     listBlock.appendChild(renderGrid());
     root.appendChild(listBlock);
@@ -426,7 +421,8 @@ export function mountFieldEditor(
     if (opts.name === 'week' && opts.onWeekFormat) {
       const fmt = el('div', 'cz-week-format');
       fmt.setAttribute('role', 'radiogroup');
-      fmt.appendChild(el('span', 'cz-week-format__label', '周字段写法：'));
+      fmt.setAttribute('aria-label', m.weekFormatAria);
+      fmt.appendChild(el('span', 'cz-week-format__label', m.weekFormatLabel));
       for (const f of ['number', 'abbr'] as WeekFormat[]) {
         const lab = el('label', 'cz-week-format__opt');
         const r = document.createElement('input');
@@ -439,11 +435,7 @@ export function mountFieldEditor(
         });
         lab.appendChild(r);
         lab.appendChild(
-          document.createTextNode(
-            f === 'number'
-              ? '数字 1~7（1=周日，2=周一，…，7=周六）'
-              : '英文缩写 SUN…SAT',
-          ),
+          document.createTextNode(f === 'number' ? m.weekFormatNumber : m.weekFormatAbbr),
         );
         fmt.appendChild(lab);
       }
