@@ -1,7 +1,7 @@
 # 介绍
 
 <p class="cz-lead">
-cron-zen 是可嵌入的 Cron 能力库：<strong>@cron-zen/core</strong> 是任意运行时都能用的引擎；可视化可选 <strong>vanilla</strong>（纯 DOM）或 <strong>vue3</strong> / <strong>vue2</strong>。不绑定 Element / Ant。
+cron-zen 是可嵌入的 Cron 能力库：<strong>无 Vue 用 vanilla</strong>，<strong>Vue2 用 vue2</strong>，<strong>Vue3 用 vue3</strong>；只要引擎用 <strong>core</strong>。源码 TypeScript，产物支持 JS / ESM / CJS。不绑定 Element / Ant。
 </p>
 
 ## 你会得到什么

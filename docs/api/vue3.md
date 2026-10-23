@@ -25,9 +25,25 @@
 pnpm add @cron-zen/vue3 @cron-zen/core vue
 ```
 
-```ts
+::: code-group
+
+```ts [ESM · TS]
+import { CronZen } from '@cron-zen/vue3'
 import '@cron-zen/vue3/style.css'
 ```
+
+```js [ESM · JS]
+import { CronZen } from '@cron-zen/vue3'
+import '@cron-zen/vue3/style.css'
+```
+
+```js [CJS]
+const { CronZen } = require('@cron-zen/vue3')
+```
+
+:::
+
+更多 → [引入方式](/guide/import-styles)
 
 ::: tip 不要为了弹窗去装 Element
 默认路径是 `CronZen` / `useCronZen`。只有全站已在用 Element Plus 时，才考虑按需引入 `CronZenPicker`（并自行 `pnpm add element-plus`）。

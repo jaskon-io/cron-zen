@@ -7,7 +7,7 @@ import { defineConfig } from 'vitepress';
  */
 export default defineConfig({
   title: 'cron-zen',
-  description: '可嵌入的 Cron 引擎：纯 TypeScript 核心，不绑定 UI 库，Vue 适配可选',
+  description: '可嵌入的 Cron 引擎：无 Vue 用 vanilla，Vue2/Vue3 分包装，JS/TS · ESM/CJS',
   lang: 'zh-CN',
   base: '/cron-zen/',
   cleanUrls: true,
@@ -47,6 +47,8 @@ export default defineConfig({
           { text: '介绍', link: '/guide/introduction' },
           { text: '选哪个包', link: '/guide/choose-package' },
           { text: '快速开始', link: '/guide/quick-start' },
+          { text: '引入方式与 Demo', link: '/guide/import-styles' },
+          { text: '质量与安全', link: '/guide/quality' },
           { text: '任意 UI 库集成', link: '/guide/any-ui' },
           { text: '与 cron.ren 对照', link: '/guide/vs-cron-ren' },
         ],
@@ -86,11 +88,13 @@ export default defineConfig({
             { text: '介绍', link: '/guide/introduction' },
             { text: '选哪个包', link: '/guide/choose-package' },
             { text: '快速开始', link: '/guide/quick-start' },
+            { text: '引入方式与 Demo', link: '/guide/import-styles' },
           ],
         },
         {
           text: '指南',
           items: [
+            { text: '质量与安全', link: '/guide/quality' },
             { text: '任意 UI 库集成', link: '/guide/any-ui' },
             { text: '与 cron.ren 对照', link: '/guide/vs-cron-ren' },
           ],

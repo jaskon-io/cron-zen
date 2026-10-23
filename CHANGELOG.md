@@ -9,6 +9,10 @@
 
 ## [Unreleased]
 
+### Changed
+
+- 文档：选包决策改为「无 Vue→vanilla / Vue2→vue2 / Vue3→vue3」；新增「引入方式与 Demo」「质量与安全」；首页 / 快速开始 Demo 升华（JS·TS·ESM·CJS·CDN）
+
 ---
 
 ## [0.2.0] - 2026-10-23
