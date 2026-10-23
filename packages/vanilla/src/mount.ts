@@ -1,5 +1,5 @@
 import type { CronFieldName, CronState, WeekFormat } from '@cron-zen/core';
-import { getCronTabs } from '@cron-zen/core';
+import { getCronTabs, getUiMessages } from '@cron-zen/core';
 import {
   createCronZen,
   displayFieldValue,
@@ -105,11 +105,9 @@ export function mountCronZen(
 
   const nav = document.createElement('nav');
   nav.className = 'cron-zen__tabs';
-  nav.setAttribute('aria-label', 'Cron 字段');
 
   const body = document.createElement('section');
   body.className = 'cron-zen__body';
-  body.setAttribute('aria-label', '字段配置');
 
   const mutexEl = document.createElement('p');
   mutexEl.className = 'cron-zen__mutex';
@@ -125,7 +123,6 @@ export function mountCronZen(
 
   const preview = document.createElement('section');
   preview.className = 'cron-zen__preview';
-  preview.setAttribute('aria-label', '预览');
   preview.hidden = !showPreview;
 
   el.replaceChildren(root);
@@ -152,15 +149,16 @@ export function mountCronZen(
   };
 
   const mutexTip = (snap: ReturnType<CronZenController['getSnapshot']>): string => {
+    const m = getUiMessages(snap.locale);
     const dayConcrete =
       snap.state.day.mode !== 'every' && snap.state.day.mode !== 'unset';
     const weekConcrete =
       snap.state.week.mode !== 'every' && snap.state.week.mode !== 'unset';
     if (snap.activeTab === 'day' && weekConcrete) {
-      return '当前已配置「周」字段；若在此选择具体「日」，将自动把周改为 ?（日周互斥）';
+      return m.mutexDayOccupied;
     }
     if (snap.activeTab === 'week' && dayConcrete) {
-      return '当前已配置「日」字段；若在此选择具体「周」，将自动把日改为 ?（日周互斥）';
+      return m.mutexWeekOccupied;
     }
     return '';
   };
@@ -172,15 +170,18 @@ export function mountCronZen(
       name,
       field: snap.state[name],
       weekFormat: snap.weekFormat,
+      locale: snap.locale,
       onChange: (field) => ctrl.updateField(name, field),
       onWeekFormat: (f) => ctrl.setWeekFormat(f),
     });
   };
 
   let lastTab: CronFieldName | null = null;
+  let lastLocale: string | null = null;
 
   const renderPreview = (): void => {
     const snap = ctrl.getSnapshot();
+    const m = getUiMessages(snap.locale);
     if (!showPreview) {
       if (snap.hint) {
         compactHint.hidden = false;
@@ -193,6 +194,7 @@ export function mountCronZen(
     }
 
     preview.replaceChildren();
+    preview.setAttribute('aria-label', m.ariaPreview);
 
     const tabs = getCronTabs(snap.locale);
     const fields = document.createElement('div');
@@ -214,7 +216,7 @@ export function mountCronZen(
       vBtn.type = 'button';
       vBtn.className =
         'cron-zen__field-val' + (snap.activeTab === tab.name ? ' is-active' : '');
-      vBtn.title = `编辑${tab.label}`;
+      vBtn.title = m.editField(tab.label);
       const code = document.createElement('code');
       code.textContent = displayFieldValue(
         tab.name,
@@ -233,21 +235,23 @@ export function mountCronZen(
     exprBlock.className = 'cron-zen__preview-block';
     const titleRow = document.createElement('div');
     titleRow.className = 'cron-zen__preview-title';
-    titleRow.appendChild(Object.assign(document.createElement('h3'), { textContent: '表达式' }));
+    titleRow.appendChild(
+      Object.assign(document.createElement('h3'), { textContent: m.expression }),
+    );
     const actions = document.createElement('div');
     actions.className = 'cron-zen__actions';
     const copyBtn = document.createElement('button');
     copyBtn.type = 'button';
     copyBtn.className = 'cron-zen__btn';
-    copyBtn.textContent = '复制';
+    copyBtn.textContent = m.copy;
     copyBtn.addEventListener('click', async () => {
       ctrl.flush();
       try {
         await navigator.clipboard.writeText(ctrl.getSnapshot().expression);
-        copyBtn.textContent = '已复制';
+        copyBtn.textContent = m.copied;
         if (copiedTimer) clearTimeout(copiedTimer);
         copiedTimer = setTimeout(() => {
-          copyBtn.textContent = '复制';
+          copyBtn.textContent = m.copy;
           copiedTimer = null;
         }, 1500);
       } catch {
@@ -257,7 +261,7 @@ export function mountCronZen(
     const resetBtn = document.createElement('button');
     resetBtn.type = 'button';
     resetBtn.className = 'cron-zen__btn';
-    resetBtn.textContent = '重置';
+    resetBtn.textContent = m.reset;
     resetBtn.addEventListener('click', () => {
       ctrl.reset();
       ctrl.setActiveTab('second');
@@ -268,7 +272,7 @@ export function mountCronZen(
     exprBlock.appendChild(titleRow);
     const pre = document.createElement('pre');
     pre.className = 'cron-zen__expr';
-    pre.textContent = snap.expression || '（编辑后生成）';
+    pre.textContent = snap.expression || m.expressionPlaceholder;
     exprBlock.appendChild(pre);
     const desc = document.createElement('p');
     desc.className = 'cron-zen__desc';
@@ -280,7 +284,7 @@ export function mountCronZen(
     runsBlock.className = 'cron-zen__preview-block';
     const runsTitle = document.createElement('h3');
     const n = Math.min(Math.max(options.nextCount ?? 10, 1), 100);
-    runsTitle.textContent = `近 ${n} 次执行时间`;
+    runsTitle.textContent = m.nextRunsTitle(n);
     runsBlock.appendChild(runsTitle);
     if (snap.nextRuns.length) {
       const ol = document.createElement('ol');
@@ -294,7 +298,7 @@ export function mountCronZen(
     } else {
       const p = document.createElement('p');
       p.className = 'cron-zen__desc';
-      p.textContent = '当前模式暂无法估算触发时间（如 L / W / #）';
+      p.textContent = m.cannotEstimate;
       runsBlock.appendChild(p);
     }
     preview.appendChild(runsBlock);
@@ -309,6 +313,9 @@ export function mountCronZen(
 
   const render = (): void => {
     const snap = ctrl.getSnapshot();
+    const m = getUiMessages(snap.locale);
+    nav.setAttribute('aria-label', m.ariaTabs);
+    body.setAttribute('aria-label', m.ariaBody);
     const tip = mutexTip(snap);
     if (tip) {
       mutexEl.hidden = false;
@@ -318,9 +325,10 @@ export function mountCronZen(
     }
 
     renderTabs();
-    // 仅切 Tab 时重建编辑器，避免输入时重绘抢焦点
-    if (lastTab !== snap.activeTab) {
+    // 仅切 Tab / 换语言时重建编辑器，避免输入时重绘抢焦点
+    if (lastTab !== snap.activeTab || lastLocale !== snap.locale) {
       lastTab = snap.activeTab;
+      lastLocale = snap.locale;
       ensureFieldEditor(snap.activeTab);
     }
     renderPreview();

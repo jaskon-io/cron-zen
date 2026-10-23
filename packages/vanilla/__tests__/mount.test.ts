@@ -74,4 +74,23 @@ describe('mountCronZen', () => {
     api.destroy();
     expect(document.querySelector('#app')?.children.length).toBe(0);
   });
+
+  it('locale=en-US 时 FieldEditor 与壳文案英文化', () => {
+    const api = mountCronZen('#app', {
+      value: '',
+      debounceMs: 0,
+      locale: 'en-US',
+    });
+    const text = document.body.textContent || '';
+    expect(text).toContain('Second');
+    expect(text).toContain('Every second');
+    expect(text).toContain('Range');
+    expect(text).toContain('Copy');
+    expect(text).not.toContain('每秒');
+    api.controller.setLocale('zh-CN');
+    const zh = document.body.textContent || '';
+    expect(zh).toContain('每秒');
+    expect(zh).toContain('周期');
+    api.destroy();
+  });
 });

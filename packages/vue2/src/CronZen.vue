@@ -13,7 +13,7 @@ import {
   toRef,
 } from 'vue';
 import type { CronFieldName, CronFieldState, WeekFormat } from '@cron-zen/core';
-import { getCronTabs } from '@cron-zen/core';
+import { getCronTabs, getUiMessages } from '@cron-zen/core';
 import { displayFieldValue, useCronZen } from './composables/useCronZen';
 import FieldEditor from './components/FieldEditor.vue';
 import './styles/cron-zen.css';
@@ -88,6 +88,7 @@ export default defineComponent({
     });
 
     const tabs = computed(() => getCronTabs(props.locale));
+    const ui = computed(() => getUiMessages(props.locale));
     const currentField = computed(() => state.value[activeTab.value]);
     const copied = ref(false);
     let copiedTimer: ReturnType<typeof setTimeout> | null = null;
@@ -107,10 +108,10 @@ export default defineComponent({
       const weekConcrete =
         state.value.week.mode !== 'every' && state.value.week.mode !== 'unset';
       if (activeTab.value === 'day' && weekConcrete) {
-        return '当前已配置「周」字段；若在此选择具体「日」，将自动把周改为 ?（日周互斥）';
+        return ui.value.mutexDayOccupied;
       }
       if (activeTab.value === 'week' && dayConcrete) {
-        return '当前已配置「日」字段；若在此选择具体「周」，将自动把日改为 ?（日周互斥）';
+        return ui.value.mutexWeekOccupied;
       }
       return '';
     });
@@ -196,6 +197,7 @@ export default defineComponent({
     return {
       showPreview: toRef(props, 'showPreview'),
       nextCount: toRef(props, 'nextCount'),
+      locale: toRef(props, 'locale'),
       state,
       activeTab,
       expression,
@@ -205,6 +207,7 @@ export default defineComponent({
       hint,
       weekFormat,
       tabs,
+      ui,
       currentField,
       fieldParts,
       mutexTip,
@@ -221,7 +224,7 @@ export default defineComponent({
 
 <template>
   <div class="cron-zen" :class="{ 'cron-zen--compact': !showPreview }" data-cron-zen>
-    <nav class="cron-zen__tabs" aria-label="Cron 字段">
+    <nav class="cron-zen__tabs" :aria-label="ui.ariaTabs">
       <button
         v-for="tab in tabs"
         :key="tab.name"
@@ -234,13 +237,14 @@ export default defineComponent({
       </button>
     </nav>
 
-    <section class="cron-zen__body" aria-label="字段配置">
+    <section class="cron-zen__body" :aria-label="ui.ariaBody">
       <p v-if="mutexTip" class="cron-zen__mutex">{{ mutexTip }}</p>
       <FieldEditor
         :key="activeTab"
         :name="activeTab"
         :value="currentField"
         :week-format="weekFormat"
+        :locale="locale"
         @input="onFieldUpdate"
         @update:weekFormat="onWeekFormat"
       />
@@ -254,7 +258,7 @@ export default defineComponent({
       {{ hint }}
     </p>
 
-    <section v-if="showPreview" class="cron-zen__preview" aria-label="预览">
+    <section v-if="showPreview" class="cron-zen__preview" :aria-label="ui.ariaPreview">
       <div class="cron-zen__fields">
         <div class="cron-zen__fields-head">
           <button
@@ -275,7 +279,7 @@ export default defineComponent({
             type="button"
             class="cron-zen__field-val"
             :class="{ 'is-active': activeTab === p.name }"
-            :title="'编辑' + p.label"
+            :title="ui.editField(p.label)"
             @click="onTab(p.name)"
           >
             <code>{{ p.value }}</code>
@@ -285,24 +289,24 @@ export default defineComponent({
 
       <div class="cron-zen__preview-block">
         <div class="cron-zen__preview-title">
-          <h3>表达式</h3>
+          <h3>{{ ui.expression }}</h3>
           <div class="cron-zen__actions">
             <button type="button" class="cron-zen__btn" @click="copyExpression">
-              {{ copied ? '已复制' : '复制' }}
+              {{ copied ? ui.copied : ui.copy }}
             </button>
-            <button type="button" class="cron-zen__btn" @click="onReset">重置</button>
+            <button type="button" class="cron-zen__btn" @click="onReset">{{ ui.reset }}</button>
           </div>
         </div>
-        <pre class="cron-zen__expr">{{ expression || '（编辑后生成）' }}</pre>
+        <pre class="cron-zen__expr">{{ expression || ui.expressionPlaceholder }}</pre>
         <p class="cron-zen__desc">{{ description }}</p>
       </div>
 
       <div class="cron-zen__preview-block">
-        <h3>近 {{ nextCount }} 次执行时间</h3>
+        <h3>{{ ui.nextRunsTitle(nextCount) }}</h3>
         <ol v-if="nextRuns.length" class="cron-zen__runs">
           <li v-for="(t, i) in nextRuns" :key="i">{{ t }}</li>
         </ol>
-        <p v-else class="cron-zen__desc">当前模式暂无法估算触发时间（如 L / W / #）</p>
+        <p v-else class="cron-zen__desc">{{ ui.cannotEstimate }}</p>
       </div>
 
       <p

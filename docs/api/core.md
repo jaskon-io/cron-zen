@@ -100,7 +100,7 @@ describeCron(createDefaultCronState()) // '每天'
 describeCron(createDefaultCronState(), { locale: 'en-US' }) // 'Every day'
 ```
 
-`getCronTabs('en-US')` 可得到英文 Tab 标签。内置 `zh-CN` / `en-US`；亦可用 `resolveLocale` / 自定义 `CronLocaleMessages`。
+`getCronTabs('en-US')` 可得到英文 Tab 标签。`getUiMessages('en-US')` 提供 FieldEditor / 预览壳文案（每秒→Every second、复制→Copy 等）。内置 `zh-CN` / `en-US`；亦可用 `resolveLocale` / 自定义 `CronLocaleMessages`（含 `ui`）。
 
 已支持的特殊字段（无法安全估算时返回 `[]`）：
 
@@ -123,6 +123,7 @@ describeCron(createDefaultCronState(), { locale: 'en-US' }) // 'Every day'
 | `lastQuartzWeekdayOfMonth` / `nthQuartzWeekdayOfMonth` | 周日历辅助（nL / #） |
 | `QUARTZ_MONTH_LABELS` / `quartzMonthLabel` | 月中文标签 |
 | `getCronTabs` | Tab 元数据 |
+| `getUiMessages` | FieldEditor / 预览壳 UI 文案 |
 | `createDefaultCronState` | 默认状态 |
 | `generateCronOrThrow` | 失败抛错 |
 

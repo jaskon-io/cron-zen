@@ -4,7 +4,7 @@
 按运行时选包：无 Vue → <strong>vanilla</strong>；Vue 2 → <strong>vue2</strong>；Vue 3 → <strong>vue3</strong>。只要引擎 → <strong>core</strong>。支持 TypeScript 与纯 JavaScript（ESM / CJS）。
 </p>
 
-完整对照 → [选哪个包](./choose-package) · 引入写法 → [引入方式与 Demo](./import-styles)
+完整对照 → [选哪个包](./choose-package) · 引入写法 → [引入方式与 Demo](./import-styles) · [纯 HTML 示例页](/examples/script-tag.html)
 
 ## 1. 无 Vue / 无 UI 框架 → `@cron-zen/vanilla`
 
@@ -15,8 +15,8 @@ pnpm add @cron-zen/vanilla @cron-zen/core
 ::: code-group
 
 ```html [script 直引 · 纯 HTML]
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@cron-zen/vanilla@0.2.1/dist/cron-zen-vanilla.css" />
-<script src="https://cdn.jsdelivr.net/npm/@cron-zen/vanilla@0.2.1/dist/cron-zen-vanilla.browser.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@cron-zen/vanilla@0.2.2/dist/cron-zen-vanilla.css" />
+<script src="https://cdn.jsdelivr.net/npm/@cron-zen/vanilla@0.2.2/dist/cron-zen-vanilla.browser.js"></script>
 <script>
   CronZen.mountCronZen('#cron', {
     value: '',

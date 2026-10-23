@@ -166,7 +166,9 @@ module.exports = { previewNext }
 
 ## 4. 浏览器 `<script>` 直引（推荐纯 HTML）
 
-不需要打包器、不需要 `type="module"`。用 **browser 单文件**（已内联 `core`），挂到全局 `window.CronZen`：
+不需要打包器、不需要 `type="module"`。用 **browser 单文件**（已内联 `core`），挂到全局 `window.CronZen`。
+
+**复制即用整页**（中英切换）：部署后打开 [examples/script-tag.html](/examples/script-tag.html)，或本仓库 `docs/public/examples/script-tag.html`。
 
 ```html
 <!DOCTYPE html>
@@ -176,7 +178,7 @@ module.exports = { previewNext }
   <title>cron-zen · script 直引</title>
   <link
     rel="stylesheet"
-    href="https://cdn.jsdelivr.net/npm/@cron-zen/vanilla@0.2.1/dist/cron-zen-vanilla.css"
+    href="https://cdn.jsdelivr.net/npm/@cron-zen/vanilla@0.2.2/dist/cron-zen-vanilla.css"
   />
 </head>
 <body>
@@ -184,7 +186,7 @@ module.exports = { previewNext }
   <pre id="out"></pre>
 
   <!-- 一个 JS 即可（内含 core） -->
-  <script src="https://cdn.jsdelivr.net/npm/@cron-zen/vanilla@0.2.1/dist/cron-zen-vanilla.browser.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@cron-zen/vanilla@0.2.2/dist/cron-zen-vanilla.browser.js"></script>
   <script>
     // 全局：CronZen.mountCronZen / createCronZen / parseCron / …
     var api = CronZen.mountCronZen('#cron', {
@@ -223,10 +225,10 @@ module.exports = { previewNext }
 ```html [vanilla · CDN ESM]
 <link
   rel="stylesheet"
-  href="https://cdn.jsdelivr.net/npm/@cron-zen/vanilla@0.2.1/dist/cron-zen-vanilla.css"
+  href="https://cdn.jsdelivr.net/npm/@cron-zen/vanilla@0.2.2/dist/cron-zen-vanilla.css"
 />
 <script type="module">
-  import { mountCronZen } from 'https://cdn.jsdelivr.net/npm/@cron-zen/vanilla@0.2.1/+esm'
+  import { mountCronZen } from 'https://cdn.jsdelivr.net/npm/@cron-zen/vanilla@0.2.2/+esm'
 
   mountCronZen('#cron', {
     value: '',

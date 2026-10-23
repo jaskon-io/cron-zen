@@ -9,12 +9,7 @@ import type {
   CronFieldState,
   WeekFormat,
 } from '@cron-zen/core';
-import {
-  FIELD_RANGES,
-  QUARTZ_MONTH_LABELS,
-  QUARTZ_WEEK_LABELS,
-  QUARTZ_WEEK_UI_ORDER,
-} from '@cron-zen/core';
+import { FIELD_RANGES, QUARTZ_WEEK_UI_ORDER, getUiMessages } from '@cron-zen/core';
 import ValueGrid from './ValueGrid.vue';
 
 export default Vue.extend({
@@ -31,6 +26,8 @@ export default Vue.extend({
     disabledReason: { type: String, default: '' },
     /** @description 周字段输出写法 */
     weekFormat: { type: String as PropType<WeekFormat>, default: 'number' },
+    /** @description UI 语言 zh-CN | en-US */
+    locale: { type: String, default: 'zh-CN' },
   },
   data() {
     const range = FIELD_RANGES[this.name];
@@ -54,13 +51,7 @@ export default Vue.extend({
       listVals: ((this.value.values ?? [])
         .map((v) => Number(v))
         .filter((n) => Number.isFinite(n))) as number[],
-      weekLabels: { ...QUARTZ_WEEK_LABELS } as Record<number, string>,
       weekOrder: [...QUARTZ_WEEK_UI_ORDER] as number[],
-      monthLabels: { ...QUARTZ_MONTH_LABELS } as Record<number, string>,
-      weekOptions: QUARTZ_WEEK_UI_ORDER.map((value) => ({
-        value,
-        label: QUARTZ_WEEK_LABELS[value],
-      })),
       yearNow,
       yearMax: yearNow + 23,
       syncingFromProp: false,
@@ -70,17 +61,29 @@ export default Vue.extend({
     range(): { min: number; max: number } {
       return FIELD_RANGES[this.name];
     },
+    ui() {
+      return getUiMessages(this.locale);
+    },
     unitLabel(): string {
-      const map: Record<CronFieldName, string> = {
-        second: '秒',
-        minute: '分钟',
-        hour: '小时',
-        day: '日',
-        month: '月',
-        week: '周',
-        year: '年',
-      };
-      return map[this.name];
+      return this.ui.editorUnits[this.name];
+    },
+    everyLabel(): string {
+      return this.ui.every(this.unitLabel);
+    },
+    stepOnceUnit(): string {
+      return this.name === 'day' ? this.ui.dayStepUnit : this.unitLabel;
+    },
+    weekLabels(): Record<number, string> {
+      return { ...this.ui.weekDayEditor };
+    },
+    monthLabels(): Record<number, string> {
+      return { ...this.ui.monthEditor };
+    },
+    weekOptions(): { value: number; label: string }[] {
+      return QUARTZ_WEEK_UI_ORDER.map((value) => ({
+        value,
+        label: this.ui.weekDayEditor[value],
+      }));
     },
     gridMin(): number {
       if (this.name === 'year') return this.yearNow;
@@ -94,15 +97,6 @@ export default Vue.extend({
     },
     listDefaultValue(): number {
       return this.name === 'week' ? 2 : this.gridMin;
-    },
-    everyLabel(): string {
-      if (this.name === 'second') return '每一秒钟';
-      if (this.name === 'minute') return '每一分钟';
-      if (this.name === 'hour') return '每一小时';
-      if (this.name === 'day') return '每日';
-      if (this.name === 'month') return '每月';
-      if (this.name === 'week') return '每周';
-      return '每年';
     },
   },
   watch: {
@@ -352,8 +346,8 @@ export default Vue.extend({
         :disabled="disabled"
         @change="selectMode('unset')"
       />
-      <span>不指定</span>
-      <span class="cz-row__muted">允许的通配符[, - * / L W #]</span>
+      <span>{{ ui.unset }}</span>
+      <span class="cz-row__muted">{{ ui.wildcardsAllowed('[, - * / L W #]') }}</span>
     </label>
 
     <label v-if="name === 'year'" class="cz-row">
@@ -364,7 +358,9 @@ export default Vue.extend({
         :disabled="disabled"
         @change="selectMode('unset')"
       />
-      <span>不指定 <span class="cz-row__muted">（非必填）</span></span>
+      <span
+        >{{ ui.unset }} <span class="cz-row__muted">（{{ ui.yearOptional }}）</span></span
+      >
     </label>
 
     <label class="cz-row">
@@ -375,7 +371,7 @@ export default Vue.extend({
         :disabled="disabled"
         @change="selectMode('every')"
       />
-      <span>{{ everyLabel }} 允许的通配符[, - * /]</span>
+      <span>{{ everyLabel }} {{ ui.wildcardsAllowed('[, - * /]') }}</span>
     </label>
 
     <label class="cz-row">
@@ -387,7 +383,7 @@ export default Vue.extend({
         @change="selectMode('range')"
       />
       <span class="cz-row__inline">
-        周期从
+        {{ ui.range }}{{ ui.from }}
         <input
           v-model.number="rangeStart"
           type="number"
@@ -422,7 +418,7 @@ export default Vue.extend({
         @change="selectMode('step')"
       />
       <span class="cz-row__inline">
-        从
+        {{ ui.from }}
         <input
           v-model.number="stepBase"
           type="number"
@@ -433,7 +429,7 @@ export default Vue.extend({
           @change="controlInput('step')"
           @input="controlInput('step')"
         />
-        {{ unitLabel }}开始, 每
+        {{ ui.stepStart(unitLabel) }}
         <input
           v-model.number="stepValue"
           type="number"
@@ -444,7 +440,7 @@ export default Vue.extend({
           @change="controlInput('step')"
           @input="controlInput('step')"
         />
-        {{ name === 'day' ? '天' : unitLabel }}执行一次
+        {{ ui.stepOnce(stepOnceUnit) }}
       </span>
     </label>
 
@@ -457,7 +453,7 @@ export default Vue.extend({
         @change="selectMode('weekday')"
       />
       <span class="cz-row__inline">
-        每月
+        {{ ui.nearestWorkdayPrefix }}
         <input
           v-model.number="weekdayNear"
           type="number"
@@ -468,7 +464,7 @@ export default Vue.extend({
           @change="controlInput('weekday')"
           @input="controlInput('weekday')"
         />
-        号最近的那个工作日
+        {{ ui.nearestWorkdaySuffix }}
       </span>
     </label>
 
@@ -480,7 +476,7 @@ export default Vue.extend({
         :disabled="disabled"
         @change="selectMode('last')"
       />
-      <span><strong>每月最后一天</strong></span>
+      <span><strong>{{ ui.lastDayOfMonth }}</strong></span>
     </label>
 
     <label v-if="name === 'day'" class="cz-row">
@@ -491,7 +487,7 @@ export default Vue.extend({
         :disabled="disabled"
         @change="selectMode('lastWeekday')"
       />
-      <span><strong>本月最后一个工作日</strong></span>
+      <span><strong>{{ ui.lastWorkdayOfMonth }}</strong></span>
     </label>
 
     <label v-if="name === 'week'" class="cz-row">
@@ -503,7 +499,7 @@ export default Vue.extend({
         @change="selectMode('nth')"
       />
       <span class="cz-row__inline">
-        第
+        {{ ui.nthPrefix }}
         <input
           v-model.number="nthOrder"
           type="number"
@@ -514,7 +510,7 @@ export default Vue.extend({
           @change="controlInput('nth')"
           @input="controlInput('nth')"
         />
-        个
+        {{ ui.nthMiddle }}
         <select
           v-model.number="nthWeekday"
           :disabled="disabled"
@@ -535,7 +531,7 @@ export default Vue.extend({
         @change="selectMode('last')"
       />
       <span class="cz-row__inline">
-        本月最后一个
+        {{ ui.lastWeekdayPrefix }}
         <select
           v-model.number="lastWeekday"
           :disabled="disabled"
@@ -556,7 +552,7 @@ export default Vue.extend({
           :disabled="disabled"
           @change="selectMode('list')"
         />
-        <strong>指定</strong>
+        <strong>{{ ui.specific }}</strong>
       </label>
       <ValueGrid
         :min="gridMin"
@@ -571,8 +567,13 @@ export default Vue.extend({
       />
     </div>
 
-    <div v-if="name === 'week'" class="cz-week-format" role="radiogroup" aria-label="周字段写法">
-      <span class="cz-week-format__label">周字段写法：</span>
+    <div
+      v-if="name === 'week'"
+      class="cz-week-format"
+      role="radiogroup"
+      :aria-label="ui.weekFormatAria"
+    >
+      <span class="cz-week-format__label">{{ ui.weekFormatLabel }}</span>
       <label class="cz-week-format__opt">
         <input
           type="radio"
@@ -581,7 +582,7 @@ export default Vue.extend({
           :disabled="disabled"
           @change="onWeekFormat('number')"
         />
-        数字 1~7（1=周日，2=周一，…，7=周六）
+        {{ ui.weekFormatNumber }}
       </label>
       <label class="cz-week-format__opt">
         <input
@@ -591,7 +592,7 @@ export default Vue.extend({
           :disabled="disabled"
           @change="onWeekFormat('abbr')"
         />
-        英文 SUN、MON、TUE、WED、THU、FRI、SAT
+        {{ ui.weekFormatAbbr }}
       </label>
     </div>
   </div>

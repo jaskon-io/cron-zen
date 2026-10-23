@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>cron-zen · script 直引示例</title>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/@cron-zen/vanilla@0.2.2/dist/cron-zen-vanilla.css"
+    />
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f4f7f6;
+        --ink: #0f172a;
+        --muted: #64748b;
+        --card: #fff;
+        --line: #e2e8f0;
+        --accent: #0f766e;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font-family: 'Segoe UI', system-ui, sans-serif;
+        background:
+          radial-gradient(900px 400px at 10% -10%, #ccfbf1 0%, transparent 55%),
+          radial-gradient(700px 360px at 100% 0%, #e0f2fe 0%, transparent 50%),
+          var(--bg);
+        color: var(--ink);
+        min-height: 100vh;
+      }
+      main {
+        max-width: 720px;
+        margin: 0 auto;
+        padding: 2rem 1.25rem 3rem;
+      }
+      h1 {
+        font-size: 1.5rem;
+        margin: 0 0 0.35rem;
+        letter-spacing: -0.02em;
+      }
+      .lead {
+        margin: 0 0 1.25rem;
+        color: var(--muted);
+        font-size: 0.95rem;
+        line-height: 1.5;
+      }
+      #cron {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 0.75rem;
+      }
+      .out {
+        margin-top: 1rem;
+        padding: 0.85rem 1rem;
+        background: #0f172a;
+        color: #e2e8f0;
+        border-radius: 10px;
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 0.875rem;
+        word-break: break-all;
+      }
+      .out strong {
+        color: #5eead4;
+        font-weight: 600;
+      }
+      .toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-bottom: 0.85rem;
+      }
+      button {
+        appearance: none;
+        border: 1px solid var(--line);
+        background: var(--card);
+        color: var(--ink);
+        border-radius: 8px;
+        padding: 0.4rem 0.75rem;
+        font-size: 0.875rem;
+        cursor: pointer;
+      }
+      button:hover {
+        border-color: var(--accent);
+        color: var(--accent);
+      }
+      button.is-on {
+        background: var(--accent);
+        border-color: var(--accent);
+        color: #fff;
+      }
+      a.doc {
+        color: var(--accent);
+        font-size: 0.875rem;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>cron-zen · &lt;script&gt; 直引</h1>
+      <p class="lead">
+        复制本页即可：CDN CSS + browser IIFE，无需打包器。完整文档见
+        <a class="doc" href="/cron-zen/guide/quick-start">快速开始</a>。
+      </p>
+
+      <div class="toolbar">
+        <button type="button" id="btn-zh" class="is-on">中文</button>
+        <button type="button" id="btn-en">English</button>
+      </div>
+
+      <div id="cron"></div>
+      <p class="out"><strong>expression</strong> · <span id="out">（编辑后生成）</span></p>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/@cron-zen/vanilla@0.2.2/dist/cron-zen-vanilla.browser.js"></script>
+    <script>
+      var out = document.getElementById('out')
+      var api = CronZen.mountCronZen('#cron', {
+        value: '',
+        locale: 'zh-CN',
+        onChange: function (expr) {
+          out.textContent = expr || '（编辑后生成）'
+        },
+      })
+
+      function setLocale(locale) {
+        api.controller.setLocale(locale)
+        document.getElementById('btn-zh').classList.toggle('is-on', locale === 'zh-CN')
+        document.getElementById('btn-en').classList.toggle('is-on', locale === 'en-US')
+      }
+
+      document.getElementById('btn-zh').onclick = function () {
+        setLocale('zh-CN')
+      }
+      document.getElementById('btn-en').onclick = function () {
+        setLocale('en-US')
+      }
+    </script>
+  </body>
+</html>
