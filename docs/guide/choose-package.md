@@ -16,8 +16,18 @@
 ::: tip 记牢
 - **无 UI 框架、无 Vue / React，又要点选 Cron** → 用 **`vanilla`**。  
 - **有 React** → **`react`**；**有 Vue 2** → **`vue2`**；**有 Vue 3** → **`vue3`**。  
-- **只要解析 / 生成 / 校验 / 近 N 次**（脚本、接口）→ 只装 **`core`**。
+- **只要解析 / 生成 / 校验 / 近 N 次**（脚本、接口）→ 只装 **`core`**，函数说明见 [API · core](/api/core)。
 :::
+
+**在线 Demo（四包 + 引擎各一份）** → [示例总览](./examples)
+
+| 包 | Demo |
+| --- | --- |
+| vanilla | [examples/vanilla.html](/examples/vanilla.html) |
+| react | [examples/react.html](/examples/react.html) |
+| vue2 | [examples/vue2.html](/examples/vue2.html) |
+| vue3 | [examples/vue3.html](/examples/vue3.html) |
+| core（只要引擎） | [examples/core.html](/examples/core.html) · [API 全文](/api/core) |
 
 ## 安装对照
 
@@ -143,7 +153,11 @@ const cron = ref('')
 </template>
 ```
 
-### D. 只要引擎 → core（Node / 接口）
+### D. React → react
+
+见 [react Demo](/examples/react.html) 与 [API · react](/api/react)。
+
+### E. 只要引擎 → core（Node / 接口）
 
 ```js
 // ESM
@@ -159,6 +173,9 @@ if (res.success) {
 }
 ```
 
+**每个导出函数的参数 / 返回值 / 示例** → [API · @cron-zen/core](/api/core)  
+**可点的引擎沙箱** → [examples/core.html](/examples/core.html)
+
 更多引入写法（`require` / ESM / 浏览器）→ [引入方式与 Demo](./import-styles)
 
 ## 质量与可信度
@@ -167,7 +184,7 @@ if (res.success) {
 
 ## 下一步
 
+- [在线示例 Demo](./examples)（四包 + core）
 - [引入方式与 Demo](./import-styles)
 - [快速开始](./quick-start)
-- [质量与安全](./quality)
-- [API · vanilla](/api/vanilla) · [vue2](/api/vue2) · [vue3](/api/vue3) · [core](/api/core)
+- [API · core](/api/core) · [vanilla](/api/vanilla) · [react](/api/react) · [vue2](/api/vue2) · [vue3](/api/vue3)

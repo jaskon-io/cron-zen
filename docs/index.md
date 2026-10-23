@@ -13,6 +13,9 @@ hero:
       text: 引入方式
       link: /guide/import-styles
     - theme: alt
+      text: 在线 Demo
+      link: /guide/examples
+    - theme: alt
       text: Playground
       link: /guide/playground
   image:
@@ -41,7 +44,7 @@ features:
 | **Vue 2.7** | `@cron-zen/vue2` | `@cron-zen/core` |
 | **Vue 3** | `@cron-zen/vue3` | `@cron-zen/core` |
 
-完整对照：[选哪个包](/guide/choose-package) · [引入方式](/guide/import-styles) · [质量与安全](/guide/quality)
+完整对照：[选哪个包](/guide/choose-package) · [在线 Demo（四包 + core）](/guide/examples) · [API · core](/api/core) · [引入方式](/guide/import-styles)
 
 ## 30 秒 Demo
 
