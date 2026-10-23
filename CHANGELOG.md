@@ -11,6 +11,16 @@
 
 ---
 
+## [0.1.6] - 2026-10-23
+
+### Added
+
+- **`@cron-zen/vanilla` npm 首发**：无框架 `mountCronZen` / `createCronZen`（纯 DOM + TS，ESM/CJS）
+- vanilla Vitest：24 cases（状态机 / 挂载 / 压测）
+- 文档站：API · vanilla；选包 / 介绍补充无框架路径
+
+---
+
 ## [0.1.5] - 2026-10-23
 
 ### Added

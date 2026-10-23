@@ -2,7 +2,7 @@
   "name": "cron-zen",
   "version": "0.1.0",
   "private": true,
-  "description": "Embeddable Quartz/cron.ren Cron engine — @cron-zen/core + @cron-zen/vue3 + @cron-zen/vue2",
+  "description": "Embeddable Quartz/cron.ren Cron engine — core + vanilla + vue3 + vue2",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -26,13 +26,14 @@
     "docs:dev": "pnpm --filter @cron-zen/docs dev",
     "docs:build": "node scripts/build-docs.mjs",
     "docs:preview": "pnpm --filter @cron-zen/docs preview --base /cron-zen/",
-    "build": "pnpm -r --filter @cron-zen/core build && pnpm -r --filter @cron-zen/vue3 build && pnpm -r --filter @cron-zen/vue2 build",
+    "build": "pnpm -r --filter @cron-zen/core build && pnpm -r --filter @cron-zen/vanilla build && pnpm -r --filter @cron-zen/vue3 build && pnpm -r --filter @cron-zen/vue2 build",
     "build:core": "pnpm --filter @cron-zen/core build",
+    "build:vanilla": "pnpm --filter @cron-zen/vanilla build",
     "build:vue3": "pnpm --filter @cron-zen/vue3 build",
     "build:vue2": "pnpm --filter @cron-zen/vue2 build",
-    "test": "pnpm -r --filter @cron-zen/core test && pnpm -r --filter @cron-zen/vue3 test && pnpm -r --filter @cron-zen/vue2 test",
+    "test": "pnpm -r --filter @cron-zen/core test && pnpm -r --filter @cron-zen/vanilla test && pnpm -r --filter @cron-zen/vue3 test && pnpm -r --filter @cron-zen/vue2 test",
     "test:coverage": "pnpm -r --filter @cron-zen/core test:coverage",
-    "typecheck": "pnpm -r --filter @cron-zen/core typecheck && pnpm -r --filter @cron-zen/vue3 typecheck && pnpm -r --filter @cron-zen/vue2 typecheck"
+    "typecheck": "pnpm -r --filter @cron-zen/core typecheck && pnpm -r --filter @cron-zen/vanilla typecheck && pnpm -r --filter @cron-zen/vue3 typecheck && pnpm -r --filter @cron-zen/vue2 typecheck"
   },
   "engines": {
     "node": ">=18",
