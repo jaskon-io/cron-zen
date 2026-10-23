@@ -13,6 +13,10 @@
 
 - 文档：`getPrevRuns` / 常用模板 API 示例；适配层说明；Playground 露出完整编辑器；CDN 示例钉到 `0.2.4`；README 徽标对齐
 
+### Fixed
+
+- 工作区依赖恢复为 `workspace:*`（发版误写成硬编码版本导致 Pages CI `pnpm install --frozen-lockfile` 失败）
+
 ---
 
 ## [0.2.4] - 2026-10-23

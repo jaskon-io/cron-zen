@@ -44,8 +44,8 @@
     "prepublishOnly": "pnpm run typecheck && pnpm run test && pnpm run build"
   },
   "dependencies": {
-    "@cron-zen/core": "0.2.4",
-    "@cron-zen/vanilla": "0.2.4"
+    "@cron-zen/core": "workspace:*",
+    "@cron-zen/vanilla": "workspace:*"
   },
   "peerDependencies": {
     "react": "^18.0.0 || ^19.0.0",
