@@ -1,0 +1,62 @@
+{
+  "name": "@cron-zen/vanilla",
+  "version": "0.1.6",
+  "description": "Framework-free Cron visual editor for cron-zen — mount(el) / createCronZen, pure JS/TS",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jaskon-io/cron-zen.git",
+    "directory": "packages/vanilla"
+  },
+  "homepage": "https://jaskon-io.github.io/cron-zen/api/vanilla",
+  "bugs": {
+    "url": "https://github.com/jaskon-io/cron-zen/issues"
+  },
+  "type": "module",
+  "main": "./dist/cron-zen-vanilla.umd.cjs",
+  "module": "./dist/cron-zen-vanilla.js",
+  "types": "./dist/index.d.ts",
+  "style": "./dist/cron-zen-vanilla.css",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/cron-zen-vanilla.js",
+      "require": "./dist/cron-zen-vanilla.umd.cjs"
+    },
+    "./style.css": "./dist/cron-zen-vanilla.css"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "keywords": [
+    "cron",
+    "cron-expression",
+    "vanilla",
+    "dom",
+    "typescript",
+    "cron-zen"
+  ],
+  "scripts": {
+    "build": "vite build && tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.build.json --noEmit",
+    "test": "vitest run",
+    "prepublishOnly": "pnpm run typecheck && pnpm run test && pnpm run build"
+  },
+  "dependencies": {
+    "@cron-zen/core": "workspace:*"
+  },
+  "devDependencies": {
+    "jsdom": "^25.0.1",
+    "typescript": "^5.7.2",
+    "vite": "^5.4.11",
+    "vitest": "^2.1.8"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "sideEffects": [
+    "**/*.css"
+  ]
+}

@@ -64,7 +64,7 @@ docs: clarify core vs vue3 runtime boundaries
 发版包：
 
 - `@cron-zen/core` + `@cron-zen/vue3`（版本号 **对齐**）
-- `@cron-zen/vue2`（可独立补丁号发版；大功能对齐时可与主线同号）
+- `@cron-zen/vue2` / `@cron-zen/vanilla`（可独立补丁号发版；大功能对齐时可与主线同号）
 
 ---
 
