@@ -377,7 +377,7 @@ export function validateCronState(state: CronState): ValidateResult {
       Number(field.value) > Number(field.secondary)
     ) {
       warnings.push(
-        `${name} 字段区间起点大于终点（${field.value}-${field.secondary}），已按原样输出；近 N 次预估可能不可用`,
+        `${name} 字段区间起点大于终点（${field.value}-${field.secondary}），已按原样输出；近 N 次将按环形回绕估算`,
       );
     }
   }

@@ -23,9 +23,14 @@ describe('expandFieldValues', () => {
     expect(
       expandFieldValues({ mode: 'range', raw: '2-4', value: '2', secondary: '4' }, 0, 10),
     ).toEqual([2, 3, 4]);
+    // 倒序回绕（对齐 cron.ren）：5-1 → 5..10 + 0..1
     expect(
       expandFieldValues({ mode: 'range', raw: '5-1', value: '5', secondary: '1' }, 0, 10),
-    ).toBeNull();
+    ).toEqual([5, 6, 7, 8, 9, 10, 0, 1]);
+    // 周 7-3（周六→周二）
+    expect(
+      expandFieldValues({ mode: 'range', raw: '7-3', value: '7', secondary: '3' }, 1, 7),
+    ).toEqual([7, 1, 2, 3]);
     expect(
       expandFieldValues({ mode: 'step', raw: '0/2', value: '0', secondary: '2' }, 0, 5),
     ).toEqual([0, 2, 4]);
@@ -99,6 +104,36 @@ describe('getNextRuns / formatRunTime', () => {
     expect(runs.length).toBeGreaterThan(0);
     expect(runs[0].getDay()).toBe(0); // JS 周日
     expect(runs[0].getFullYear()).toBe(2026);
+  });
+
+  it('周倒序 7-3（周六→周二）应能预估近 N 次', () => {
+    const state = createDefaultCronState();
+    state.second = { mode: 'specific', raw: '0', value: '0' };
+    state.minute = { mode: 'specific', raw: '0', value: '0' };
+    state.hour = { mode: 'specific', raw: '9', value: '9' };
+    state.day = createUnsetField();
+    state.week = { mode: 'range', raw: '7-3', value: '7', secondary: '3' };
+    // 2026-01-01 周四；合法 JS getDay：6=六,0=日,1=一,2=二
+    const from = new Date(2026, 0, 1, 0, 0, 0);
+    const runs = getNextRuns(state, 4, from);
+    expect(runs).toHaveLength(4);
+    const allowed = new Set([6, 0, 1, 2]);
+    for (const r of runs) {
+      expect(allowed.has(r.getDay())).toBe(true);
+      expect(r.getHours()).toBe(9);
+    }
+  });
+
+  it('小时倒序 22-2 应能预估近 N 次', () => {
+    const state = createDefaultCronState();
+    state.second = { mode: 'specific', raw: '0', value: '0' };
+    state.minute = { mode: 'specific', raw: '0', value: '0' };
+    state.hour = { mode: 'range', raw: '22-2', value: '22', secondary: '2' };
+    const from = new Date(2026, 0, 1, 12, 0, 0);
+    const runs = getNextRuns(state, 5, from);
+    expect(runs).toHaveLength(5);
+    // 日内按时钟升序：当天 22、23，次日 0、1、2
+    expect(runs.map((d) => d.getHours())).toEqual([22, 23, 0, 1, 2]);
   });
 
 

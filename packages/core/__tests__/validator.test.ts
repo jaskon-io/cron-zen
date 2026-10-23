@@ -114,6 +114,7 @@ describe('validateFieldRange', () => {
     const full = validateCronState(state);
     expect(full.valid).toBe(true);
     expect(full.warnings.some((w) => w.includes('起点大于终点'))).toBe(true);
+    expect(full.warnings.some((w) => w.includes('环形回绕'))).toBe(true);
     expect(
       validateFieldRange('second', {
         mode: 'step',

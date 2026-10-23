@@ -37,6 +37,31 @@ function rangeArray(start: number, end: number): number[] | null {
 }
 
 /**
+ * @description 展开区间；起点大于终点时按环形字段回绕（对齐 cron.ren，如周 7-3、时 22-2）
+ * @param {number} start - 起（已夹紧）
+ * @param {number} end - 止（已夹紧）
+ * @param {number} min - 字段下界
+ * @param {number} max - 字段上界
+ * @returns {number[] | null} 候选列表
+ * @example
+ * rangeArrayMaybeWrap(7, 3, 1, 7); // [7, 1, 2, 3]
+ * rangeArrayMaybeWrap(22, 2, 0, 23); // [22, 23, 0, 1, 2]
+ */
+function rangeArrayMaybeWrap(
+  start: number,
+  end: number,
+  min: number,
+  max: number,
+): number[] | null {
+  if (start <= end) return rangeArray(start, end);
+  const high = rangeArray(start, max);
+  const low = rangeArray(min, end);
+  if (!high || !low) return null;
+  if (high.length + low.length > MAX_EXPAND_SPAN) return null;
+  return [...high, ...low];
+}
+
+/**
  * @description 将字段状态展开为候选数值集合（覆盖 every / specific / list / range / step）
  * @param {CronFieldState} field - 字段状态
  * @param {number} min - 最小值
@@ -79,13 +104,14 @@ export function expandFieldValues(
     case 'range': {
       const rawStart = Number(field.value);
       const rawEnd = Number(field.secondary);
-      if (!Number.isFinite(rawStart) || !Number.isFinite(rawEnd) || rawStart > rawEnd) {
+      if (!Number.isFinite(rawStart) || !Number.isFinite(rawEnd)) {
         return null;
       }
       // 夹紧到合法区间，避免 0..999999 这类恶意/异常输入占满内存
       const start = clampInt(rawStart, min, max);
       const end = clampInt(rawEnd, min, max);
-      return rangeArray(start, end);
+      // 倒序（如周 7-3）：按 [min,max] 环形回绕展开，供近 N 次预估
+      return rangeArrayMaybeWrap(start, end, min, max);
     }
     case 'step': {
       const step = Number(field.secondary);
@@ -94,19 +120,21 @@ export function expandFieldValues(
       const safeStep = Math.max(1, Math.min(Math.floor(step), span));
       const rawBase = field.value && field.value.length > 0 ? field.value : '*';
 
-      // 区间步长 a-b/n（Quartz / cron.ren）
+      // 区间步长 a-b/n（Quartz / cron.ren）；支持 a>b 回绕
       if (rawBase.includes('-')) {
         const [a, b] = rawBase.split('-');
         const startRaw = Number(a);
         const endRaw = Number(b);
-        if (!Number.isFinite(startRaw) || !Number.isFinite(endRaw) || startRaw > endRaw) {
+        if (!Number.isFinite(startRaw) || !Number.isFinite(endRaw)) {
           return null;
         }
         const start = clampInt(startRaw, min, max);
         const end = clampInt(endRaw, min, max);
+        const domain = rangeArrayMaybeWrap(start, end, min, max);
+        if (!domain) return null;
         const out: number[] = [];
-        for (let v = start; v <= end; v += safeStep) {
-          out.push(v);
+        for (let i = 0; i < domain.length; i += safeStep) {
+          out.push(domain[i]!);
           if (out.length > MAX_EXPAND_SPAN) break;
         }
         return out;
@@ -174,9 +202,10 @@ export function getNextRuns(
   if (limit === 0) return [];
   if (!(from instanceof Date) || Number.isNaN(from.getTime())) return [];
 
-  const seconds = expandFieldValues(state.second, 0, 59);
-  const minutes = expandFieldValues(state.minute, 0, 59);
-  const hours = expandFieldValues(state.hour, 0, 23);
+  // 时间字段按数值升序迭代，保证倒序回绕（如时 22-2 → [22,23,0,1,2]）在日内按时钟推进
+  const seconds = expandFieldValues(state.second, 0, 59)?.slice().sort((a, b) => a - b) ?? null;
+  const minutes = expandFieldValues(state.minute, 0, 59)?.slice().sort((a, b) => a - b) ?? null;
+  const hours = expandFieldValues(state.hour, 0, 23)?.slice().sort((a, b) => a - b) ?? null;
   const days = expandFieldValues(state.day, 1, 31);
   const months = expandFieldValues(state.month, 1, 12);
 

@@ -194,14 +194,15 @@ describe('Quartz / cron.ren 对齐', () => {
       ).toEqual([0, 15, 30, 45]);
     });
 
-    it('非法 a-b/n 应展开失败', () => {
+    it('a-b/n 倒序应回绕展开；非数字仍失败', () => {
+      // 10-1/2 → domain 10..59 + 0..1，再按步长取样
       expect(
         expandFieldValues(
           { mode: 'step', raw: '10-1/2', value: '10-1', secondary: '2' },
           0,
           59,
         ),
-      ).toBeNull();
+      ).toEqual([10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40, 42, 44, 46, 48, 50, 52, 54, 56, 58, 0]);
       expect(
         expandFieldValues(
           { mode: 'step', raw: 'a-b/2', value: 'a-b', secondary: '2' },
