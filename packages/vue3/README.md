@@ -4,7 +4,7 @@ Vue 3 可视化 Cron 表达式生成器。基于 `@cron-zen/core`，交互对齐
 
 **本包需要 Vue 3。** 包名中的 `vue3` 即运行时要求；无 Vue 请用 [`@cron-zen/core`](https://www.npmjs.com/package/@cron-zen/core)。
 
-**默认不依赖 Element / Ant 等 UI 库。** `CronZen` / `useCronZen` 即可嵌入；文档里的原生 `<dialog>` 示例仍是 Vue SFC，只是弹层没用组件库。`CronZenPicker` 仅为 Element 可选壳。
+**默认不依赖 Element / Ant。** 推荐只用 `CronZen` / `useCronZen`。`CronZenPicker` 是 Element 可选示例壳；`CronZenPlugin` **只注册** `CronZen`，不会全局挂上 Picker。
 
 选包：[选哪个包](https://jaskon-io.github.io/cron-zen/guide/choose-package) · 弹层：[任意 UI 库集成](https://jaskon-io.github.io/cron-zen/guide/any-ui)。
 
@@ -12,10 +12,6 @@ Vue 3 可视化 Cron 表达式生成器。基于 `@cron-zen/core`，交互对齐
 
 ```bash
 pnpm add @cron-zen/vue3 @cron-zen/core vue
-```
-
-```bash
-pnpm add element-plus   # 仅使用 CronZenPicker 时需要；不是安装前提
 ```
 
 ```ts
@@ -26,7 +22,11 @@ import '@cron-zen/vue3/style.css';
 createApp(App).use(CronZenPlugin).mount('#app');
 ```
 
-也可按需引入组件，不必装插件。
+也可按需引入 `CronZen`，不必装插件。只有全站已用 Element Plus 时才需要：
+
+```bash
+pnpm add element-plus   # 仅 CronZenPicker；不是安装前提
+```
 
 ## Quick Start
 
@@ -101,9 +101,9 @@ function onChange(state: CronState) {
 
 ---
 
-## `CronZenPicker`（可选 · Element 壳）
+## `CronZenPicker`（可选 · Element 示例壳）
 
-输入框 +「选择」按钮 + Dialog，**仅当你已在用 Element Plus** 时省胶水代码。弹窗内使用 `CronZen`（`showPreview=false`）。其它 UI 库请自行包一层 Dialog，不必为此引入 Element。
+输入框 +「选择」按钮 + Dialog。**仅当你已在用 Element Plus** 时省胶水；请 `import { CronZenPicker }` 按需使用（插件不会全局注册）。其它 UI 库请自行包一层 Dialog，见 [任意 UI 库集成](https://jaskon-io.github.io/cron-zen/guide/any-ui)，**不要**为了 Picker 专门引入 Element。
 
 ### Props
 

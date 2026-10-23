@@ -12,10 +12,10 @@
 
 | 导出 | 需要 Vue | UI 库依赖 | 用途 |
 | --- | --- | --- | --- |
-| `CronZen` | 是 | 无 | 完整可视化编辑器 |
-| `useCronZen` | 是 | 无 | 无头状态机 |
-| `CronZenPicker` | 是 | Element Plus（optional peer） | 官方 Element 壳 |
-| `CronZenPlugin` | 是 | 无 | 可选全局注册 |
+| `CronZen` | 是 | 无 | 完整可视化编辑器（推荐） |
+| `useCronZen` | 是 | 无 | 无头状态机（自绘 UI） |
+| `CronZenPlugin` | 是 | 无 | 仅全局注册 `CronZen` |
+| `CronZenPicker` | 是 | Element Plus（按需） | 可选示例壳；**不**随插件注册 |
 
 弹层用原生 `<dialog>` / Ant / Naive：仍在 Vue 应用内，见 [任意 UI 库集成](/guide/any-ui)。
 
@@ -25,13 +25,13 @@
 pnpm add @cron-zen/vue3 @cron-zen/core vue
 ```
 
-```bash
-pnpm add element-plus   # 仅 CronZenPicker
-```
-
 ```ts
 import '@cron-zen/vue3/style.css'
 ```
+
+::: tip 不要为了弹窗去装 Element
+默认路径是 `CronZen` / `useCronZen`。只有全站已在用 Element Plus 时，才考虑按需引入 `CronZenPicker`（并自行 `pnpm add element-plus`）。
+:::
 
 ---
 
@@ -88,9 +88,9 @@ const {
 
 ---
 
-## CronZenPicker
+## CronZenPicker（可选 · 不推荐作为默认）
 
-面向**已使用 Element Plus** 的表单。其它 UI 库请用 [任意 UI 库集成](/guide/any-ui)。
+面向**已使用 Element Plus** 的表单胶水。其它 UI 库请用 [任意 UI 库集成](/guide/any-ui)。需按需导入，不会被 `CronZenPlugin` 全局注册。
 
 ### Props
 

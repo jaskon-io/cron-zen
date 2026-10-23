@@ -25,9 +25,9 @@ features:
   - title: vue3 = 只给 Vue 3
     details: '@cron-zen/vue3 提供 CronZen / useCronZen。包名里的 vue3 表示适配层，不是「无 Vue 也能跑组件」。'
   - title: UI 库可换
-    details: 不绑定 Element / Ant。弹窗可用原生 dialog、Naive、自研壳；Picker 仅为 Element 可选示例。
+    details: 不绑定 Element / Ant。弹窗可用原生 dialog、Naive、自研壳；CronZenPicker 仅为 Element 可选示例，插件不强制注册。
   - title: 行为可预期
-    details: 年省略、日周互斥、周数字 / abbr、倒序区间等对齐 cron.ren / Quartz 主路径。
+    details: 年省略、日周互斥、近 N 次（L/LW/nW、周 nL/#）、倒序区间等对齐 cron.ren / Quartz 主路径。
 ---
 
 <div class="cz-home-install">

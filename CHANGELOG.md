@@ -11,6 +11,15 @@
 
 ---
 
+## [0.1.4] - 2026-10-23
+
+### Changed
+
+- `CronZenPlugin` 仅全局注册 `CronZen`，不再注册依赖 Element 的 `CronZenPicker`（仍可按需 import）
+- 文档 / README / npm description：强化「默认无 UI 库」、0.1.3 能力与 Release 入口
+
+---
+
 ## [0.1.3] - 2026-10-23
 
 ### Added
@@ -73,6 +82,7 @@
 
 ---
 
+[0.1.4]: https://github.com/jaskon-io/cron-zen/compare/v0.1.3...v0.1.4
 [0.1.3]: https://github.com/jaskon-io/cron-zen/compare/v0.1.2...v0.1.3
 [0.1.2]: https://github.com/jaskon-io/cron-zen/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/jaskon-io/cron-zen/compare/v0.1.0...v0.1.1
