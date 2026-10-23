@@ -2,7 +2,7 @@
   "name": "cron-zen",
   "version": "0.1.0",
   "private": true,
-  "description": "Embeddable Quartz/cron.ren Cron engine — @cron-zen/core (any runtime) + @cron-zen/vue3 (Vue 3, no Element required)",
+  "description": "Embeddable Quartz/cron.ren Cron engine — @cron-zen/core + @cron-zen/vue3 + @cron-zen/vue2",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -30,7 +30,7 @@
     "build:core": "pnpm --filter @cron-zen/core build",
     "build:vue3": "pnpm --filter @cron-zen/vue3 build",
     "build:vue2": "pnpm --filter @cron-zen/vue2 build",
-    "test": "pnpm -r --filter @cron-zen/core test && pnpm -r --filter @cron-zen/vue3 test",
+    "test": "pnpm -r --filter @cron-zen/core test && pnpm -r --filter @cron-zen/vue3 test && pnpm -r --filter @cron-zen/vue2 test",
     "test:coverage": "pnpm -r --filter @cron-zen/core test:coverage",
     "typecheck": "pnpm -r --filter @cron-zen/core typecheck && pnpm -r --filter @cron-zen/vue3 typecheck && pnpm -r --filter @cron-zen/vue2 typecheck"
   },

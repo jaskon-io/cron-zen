@@ -5,6 +5,13 @@ import type { PluginObject, VueConstructor } from 'vue';
 import CronZen from './CronZen.vue';
 
 export { CronZen };
+export {
+  useCronZen,
+  displayFieldValue,
+  getCronTabs,
+  FIELD_RANGES,
+} from './composables/useCronZen';
+export type { UseCronZenOptions, UseCronZenReturn } from './composables/useCronZen';
 
 export {
   describeCron,
@@ -12,7 +19,6 @@ export {
   getNextRuns,
   expandFieldValues,
   formatRunTime,
-  getCronTabs,
   parseCron,
   generateCron,
   enforceDayWeekMutex,

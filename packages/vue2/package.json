@@ -1,14 +1,14 @@
 {
   "name": "@cron-zen/vue2",
-  "version": "0.1.4",
-  "description": "Vue 2.7 Cron visual editor for cron-zen — aligned with @cron-zen/vue3, no Element required",
+  "version": "0.1.5",
+  "description": "Vue 2.7 Cron visual editor for cron-zen — CronZen / useCronZen, aligned with @cron-zen/vue3",
   "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/jaskon-io/cron-zen.git",
     "directory": "packages/vue2"
   },
-  "homepage": "https://jaskon-io.github.io/cron-zen/",
+  "homepage": "https://jaskon-io.github.io/cron-zen/api/vue2",
   "bugs": {
     "url": "https://github.com/jaskon-io/cron-zen/issues"
   },
@@ -39,7 +39,8 @@
   "scripts": {
     "build": "vite build && tsc -p tsconfig.build.json",
     "typecheck": "tsc -p tsconfig.build.json --noEmit",
-    "prepublishOnly": "pnpm run typecheck && pnpm run build"
+    "test": "vitest run",
+    "prepublishOnly": "pnpm run typecheck && pnpm run test && pnpm run build"
   },
   "peerDependencies": {
     "vue": "^2.7.0"
@@ -49,9 +50,13 @@
   },
   "devDependencies": {
     "@vitejs/plugin-vue2": "^2.3.3",
+    "@vue/test-utils": "^1.3.6",
+    "jsdom": "^25.0.1",
     "typescript": "^5.7.2",
     "vite": "^5.4.11",
-    "vue": "^2.7.16"
+    "vitest": "^2.1.8",
+    "vue": "^2.7.16",
+    "vue-template-compiler": "2.7.16"
   },
   "publishConfig": {
     "access": "public"

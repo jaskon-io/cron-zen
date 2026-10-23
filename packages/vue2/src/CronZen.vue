@@ -5,31 +5,20 @@
  * <cron-zen v-model="cron" />
  * <cron-zen :value.sync="cron" :show-preview="false" />
  */
-import Vue from 'vue';
-import type {
-  CronFieldName,
-  CronFieldState,
-  CronState,
-  ValidateResult,
-  WeekFormat,
-} from '@cron-zen/core';
 import {
-  createDefaultCronState,
-  generateCron,
-  parseCron,
-  validateCronState,
-  enforceDayWeekMutex,
-  describeCron,
-  formatRunTime,
-  getNextRuns,
-  getCronTabs,
-  stringifyField,
-  weekTokenUsesAbbr,
-} from '@cron-zen/core';
+  computed,
+  defineComponent,
+  onBeforeUnmount,
+  ref,
+  toRef,
+} from 'vue';
+import type { CronFieldName, CronFieldState, WeekFormat } from '@cron-zen/core';
+import { getCronTabs } from '@cron-zen/core';
+import { displayFieldValue, useCronZen } from './composables/useCronZen';
 import FieldEditor from './components/FieldEditor.vue';
 import './styles/cron-zen.css';
 
-export default Vue.extend({
+export default defineComponent({
   name: 'CronZen',
   components: { FieldEditor },
   model: {
@@ -54,237 +43,120 @@ export default Vue.extend({
      */
     showPreview: { type: Boolean, default: true },
   },
-  data() {
-    return {
-      state: createDefaultCronState() as CronState,
-      activeTab: 'second' as CronFieldName,
-      expression: '',
-      description: '',
-      nextRuns: [] as string[],
-      validation: { valid: true, errors: [], warnings: [] } as ValidateResult,
-      hint: '',
-      tabs: getCronTabs(),
-      timer: null as ReturnType<typeof setTimeout> | null,
-      syncingOut: false,
-      weekFormat: 'number' as WeekFormat,
-      copied: false,
-      copiedTimer: null as ReturnType<typeof setTimeout> | null,
-    };
-  },
-  computed: {
-    /** @description 夹紧后的预览条数 */
-    safeNextCount(): number {
-      const n = Number.isFinite(this.nextCount) ? Math.floor(this.nextCount) : 10;
-      return Math.min(Math.max(n, 1), 100);
-    },
-    /** @description 夹紧后的防抖毫秒 */
-    safeDebounceMs(): number {
-      const d = Number.isFinite(this.debounceMs) ? Math.floor(this.debounceMs) : 0;
-      return Math.min(Math.max(d, 0), 5000);
-    },
-    currentField(): CronFieldState {
-      return this.state[this.activeTab];
-    },
-    fieldParts(): { name: CronFieldName; label: string; value: string }[] {
-      return this.tabs.map((tab) => ({
+  emits: ['input', 'update:value', 'change'],
+  setup(props, { emit }) {
+    const modelRef = toRef(props, 'value');
+
+    const writableModel = computed({
+      get: () => modelRef.value,
+      set: (val: string | undefined) => {
+        if (val != null) {
+          emit('input', val);
+          emit('update:value', val);
+        }
+      },
+    });
+
+    const {
+      state,
+      activeTab,
+      expression,
+      description,
+      nextRuns,
+      validation,
+      hint,
+      weekFormat,
+      updateField,
+      setWeekFormat,
+      reset,
+      flush,
+    } = useCronZen({
+      modelValue: writableModel,
+      debounceMs: props.debounceMs,
+      nextCount: props.nextCount,
+      showPreview: props.showPreview,
+    });
+
+    const tabs = getCronTabs();
+    const currentField = computed(() => state.value[activeTab.value]);
+    const copied = ref(false);
+    let copiedTimer: ReturnType<typeof setTimeout> | null = null;
+
+    const fieldParts = computed(() =>
+      tabs.map((tab) => ({
         name: tab.name,
         label: tab.label,
-        value: stringifyField(this.state[tab.name], {
-          fieldName: tab.name,
-          weekFormat: this.weekFormat,
-        }),
-      }));
-    },
+        value: displayFieldValue(tab.name, state.value[tab.name], weekFormat.value),
+      })),
+    );
+
     /** @description 日周互斥提示（不锁死编辑） */
-    mutexTip(): string {
+    const mutexTip = computed(() => {
       const dayConcrete =
-        this.state.day.mode !== 'every' && this.state.day.mode !== 'unset';
+        state.value.day.mode !== 'every' && state.value.day.mode !== 'unset';
       const weekConcrete =
-        this.state.week.mode !== 'every' && this.state.week.mode !== 'unset';
-      if (this.activeTab === 'day' && weekConcrete) {
+        state.value.week.mode !== 'every' && state.value.week.mode !== 'unset';
+      if (activeTab.value === 'day' && weekConcrete) {
         return '当前已配置「周」字段；若在此选择具体「日」，将自动把周改为 ?（日周互斥）';
       }
-      if (this.activeTab === 'week' && dayConcrete) {
+      if (activeTab.value === 'week' && dayConcrete) {
         return '当前已配置「日」字段；若在此选择具体「周」，将自动把日改为 ?（日周互斥）';
       }
       return '';
-    },
-  },
-  watch: {
-    value: {
-      immediate: true,
-      handler(val: string) {
-        if (this.syncingOut) return;
-        if (!val) {
-          // 空 v-model：保留可编辑默认态，不写回表达式
-          this.state = createDefaultCronState();
-          this.expression = '';
-          this.weekFormat = 'number';
-          this.refreshPreviewOnly();
-          return;
-        }
-        if (val !== this.expression) {
-          this.loadExpression(val);
-        }
-      },
-    },
-    showPreview(v: boolean) {
-      if (v) this.refreshPreviewOnly();
-    },
-  },
-  created() {
-    if (this.value) this.loadExpression(this.value);
-    else this.refreshPreviewOnly();
-  },
-  beforeDestroy() {
-    if (this.timer != null) {
-      clearTimeout(this.timer);
-      this.timer = null;
-    }
-    if (this.copiedTimer != null) {
-      clearTimeout(this.copiedTimer);
-      this.copiedTimer = null;
-    }
-  },
-  methods: {
+    });
+
     /**
-     * @description 仅刷新描述 / 近 N 次 / 校验（不写回空 v-model）
-     * @returns {void}
-     */
-    refreshPreviewOnly(): void {
-      this.validation = validateCronState(this.state);
-      this.description = describeCron(this.state);
-      if (this.showPreview) {
-        this.nextRuns = getNextRuns(this.state, this.safeNextCount)
-          .map(formatRunTime)
-          .filter(Boolean);
-      } else {
-        this.nextRuns = [];
-      }
-    },
-    /**
-     * @description 立即刷新表达式 / 描述 / 预览
-     * @returns {void}
-     */
-    refreshNow(): void {
-      const gen = generateCron(this.state, { weekFormat: this.weekFormat });
-      if (gen.state) this.state = gen.state;
-      this.validation = validateCronState(this.state);
-      this.description = describeCron(this.state);
-      if (this.showPreview) {
-        this.nextRuns = getNextRuns(this.state, this.safeNextCount)
-          .map(formatRunTime)
-          .filter(Boolean);
-      } else {
-        this.nextRuns = [];
-      }
-      if (gen.warning) this.hint = gen.warning;
-      else if (this.validation.warnings.length > 0) {
-        this.hint = this.validation.warnings.join('；');
-      } else if (!this.validation.valid) {
-        this.hint = this.validation.errors.join('；');
-      } else {
-        this.hint = '';
-      }
-      if (gen.success && gen.expression) {
-        this.expression = gen.expression;
-        if (this.value !== gen.expression) {
-          this.syncingOut = true;
-          this.$emit('input', gen.expression);
-          this.$emit('update:value', gen.expression);
-          Promise.resolve().then(() => {
-            this.syncingOut = false;
-          });
-        }
-      }
-      this.$emit('change', this.state);
-    },
-    /**
-     * @description 防抖刷新
-     * @returns {void}
-     */
-    scheduleRefresh(): void {
-      if (this.timer != null) clearTimeout(this.timer);
-      if (this.safeDebounceMs === 0) {
-        this.refreshNow();
-        return;
-      }
-      this.timer = setTimeout(() => {
-        this.timer = null;
-        this.refreshNow();
-      }, this.safeDebounceMs);
-    },
-    /**
-     * @description 切换 Tab
+     * @description 切换顶部 Tab
      * @param {CronFieldName} name - 字段名
      * @returns {void}
      */
-    onTab(name: CronFieldName): void {
-      this.activeTab = name;
-    },
+    function onTab(name: CronFieldName): void {
+      activeTab.value = name;
+    }
+
     /**
-     * @description 更新字段
+     * @description 字段编辑回调
      * @param {CronFieldState} field - 新字段状态
      * @returns {void}
      */
-    onFieldUpdate(field: CronFieldState): void {
-      const next: CronState = { ...this.state, [this.activeTab]: field };
-      if (this.activeTab === 'day' || this.activeTab === 'week') {
-        const enforced = enforceDayWeekMutex(next);
-        this.state = enforced.state;
-        if (enforced.warning) this.hint = enforced.warning;
-      } else {
-        this.state = next;
-      }
-      this.scheduleRefresh();
-    },
+    function onFieldUpdate(field: CronFieldState): void {
+      updateField(activeTab.value, field);
+      emit('change', state.value);
+    }
+
     /**
-     * @description 周写法变更
+     * @description 周字段写法变更
      * @param {WeekFormat} format - number | abbr
      * @returns {void}
      */
-    onWeekFormat(format: WeekFormat): void {
-      this.weekFormat = format === 'abbr' ? 'abbr' : 'number';
-      this.scheduleRefresh();
-    },
+    function onWeekFormat(format: WeekFormat): void {
+      setWeekFormat(format);
+      emit('change', state.value);
+    }
+
     /**
-     * @description 从表达式反解析
-     * @param {string} expr - Cron 表达式
+     * @description 重置并回到「秒」Tab
      * @returns {void}
      */
-    loadExpression(expr: string): void {
-      const parsed = parseCron(expr);
-      if (parsed.state) {
-        this.state = parsed.state;
-        this.expression = parsed.expression ?? expr;
-        const weekToken = expr.trim().split(/\s+/)[5];
-        this.weekFormat = weekToken && weekTokenUsesAbbr(weekToken) ? 'abbr' : 'number';
-        if (parsed.warning) this.hint = parsed.warning;
-        if (parsed.error) this.hint = parsed.error;
-        this.scheduleRefresh();
-      }
-    },
+    function onReset(): void {
+      reset();
+      activeTab.value = 'second';
+      emit('change', state.value);
+    }
+
     /**
-     * @description 重置默认状态
+     * @description 复制当前表达式
      * @returns {void}
      */
-    reset(): void {
-      this.state = createDefaultCronState();
-      this.weekFormat = 'number';
-      this.scheduleRefresh();
-    },
-    /**
-     * @description 复制表达式
-     * @returns {void}
-     */
-    copyExpression(): void {
-      const text = this.expression;
+    function copyExpression(): void {
+      flush();
+      const text = expression.value;
       const done = () => {
-        this.copied = true;
-        if (this.copiedTimer) clearTimeout(this.copiedTimer);
-        this.copiedTimer = setTimeout(() => {
-          this.copied = false;
-          this.copiedTimer = null;
+        copied.value = true;
+        if (copiedTimer != null) clearTimeout(copiedTimer);
+        copiedTimer = setTimeout(() => {
+          copied.value = false;
+          copiedTimer = null;
         }, 1500);
       };
       if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -302,13 +174,43 @@ export default Vue.extend({
         // ignore
       }
       document.body.removeChild(input);
-    },
+    }
+
+    onBeforeUnmount(() => {
+      if (copiedTimer != null) {
+        clearTimeout(copiedTimer);
+        copiedTimer = null;
+      }
+    });
+
+    return {
+      showPreview: toRef(props, 'showPreview'),
+      nextCount: toRef(props, 'nextCount'),
+      state,
+      activeTab,
+      expression,
+      description,
+      nextRuns,
+      validation,
+      hint,
+      weekFormat,
+      tabs,
+      currentField,
+      fieldParts,
+      mutexTip,
+      copied,
+      onTab,
+      onFieldUpdate,
+      onWeekFormat,
+      onReset,
+      copyExpression,
+    };
   },
 });
 </script>
 
 <template>
-  <div class="cron-zen" data-cron-zen>
+  <div class="cron-zen" :class="{ 'cron-zen--compact': !showPreview }" data-cron-zen>
     <nav class="cron-zen__tabs" aria-label="Cron 字段">
       <button
         v-for="tab in tabs"
@@ -325,6 +227,7 @@ export default Vue.extend({
     <section class="cron-zen__body" aria-label="字段配置">
       <p v-if="mutexTip" class="cron-zen__mutex">{{ mutexTip }}</p>
       <FieldEditor
+        :key="activeTab"
         :name="activeTab"
         :value="currentField"
         :week-format="weekFormat"
@@ -333,33 +236,63 @@ export default Vue.extend({
       />
     </section>
 
+    <p
+      v-if="!showPreview && hint"
+      class="cron-zen__hint cron-zen__hint--compact"
+      :class="{ 'is-error': !validation.valid }"
+    >
+      {{ hint }}
+    </p>
+
     <section v-if="showPreview" class="cron-zen__preview" aria-label="预览">
-      <div v-if="fieldParts.length" class="cron-zen__preview-block">
-        <h3>字段</h3>
-        <ul class="cron-zen__parts">
-          <li v-for="p in fieldParts" :key="p.name">
-            <span class="cron-zen__parts-label">{{ p.label }}</span>
+      <div class="cron-zen__fields">
+        <div class="cron-zen__fields-head">
+          <button
+            v-for="p in fieldParts"
+            :key="p.name"
+            type="button"
+            class="cron-zen__field-tab"
+            :class="{ 'is-active': activeTab === p.name }"
+            @click="onTab(p.name)"
+          >
+            {{ p.label }}
+          </button>
+        </div>
+        <div class="cron-zen__fields-body">
+          <button
+            v-for="p in fieldParts"
+            :key="p.name + '-v'"
+            type="button"
+            class="cron-zen__field-val"
+            :class="{ 'is-active': activeTab === p.name }"
+            :title="'编辑' + p.label"
+            @click="onTab(p.name)"
+          >
             <code>{{ p.value }}</code>
-          </li>
-        </ul>
+          </button>
+        </div>
       </div>
 
       <div class="cron-zen__preview-block">
-        <h3>Cron 表达式</h3>
+        <div class="cron-zen__preview-title">
+          <h3>表达式</h3>
+          <div class="cron-zen__actions">
+            <button type="button" class="cron-zen__btn" @click="copyExpression">
+              {{ copied ? '已复制' : '复制' }}
+            </button>
+            <button type="button" class="cron-zen__btn" @click="onReset">重置</button>
+          </div>
+        </div>
         <pre class="cron-zen__expr">{{ expression || '（编辑后生成）' }}</pre>
-      </div>
-
-      <div class="cron-zen__preview-block">
-        <h3>自然语言</h3>
         <p class="cron-zen__desc">{{ description }}</p>
       </div>
 
       <div class="cron-zen__preview-block">
-        <h3>最近 {{ safeNextCount }} 次</h3>
+        <h3>近 {{ nextCount }} 次执行时间</h3>
         <ol v-if="nextRuns.length" class="cron-zen__runs">
           <li v-for="(t, i) in nextRuns" :key="i">{{ t }}</li>
         </ol>
-        <p v-else class="cron-zen__desc">暂无触发点（或当前模式无法估算）</p>
+        <p v-else class="cron-zen__desc">当前模式暂无法估算触发时间（如 L / W / #）</p>
       </div>
 
       <p
@@ -369,13 +302,6 @@ export default Vue.extend({
       >
         {{ hint }}
       </p>
-
-      <div class="cron-zen__actions">
-        <button type="button" class="cron-zen__btn" @click="reset">重置</button>
-        <button type="button" class="cron-zen__btn" @click="copyExpression">
-          {{ copied ? '已复制' : '复制表达式' }}
-        </button>
-      </div>
     </section>
   </div>
 </template>
