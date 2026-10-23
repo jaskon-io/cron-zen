@@ -7,9 +7,7 @@ coverage
 .turbo
 .pnpm-store
 
-# Local-only (do not publish)
+# Local-only (do not publish / not on GitHub)
 .cursorrules
-.cursor/*
-!.cursor/skills/
-!.cursor/skills/**
+.cursor/
 PUBLISH.local.md
