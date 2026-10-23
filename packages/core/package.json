@@ -3,6 +3,15 @@
   "version": "0.1.0",
   "description": "Framework-agnostic Cron expression parser, generator and validator for cron-zen",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jaskon-io/cron-zen.git",
+    "directory": "packages/core"
+  },
+  "homepage": "https://github.com/jaskon-io/cron-zen/tree/main/packages/core#readme",
+  "bugs": {
+    "url": "https://github.com/jaskon-io/cron-zen/issues"
+  },
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",

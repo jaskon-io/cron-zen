@@ -3,6 +3,15 @@
   "version": "0.1.0",
   "description": "Vue 3 adapter for cron-zen visual Cron expression generator",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jaskon-io/cron-zen.git",
+    "directory": "packages/vue3"
+  },
+  "homepage": "https://github.com/jaskon-io/cron-zen/tree/main/packages/vue3#readme",
+  "bugs": {
+    "url": "https://github.com/jaskon-io/cron-zen/issues"
+  },
   "type": "module",
   "main": "./dist/cron-zen-vue3.umd.cjs",
   "module": "./dist/cron-zen-vue3.js",

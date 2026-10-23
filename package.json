@@ -4,6 +4,14 @@
   "private": true,
   "description": "Visual Cron expression generator for Vue 2 / Vue 3",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jaskon-io/cron-zen.git"
+  },
+  "homepage": "https://github.com/jaskon-io/cron-zen#readme",
+  "bugs": {
+    "url": "https://github.com/jaskon-io/cron-zen/issues"
+  },
   "keywords": [
     "cron",
     "cron-expression",
