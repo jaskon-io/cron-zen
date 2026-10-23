@@ -4,7 +4,7 @@ layout: home
 hero:
   name: cron-zen
   text: 可嵌入的 Cron 引擎
-  tagline: 无 Vue 用 vanilla · Vue2 用 vue2 · Vue3 用 vue3 · core 任意运行时 · JS/TS · ESM/CJS
+  tagline: 无框架用 vanilla · React 用 react · Vue2/3 各用各的 · core 任意运行时 · JS/TS · ESM/CJS
   actions:
     - theme: brand
       text: 选哪个包
@@ -21,9 +21,9 @@ hero:
 
 features:
   - title: 无框架 → vanilla
-    details: 没有 Vue？用 @cron-zen/vanilla 的 mountCronZen，纯 DOM，TS/JS 均可。
-  - title: Vue2 / Vue3 各用各的
-    details: '@cron-zen/vue2 与 @cron-zen/vue3 对齐同一套 Cron 行为；不要把 vue3 装进 Vue2 工程。'
+    details: 没有 Vue / React？用 @cron-zen/vanilla 的 mountCronZen，纯 DOM，TS/JS 均可。
+  - title: React / Vue 各用各的
+    details: '@cron-zen/react（18/19）薄封装 vanilla；vue2 / vue3 对齐同一套 Cron 行为。'
   - title: JS · require · ESM 都支持
     details: 源码 TypeScript，产物 ESM + CJS。纯 JS、require、import、CDN Demo 都有文档。
   - title: 业务可嵌入且可测
@@ -36,7 +36,8 @@ features:
 
 | 环境 | 可视化 | 只要引擎 |
 | --- | --- | --- |
-| **无 Vue**（原生 / 其它框架） | `@cron-zen/vanilla` | `@cron-zen/core` |
+| **无框架**（原生 HTML 等） | `@cron-zen/vanilla` | `@cron-zen/core` |
+| **React 18/19** | `@cron-zen/react` | `@cron-zen/core` |
 | **Vue 2.7** | `@cron-zen/vue2` | `@cron-zen/core` |
 | **Vue 3** | `@cron-zen/vue3` | `@cron-zen/core` |
 
@@ -52,6 +53,16 @@ features:
 <script>
   CronZen.mountCronZen('#cron', { value: '', onChange: console.log })
 </script>
+```
+
+```tsx [react]
+import { useState } from 'react'
+import { CronZen } from '@cron-zen/react'
+import '@cron-zen/react/style.css'
+export function App() {
+  const [cron, setCron] = useState('')
+  return <CronZen value={cron} onChange={setCron} />
+}
 ```
 
 ```vue [vue3]

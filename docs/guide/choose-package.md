@@ -8,13 +8,14 @@
 
 | 你的项目 | 可视化编辑器装什么 | 只要引擎（无 UI） |
 | --- | --- | --- |
-| **没有 Vue**（原生 HTML / jQuery / React / 其它 / Node） | **`@cron-zen/vanilla`** | `@cron-zen/core` |
+| **原生 HTML / jQuery / 其它 / Node**（无 React、无 Vue） | **`@cron-zen/vanilla`** | `@cron-zen/core` |
+| **有 React 18/19** | **`@cron-zen/react`**（底层 vanilla） | `@cron-zen/core` |
 | **有 Vue 2.7** | **`@cron-zen/vue2`** | `@cron-zen/core` |
 | **有 Vue 3** | **`@cron-zen/vue3`** | `@cron-zen/core` |
 
 ::: tip 记牢
-- **无 UI 框架、无 Vue，又要点选 Cron** → 用 **`vanilla`**（不是 vue3）。  
-- **有 Vue 2** → **`vue2`**；**有 Vue 3** → **`vue3`**。  
+- **无 UI 框架、无 Vue / React，又要点选 Cron** → 用 **`vanilla`**。  
+- **有 React** → **`react`**；**有 Vue 2** → **`vue2`**；**有 Vue 3** → **`vue3`**。  
 - **只要解析 / 生成 / 校验 / 近 N 次**（脚本、接口）→ 只装 **`core`**。
 :::
 
@@ -24,6 +25,10 @@
 
 ```bash [无框架 · vanilla]
 pnpm add @cron-zen/vanilla @cron-zen/core
+```
+
+```bash [React 18/19]
+pnpm add @cron-zen/react @cron-zen/vanilla @cron-zen/core react react-dom
 ```
 
 ```bash [Vue 2.7]
@@ -48,27 +53,27 @@ pnpm add @cron-zen/core
 │  parse / generate / validate / …    │
 └─────────────────┬───────────────────┘
                   │ 被依赖
-     ┌────────────┼────────────┐
-┌────▼────┐  ┌────▼────┐  ┌────▼────┐
-│ vanilla │  │  vue2   │  │  vue3   │
-│ 无框架  │  │ Vue 2.7 │  │ Vue 3   │
-│ 纯 DOM  │  │         │  │         │
-└─────────┘  └─────────┘  └─────────┘
+     ┌────────────┼────────────────────────┐
+┌────▼────┐  ┌────▼────┐  ┌────▼────┐  ┌───▼───┐
+│ vanilla │  │  react  │  │  vue2   │  │ vue3  │
+│ 无框架  │  │ 18 / 19 │  │ Vue 2.7 │  │ Vue 3 │
+│ 纯 DOM  │  │→vanilla │  │         │  │       │
+└─────────┘  └─────────┘  └─────────┘  └───────┘
 ```
 
 | 概念 | 说明 |
 | --- | --- |
 | **引擎** | `core`：字符串 ↔ 状态、校验、描述、近 N 次、时区、i18n |
-| **可视化** | `vanilla` / `vue2` / `vue3`：把引擎接到 DOM 或 Vue |
+| **可视化** | `vanilla` / `react` / `vue2` / `vue3`：接到 DOM 或框架 |
 | **业务壳** | 你的 dialog / Modal / 抽屉——**不属于**包名 |
 
 ## 常见误解
 
 | 误解 | 事实 |
 | --- | --- |
-| 「无 Vue 也能用 `@cron-zen/vue3` 组件」 | 否。无 Vue 可视化请用 **`vanilla`** |
+| 「无 Vue 也能用 `@cron-zen/vue3` 组件」 | 否。无 Vue 可视化请用 **`vanilla`**；有 React 用 **`react`** |
 | 「不绑 UI 库 = 不需要 Vue」 | 不绑的是 Element/Ant；`vue3` 包本身仍要 Vue 3 |
-| 「只要 core 就有点选界面」 | core **没有** UI；点选来自 `vanilla` / `vue2` / `vue3` |
+| 「只要 core 就有点选界面」 | core **没有** UI；点选来自 `vanilla` / `react` / `vue2` / `vue3` |
 | 「只有 TypeScript 能用」 | 否。产物含 **ESM + CJS**，纯 JS / `require` 可用，见 [引入方式](./import-styles) |
 
 ## 场景 Demo（升华）
