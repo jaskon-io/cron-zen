@@ -1,6 +1,6 @@
 {
   "name": "@cron-zen/core",
-  "version": "0.1.4",
+  "version": "0.2.0",
   "description": "Framework-agnostic Quartz/cron.ren Cron parser, generator, validator, describe, and next-run estimates",
   "license": "MIT",
   "repository": {
@@ -26,7 +26,9 @@
   },
   "typesVersions": {
     "*": {
-      "*": ["./dist/index.d.ts"]
+      "*": [
+        "./dist/index.d.ts"
+      ]
     }
   },
   "files": [

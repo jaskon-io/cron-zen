@@ -3,11 +3,21 @@
 本项目遵循 [Semantic Versioning](https://semver.org/lang/zh-CN/)。  
 格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 
-发布包：`@cron-zen/core`、`@cron-zen/vue3`（版本号对齐）；`@cron-zen/vue2` 独立发版（与主线能力对齐）。
+发布包：`@cron-zen/core`、`@cron-zen/vue3`、`@cron-zen/vue2`、`@cron-zen/vanilla`（大功能对齐时版本号对齐）。
 
 ---
 
 ## [Unreleased]
+
+---
+
+## [0.2.0] - 2026-10-23
+
+### Added
+
+- **时区**：`getNextRuns` / `formatRunTime` 支持 IANA `timeZone`（如 `Asia/Shanghai`）；导出 `isValidTimeZone` / `getZonedParts` / `zonedWallTimeToUtc`
+- **i18n**：`describeCron` / `describeField` / `getCronTabs` 支持 `locale: 'zh-CN' | 'en-US'`（可自定义 `CronLocaleMessages`）
+- 适配层透传：`vue3` / `vue2` / `vanilla` 增加 props/options `timeZone`、`locale`
 
 ---
 

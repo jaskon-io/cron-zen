@@ -61,17 +61,29 @@ const res = validateCronState(createDefaultCronState())
 console.log(res.valid, res.errors, res.warnings)
 ```
 
-## getNextRuns
+## getNextRuns / formatRunTime
 
-估算最近 N 次触发时间（本地时区；条数 1–100）。
+估算最近 N 次触发时间（条数 1–100）。默认按**运行环境本地时区**解释 Cron 墙上时钟；可传 IANA `timeZone`。
 
 ```ts
 import { getNextRuns, parseCron, formatRunTime } from '@cron-zen/core'
 
 const { state } = parseCron('0 0 9 ? * 6L') // 每月最后一个周五 09:00
-const runs = getNextRuns(state!, 5, new Date('2026-01-01T00:00:00'))
-console.log(runs.map(formatRunTime))
+const from = new Date('2026-01-01T00:00:00Z')
+const runs = getNextRuns(state!, 5, from, { timeZone: 'Asia/Shanghai' })
+console.log(runs.map((d) => formatRunTime(d, { timeZone: 'Asia/Shanghai' })))
 ```
+
+## describeCron（i18n）
+
+```ts
+import { describeCron, createDefaultCronState } from '@cron-zen/core'
+
+describeCron(createDefaultCronState()) // '每天'
+describeCron(createDefaultCronState(), { locale: 'en-US' }) // 'Every day'
+```
+
+`getCronTabs('en-US')` 可得到英文 Tab 标签。内置 `zh-CN` / `en-US`；亦可用 `resolveLocale` / 自定义 `CronLocaleMessages`。
 
 已支持的特殊字段（无法安全估算时返回 `[]`）：
 

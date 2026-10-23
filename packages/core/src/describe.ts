@@ -1,27 +1,77 @@
-import type { CronFieldState, CronState } from './types';
-import { quartzWeekDayLabel, quartzWeekShortLabel } from './week';
+import type { CronFieldName, CronFieldState, CronState } from './types';
+import { resolveLocale, type CronLocaleInput, type CronLocaleMessages } from './i18n';
+import { weekAbbrToNumber } from './week';
 
 /**
- * @description 将周字段取值格式化为「周一」等（支持数字与 SUN…SAT）
- * @param {string | undefined} token - 原始 token
- * @returns {string} 中文周标签
+ * @description describe 选项
  */
-function formatWeekToken(token: string | undefined): string {
-  if (token == null || token === '') return '';
-  return quartzWeekDayLabel(token);
+export interface DescribeOptions {
+  /** @description 语言：zh-CN（默认）/ en-US / 自定义文案包 */
+  locale?: CronLocaleInput;
 }
 
 /**
- * @description 将单个字段状态转为简短中文描述片段
- * @param {string} label - 字段中文名
+ * @description 将周 token 转为当前 locale 的全称标签
+ * @param {string | undefined} token - 数字或 SUN…SAT
+ * @param {CronLocaleMessages} messages - 文案
+ * @returns {string}
+ */
+function formatWeekToken(
+  token: string | undefined,
+  messages: CronLocaleMessages,
+): string {
+  if (token == null || token === '') return '';
+  if (typeof token === 'string') {
+    const abbrNum = weekAbbrToNumber(token);
+    if (abbrNum != null) return messages.weekDayFull[abbrNum] ?? token;
+  }
+  const n = Number(token);
+  if (Number.isFinite(n) && messages.weekDayFull[n]) {
+    return messages.weekDayFull[n];
+  }
+  return String(token);
+}
+
+/**
+ * @description 周短标签
+ * @param {string | number | undefined} token - token
+ * @param {CronLocaleMessages} messages - 文案
+ * @returns {string}
+ */
+function formatWeekShort(
+  token: string | number | undefined,
+  messages: CronLocaleMessages,
+): string {
+  if (token == null || token === '') return '';
+  if (typeof token === 'string') {
+    const abbrNum = weekAbbrToNumber(token);
+    if (abbrNum != null) return messages.weekDayShort[abbrNum] ?? token;
+  }
+  const n = typeof token === 'number' ? token : Number(token);
+  if (Number.isFinite(n) && messages.weekDayShort[n]) {
+    return messages.weekDayShort[n];
+  }
+  return String(token);
+}
+
+/**
+ * @description 将单个字段状态转为简短描述片段
+ * @param {CronFieldName | string} fieldKeyOrLabel - 字段名（推荐）或旧版中文 label
  * @param {CronFieldState} field - 字段状态
+ * @param {DescribeOptions} [options] - locale 等
  * @returns {string} 描述片段；every/unset 返回空串
  * @example
- * describeField('小时', { mode: 'specific', raw: '2', value: '2' }); // '在 2 小时'
- * describeField('周', { mode: 'range', raw: '2-6', value: '2', secondary: '6' }); // '周一至周五'
+ * describeField('hour', { mode: 'specific', raw: '2', value: '2' }, { locale: 'en-US' });
  */
-export function describeField(label: string, field: CronFieldState): string {
-  const isWeek = label === '周';
+export function describeField(
+  fieldKeyOrLabel: CronFieldName | string,
+  field: CronFieldState,
+  options?: DescribeOptions,
+): string {
+  const messages = resolveLocale(options?.locale);
+  const name = resolveFieldName(fieldKeyOrLabel, messages);
+  const unit = name ? messages.fieldUnits[name] : fieldKeyOrLabel;
+  const isWeek = name === 'week' || fieldKeyOrLabel === '周';
 
   switch (field.mode) {
     case 'every':
@@ -29,93 +79,144 @@ export function describeField(label: string, field: CronFieldState): string {
       return '';
     case 'specific': {
       if (isWeek) {
-        const day = formatWeekToken(field.value ?? field.raw);
-        return day ? `每${day}` : '';
+        const day = formatWeekToken(field.value ?? field.raw, messages);
+        return day ? messages.everyWeekday(day) : '';
       }
-      return `在 ${field.value ?? field.raw} ${label}`;
+      return messages.atUnit(field.value ?? field.raw, unit);
     }
     case 'range': {
       if (isWeek) {
-        const from = formatWeekToken(field.value);
-        const to = formatWeekToken(field.secondary);
-        if (from && to) return `${from}至${to}`;
+        const from = formatWeekToken(field.value, messages);
+        const to = formatWeekToken(field.secondary, messages);
+        if (from && to) return messages.weekRange(from, to);
       }
-      return `${label} ${field.value}-${field.secondary}`;
+      return messages.range(unit, field.value ?? '', field.secondary ?? '');
     }
     case 'step':
-      return `每 ${field.secondary ?? '1'} ${label}（从 ${field.value || '*'}）`;
+      return messages.step(field.secondary ?? '1', unit, field.value || '*');
     case 'list': {
       const items = (field.values ?? field.value?.split(',') ?? []).filter(Boolean);
       if (items.length === 0) return '';
       if (isWeek) {
-        return items.map((t) => formatWeekToken(t)).filter(Boolean).join('、');
+        return messages.listJoin(
+          items.map((t) => formatWeekToken(t, messages)).filter(Boolean),
+        );
       }
-      return `${label}为 ${items.join('、')}`;
+      return messages.list(unit, items.join(messages.code === 'zh-CN' ? '、' : ', '));
     }
     case 'last':
       return field.value
-        ? `最后一个星期${quartzWeekShortLabel(field.value)}`
-        : '最后一天';
+        ? messages.lastWeekdayOfMonth(formatWeekShort(field.value, messages))
+        : messages.lastDay;
     case 'lastWeekday':
-      return '本月最后一个工作日';
+      return messages.lastWorkday;
     case 'weekday':
-      return `最接近 ${field.value} 号的工作日`;
+      return messages.nearestWorkday(String(field.value ?? ''));
     case 'nth':
-      return `第 ${field.secondary} 个星期${quartzWeekShortLabel(field.value ?? '')}`;
+      return messages.nthWeekday(
+        String(field.secondary ?? ''),
+        formatWeekShort(field.value ?? '', messages),
+      );
     default:
       return field.raw;
   }
 }
 
 /**
- * @description 将 Cron 可视化状态转为自然语言摘要（中文）
+ * @description 兼容旧调用：中文 label → 字段名
+ * @param {string} keyOrLabel - 入参
+ * @param {CronLocaleMessages} messages - 文案
+ * @returns {CronFieldName | null}
+ */
+function resolveFieldName(
+  keyOrLabel: string,
+  messages: CronLocaleMessages,
+): CronFieldName | null {
+  const keys: CronFieldName[] = [
+    'second',
+    'minute',
+    'hour',
+    'day',
+    'month',
+    'week',
+    'year',
+  ];
+  if ((keys as string[]).includes(keyOrLabel)) {
+    return keyOrLabel as CronFieldName;
+  }
+  // 旧版中文 label
+  const zhMap: Record<string, CronFieldName> = {
+    秒: 'second',
+    分: 'minute',
+    分钟: 'minute',
+    小时: 'hour',
+    日: 'day',
+    月: 'month',
+    周: 'week',
+    年: 'year',
+  };
+  if (zhMap[keyOrLabel]) return zhMap[keyOrLabel];
+  for (const k of keys) {
+    if (messages.fieldUnits[k] === keyOrLabel || messages.tabs[k] === keyOrLabel) {
+      return k;
+    }
+  }
+  return null;
+}
+
+/**
+ * @description 将 Cron 可视化状态转为自然语言摘要
  * @param {CronState} state - 可视化状态
+ * @param {DescribeOptions} [options] - locale 等
  * @returns {string} 自然语言描述
  * @example
  * describeCron(createDefaultCronState()); // '每天'
+ * describeCron(state, { locale: 'en-US' }); // 'Every day'
  */
-export function describeCron(state: CronState): string {
+export function describeCron(state: CronState, options?: DescribeOptions): string {
+  const messages = resolveLocale(options?.locale);
   const parts: string[] = [];
+  const opt = { locale: messages };
 
   if (state.year.mode === 'specific') {
-    parts.push(`${state.year.value} 年`);
+    parts.push(messages.yearSpecific(String(state.year.value ?? '')));
   } else if (state.year.mode !== 'every') {
-    const y = describeField('年', state.year);
+    const y = describeField('year', state.year, opt);
     if (y) parts.push(y);
   }
 
   if (state.month.mode !== 'every') {
-    const m = describeField('月', state.month);
+    const m = describeField('month', state.month, opt);
     if (m) parts.push(m);
   }
 
   if (state.week.mode !== 'every' && state.week.mode !== 'unset') {
-    const w = describeField('周', state.week);
+    const w = describeField('week', state.week, opt);
     if (w) parts.push(w);
   } else if (state.day.mode !== 'every' && state.day.mode !== 'unset') {
-    const d = describeField('日', state.day);
+    const d = describeField('day', state.day, opt);
     if (d) parts.push(d);
   } else {
-    parts.push('每天');
+    parts.push(messages.everyDay);
   }
 
   const timeBits: string[] = [];
   if (state.hour.mode === 'specific') {
-    timeBits.push(`${state.hour.value} 时`);
+    timeBits.push(messages.hourSpecific(String(state.hour.value ?? '')));
   } else {
-    const h = describeField('小时', state.hour);
+    const h = describeField('hour', state.hour, opt);
     if (h) timeBits.push(h);
   }
   if (state.minute.mode === 'specific') {
-    timeBits.push(`${state.minute.value} 分`);
+    timeBits.push(messages.minuteSpecific(String(state.minute.value ?? '')));
   } else {
-    const m = describeField('分', state.minute);
+    const m = describeField('minute', state.minute, opt);
     if (m) timeBits.push(m);
   }
   if (state.second.mode === 'specific') {
-    timeBits.push(`${state.second.value} 秒`);
+    timeBits.push(messages.secondSpecific(String(state.second.value ?? '')));
   } else {
-    const s = describeField('秒', state.second);
+    const s = describeField('second', state.second, opt);
     if (s) timeBits.push(s);
   }
 
@@ -123,5 +224,5 @@ export function describeCron(state: CronState): string {
     parts.push(timeBits.join(' '));
   }
 
-  return parts.join(' ').replace(/\s+/g, ' ').trim() || '自定义调度';
+  return parts.join(' ').replace(/\s+/g, ' ').trim() || messages.customSchedule;
 }

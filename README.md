@@ -4,10 +4,10 @@
 
 | 包 | 给谁用 | npm |
 | --- | --- | --- |
-| **`@cron-zen/core`** | 任意运行时 — 解析 / 生成 / 校验 / 描述 / 近 N 次 | [0.1.4](https://www.npmjs.com/package/@cron-zen/core) |
-| **`@cron-zen/vanilla`** | **无框架** — `mountCronZen` / `createCronZen` | [0.1.6](https://www.npmjs.com/package/@cron-zen/vanilla) |
-| **`@cron-zen/vue3`** | Vue 3 — `CronZen` / `useCronZen` | [0.1.4](https://www.npmjs.com/package/@cron-zen/vue3) |
-| **`@cron-zen/vue2`** | Vue 2.7 — `CronZen` / `useCronZen` | [0.1.5](https://www.npmjs.com/package/@cron-zen/vue2) |
+| **`@cron-zen/core`** | 任意运行时 — 解析 / 生成 / 校验 / 描述 / 近 N 次（时区 + i18n） | [0.2.0](https://www.npmjs.com/package/@cron-zen/core) |
+| **`@cron-zen/vanilla`** | **无框架** — `mountCronZen` / `createCronZen` | [0.2.0](https://www.npmjs.com/package/@cron-zen/vanilla) |
+| **`@cron-zen/vue3`** | Vue 3 — `CronZen` / `useCronZen` | [0.2.0](https://www.npmjs.com/package/@cron-zen/vue3) |
+| **`@cron-zen/vue2`** | Vue 2.7 — `CronZen` / `useCronZen` | [0.2.0](https://www.npmjs.com/package/@cron-zen/vue2) |
 
 [![npm core](https://img.shields.io/npm/v/@cron-zen/core.svg?label=%40cron-zen%2Fcore)](https://www.npmjs.com/package/@cron-zen/core)
 [![npm vanilla](https://img.shields.io/npm/v/@cron-zen/vanilla.svg?label=%40cron-zen%2Fvanilla)](https://www.npmjs.com/package/@cron-zen/vanilla)

@@ -1,8 +1,9 @@
 import type { CronFieldName } from './types';
 import { FIELD_RANGES } from './types';
+import { resolveLocale, type CronLocaleInput } from './i18n';
 
 /**
- * @description Tab 元数据（供 Vue 适配层渲染）
+ * @description Tab 元数据（供适配层渲染）
  */
 export interface CronTabMeta {
   /** @description 字段名 */
@@ -25,26 +26,19 @@ const TAB_ORDER: CronFieldName[] = [
   'year',
 ];
 
-const TAB_LABELS: Record<CronFieldName, string> = {
-  second: '秒',
-  minute: '分钟',
-  hour: '小时',
-  day: '日',
-  month: '月',
-  week: '周',
-  year: '年',
-};
-
 /**
  * @description 获取七段 Tab 元数据列表
+ * @param {CronLocaleInput} [locale] - 语言（默认 zh-CN）
  * @returns {CronTabMeta[]} Tab 列表
  * @example
- * const tabs = getCronTabs();
+ * getCronTabs();
+ * getCronTabs('en-US');
  */
-export function getCronTabs(): CronTabMeta[] {
+export function getCronTabs(locale?: CronLocaleInput): CronTabMeta[] {
+  const messages = resolveLocale(locale);
   return TAB_ORDER.map((name) => ({
     name,
-    label: TAB_LABELS[name],
+    label: messages.tabs[name],
     min: FIELD_RANGES[name].min,
     max: FIELD_RANGES[name].max,
   }));
