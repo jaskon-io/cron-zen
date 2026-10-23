@@ -32,13 +32,6 @@ features:
 
 <div class="cz-home-install">
 
-<div class="cz-badges">
-  <a href="https://www.npmjs.com/package/@cron-zen/core"><img src="https://img.shields.io/npm/v/@cron-zen/core.svg?label=%40cron-zen%2Fcore" alt="npm core" /></a>
-  <a href="https://www.npmjs.com/package/@cron-zen/vue3"><img src="https://img.shields.io/npm/v/@cron-zen/vue3.svg?label=%40cron-zen%2Fvue3" alt="npm vue3" /></a>
-  <a href="https://github.com/jaskon-io/cron-zen/blob/main/LICENSE"><img src="https://img.shields.io/npm/l/@cron-zen/core.svg" alt="MIT" /></a>
-  <a href="https://github.com/jaskon-io/cron-zen"><img src="https://img.shields.io/github/stars/jaskon-io/cron-zen?style=social" alt="stars" /></a>
-</div>
-
 ## 先选对包
 
 | 环境 | 安装 |

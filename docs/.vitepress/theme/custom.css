@@ -21,23 +21,11 @@
   --vp-c-brand-soft: rgba(45, 212, 191, 0.16);
 }
 
-/* Home: trust strip under hero actions */
+/* Home: body content under features */
 .cz-home-install {
   max-width: 1152px;
   margin: 0 auto;
-  padding: 0 24px 8px;
-}
-
-.cz-home-install .cz-badges {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 16px;
-}
-
-.cz-home-install .cz-badges img {
-  display: block;
-  height: 20px;
+  padding: 8px 24px 8px;
 }
 
 .cz-home-install h2 {
