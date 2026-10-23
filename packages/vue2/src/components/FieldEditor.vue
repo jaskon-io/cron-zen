@@ -1,22 +1,21 @@
 <script lang="ts">
 /**
- * @description 单字段配置编辑器（Vue2 Options API）
+ * @description 单字段配置编辑器（Vue2 Options API，能力对齐 vue3）
  */
 import Vue, { PropType } from 'vue';
-import type { CronFieldMode, CronFieldName, CronFieldState } from '@cron-zen/core';
-import { FIELD_RANGES } from '@cron-zen/core';
+import type {
+  CronFieldMode,
+  CronFieldName,
+  CronFieldState,
+  WeekFormat,
+} from '@cron-zen/core';
+import {
+  FIELD_RANGES,
+  QUARTZ_MONTH_LABELS,
+  QUARTZ_WEEK_LABELS,
+  QUARTZ_WEEK_UI_ORDER,
+} from '@cron-zen/core';
 import ValueGrid from './ValueGrid.vue';
-
-const WEEK_LABELS: Record<number, string> = {
-  0: '日',
-  1: '一',
-  2: '二',
-  3: '三',
-  4: '四',
-  5: '五',
-  6: '六',
-  7: '日',
-};
 
 export default Vue.extend({
   name: 'FieldEditor',
@@ -30,21 +29,40 @@ export default Vue.extend({
     disabled: { type: Boolean, default: false },
     /** @description 禁用原因 */
     disabledReason: { type: String, default: '' },
+    /** @description 周字段输出写法 */
+    weekFormat: { type: String as PropType<WeekFormat>, default: 'number' },
   },
   data() {
     const range = FIELD_RANGES[this.name];
+    const yearNow = new Date().getFullYear();
     return {
-      mode: this.value.mode as CronFieldMode,
-      specificVals: [Number(this.value.value ?? range.min) || range.min] as number[],
-      listVals: ((this.value.values ?? []).map((v) => Number(v)).filter((n) => Number.isFinite(n))) as number[],
-      rangeStart: this.value.value ?? String(range.min),
-      rangeEnd: this.value.secondary ?? String(range.max),
+      modeRadioGroup: `cz-mode-${Math.random().toString(36).slice(2, 9)}`,
+      weekFormatGroup: `cz-week-fmt-${Math.random().toString(36).slice(2, 9)}`,
+      mode: (this.value.mode === 'specific' ? 'list' : this.value.mode) as CronFieldMode,
+      rangeStart: Number(this.value.value ?? range.min) || range.min,
+      rangeEnd:
+        Number(this.value.secondary ?? Math.min(range.min + 1, range.max)) || range.min + 1,
       stepBase:
         this.value.value && this.value.value !== '*'
-          ? this.value.value
-          : String(range.min),
-      stepValue: this.value.secondary ?? '1',
-      weekLabels: WEEK_LABELS,
+          ? Number(this.value.value) || range.min
+          : range.min,
+      stepValue: Number(this.value.secondary ?? 1) || 1,
+      weekdayNear: Number(this.value.value ?? 1) || 1,
+      nthOrder: Number(this.value.secondary ?? 1) || 1,
+      nthWeekday: Number(this.value.value ?? 2) || 2,
+      lastWeekday: Number(this.value.value ?? 2) || 2,
+      listVals: ((this.value.values ?? [])
+        .map((v) => Number(v))
+        .filter((n) => Number.isFinite(n))) as number[],
+      weekLabels: { ...QUARTZ_WEEK_LABELS } as Record<number, string>,
+      weekOrder: [...QUARTZ_WEEK_UI_ORDER] as number[],
+      monthLabels: { ...QUARTZ_MONTH_LABELS } as Record<number, string>,
+      weekOptions: QUARTZ_WEEK_UI_ORDER.map((value) => ({
+        value,
+        label: QUARTZ_WEEK_LABELS[value],
+      })),
+      yearNow,
+      yearMax: yearNow + 23,
       syncingFromProp: false,
     };
   },
@@ -52,73 +70,134 @@ export default Vue.extend({
     range(): { min: number; max: number } {
       return FIELD_RANGES[this.name];
     },
-    yearWindow(): { min: number; max: number } {
-      const y = new Date().getFullYear();
-      return { min: y, max: y + 9 };
+    unitLabel(): string {
+      const map: Record<CronFieldName, string> = {
+        second: '秒',
+        minute: '分钟',
+        hour: '小时',
+        day: '日',
+        month: '月',
+        week: '周',
+        year: '年',
+      };
+      return map[this.name];
     },
     gridMin(): number {
-      return this.name === 'year' ? this.yearWindow.min : this.range.min;
+      if (this.name === 'year') return this.yearNow;
+      if (this.name === 'week') return 1;
+      return this.range.min;
     },
     gridMax(): number {
-      return this.name === 'year' ? this.yearWindow.max : this.range.max;
+      if (this.name === 'year') return this.yearMax;
+      if (this.name === 'week') return 7;
+      return this.range.max;
     },
-    modes(): { value: CronFieldMode; label: string }[] {
-      const base: { value: CronFieldMode; label: string }[] = [
-        { value: 'every', label: '每' },
-        { value: 'specific', label: '指定' },
-        { value: 'range', label: '区间' },
-        { value: 'step', label: '周期' },
-        { value: 'list', label: '枚举' },
-      ];
-      if (this.name === 'day' || this.name === 'week') {
-        base.push({ value: 'unset', label: '不指定 (?)' });
-      }
-      return base;
+    listDefaultValue(): number {
+      return this.name === 'week' ? 2 : this.gridMin;
+    },
+    everyLabel(): string {
+      if (this.name === 'second') return '每一秒钟';
+      if (this.name === 'minute') return '每一分钟';
+      if (this.name === 'hour') return '每一小时';
+      if (this.name === 'day') return '每日';
+      if (this.name === 'month') return '每月';
+      if (this.name === 'week') return '每周';
+      return '每年';
     },
   },
   watch: {
+    name() {
+      this.hydrate(this.value);
+    },
     value: {
       deep: true,
+      immediate: true,
       handler(v: CronFieldState) {
         this.syncingFromProp = true;
-        this.mode = v.mode;
-        if (v.mode === 'specific') {
-          const n = Number(v.value);
-          this.specificVals = [Number.isFinite(n) ? n : this.range.min];
-        }
-        if (v.mode === 'list') {
-          this.listVals = (v.values ?? [])
-            .map((x) => Number(x))
-            .filter((n) => Number.isFinite(n));
-        }
-        if (v.mode === 'range') {
-          this.rangeStart = v.value ?? this.rangeStart;
-          this.rangeEnd = v.secondary ?? this.rangeEnd;
-        }
-        if (v.mode === 'step') {
-          this.stepBase = v.value && v.value !== '*' ? v.value : this.stepBase;
-          this.stepValue = v.secondary ?? this.stepValue;
-        }
+        this.hydrate(v);
         Promise.resolve().then(() => {
           this.syncingFromProp = false;
         });
       },
     },
-    mode() {
-      if (this.syncingFromProp) return;
-      if (this.mode === 'list' && this.listVals.length === 0) {
-        this.listVals = [this.range.min];
-      }
-      this.emitState();
-    },
   },
   methods: {
+    /**
+     * @description 夹紧到字段范围
+     * @param {number} n - 原值
+     * @returns {number} 夹紧值
+     */
+    clamp(n: number): number {
+      const v = Math.floor(Number(n));
+      const min = this.name === 'week' ? 1 : this.range.min;
+      const max = this.name === 'week' ? 7 : this.range.max;
+      if (!Number.isFinite(v)) return min;
+      return Math.min(max, Math.max(min, v));
+    },
+    /**
+     * @description 重置本地控件默认值
+     * @returns {void}
+     */
+    resetLocalDefaults(): void {
+      const min = this.range.min;
+      const max = this.range.max;
+      this.rangeStart = this.name === 'day' || this.name === 'month' ? Math.max(min, 1) : min;
+      this.rangeEnd = Math.min(this.rangeStart + 1, max);
+      this.stepBase =
+        this.name === 'day' || this.name === 'month' || this.name === 'year'
+          ? Math.max(min, 1)
+          : min;
+      this.stepValue = 1;
+      this.weekdayNear = 1;
+      this.nthOrder = 1;
+      this.nthWeekday = 2;
+      this.lastWeekday = 2;
+      this.listVals = [this.listDefaultValue];
+    },
+    /**
+     * @description 从 props 回显
+     * @param {CronFieldState} v - 字段状态
+     * @returns {void}
+     */
+    hydrate(v: CronFieldState): void {
+      this.mode = (v.mode === 'specific' ? 'list' : v.mode) as CronFieldMode;
+      this.resetLocalDefaults();
+      if (v.mode === 'range') {
+        const a = Number(v.value);
+        const b = Number(v.secondary);
+        if (Number.isFinite(a)) this.rangeStart = a;
+        if (Number.isFinite(b)) this.rangeEnd = b;
+      } else if (v.mode === 'step') {
+        if (v.value && v.value !== '*') {
+          this.stepBase = Number(v.value) || this.stepBase;
+        } else {
+          this.stepBase =
+            this.name === 'day' || this.name === 'month' || this.name === 'year'
+              ? Math.max(this.range.min, 1)
+              : this.range.min;
+        }
+        this.stepValue = Number(v.secondary) || 1;
+      } else if (v.mode === 'weekday') {
+        this.weekdayNear = Number(v.value) || 1;
+      } else if (v.mode === 'nth') {
+        this.nthWeekday = Number(v.value) || 2;
+        this.nthOrder = Number(v.secondary) || 1;
+      } else if (v.mode === 'last') {
+        if (v.value) this.lastWeekday = Number(v.value) || 2;
+      } else if (v.mode === 'list' || v.mode === 'specific') {
+        const vals =
+          v.mode === 'list'
+            ? (v.values ?? []).map(Number).filter((n) => Number.isFinite(n))
+            : [Number(v.value)].filter((n) => Number.isFinite(n));
+        this.listVals = vals.length ? vals : [this.listDefaultValue];
+      }
+    },
     /**
      * @description 拼装并上抛字段状态
      * @returns {void}
      */
     emitState(): void {
-      if (this.disabled) return;
+      if (this.disabled || this.syncingFromProp) return;
       let next: CronFieldState;
       switch (this.mode) {
         case 'every':
@@ -127,29 +206,61 @@ export default Vue.extend({
         case 'unset':
           next = { mode: 'unset', raw: '?' };
           break;
-        case 'specific': {
-          const v = String(this.specificVals[0] ?? this.range.min);
-          next = { mode: 'specific', raw: v, value: v };
-          break;
-        }
-        case 'range':
+        case 'range': {
+          const start = this.clamp(this.rangeStart);
+          const end = this.clamp(this.rangeEnd);
           next = {
             mode: 'range',
-            raw: `${this.rangeStart}-${this.rangeEnd}`,
-            value: this.rangeStart,
-            secondary: this.rangeEnd,
+            raw: `${start}-${end}`,
+            value: String(start),
+            secondary: String(end),
           };
           break;
-        case 'step':
+        }
+        case 'step': {
+          const base = this.clamp(this.stepBase);
+          const step = Math.max(1, Math.floor(this.stepValue) || 1);
           next = {
             mode: 'step',
-            raw: `${this.stepBase}/${this.stepValue}`,
-            value: this.stepBase,
-            secondary: this.stepValue,
+            raw: `${base}/${step}`,
+            value: String(base),
+            secondary: String(step),
           };
           break;
-        case 'list': {
-          const values = this.listVals.map(String);
+        }
+        case 'weekday': {
+          const d = Math.min(31, Math.max(1, Math.floor(this.weekdayNear) || 1));
+          next = { mode: 'weekday', raw: `${d}W`, value: String(d) };
+          break;
+        }
+        case 'last': {
+          if (this.name === 'week') {
+            const w = Math.min(7, Math.max(1, Math.floor(this.lastWeekday) || 1));
+            next = { mode: 'last', raw: `${w}L`, value: String(w) };
+          } else {
+            next = { mode: 'last', raw: 'L' };
+          }
+          break;
+        }
+        case 'lastWeekday':
+          next = { mode: 'lastWeekday', raw: 'LW' };
+          break;
+        case 'nth': {
+          const w = Math.min(7, Math.max(1, Math.floor(this.nthWeekday) || 1));
+          const n = Math.min(5, Math.max(1, Math.floor(this.nthOrder) || 1));
+          next = {
+            mode: 'nth',
+            raw: `${w}#${n}`,
+            value: String(w),
+            secondary: String(n),
+          };
+          break;
+        }
+        case 'list':
+        case 'specific': {
+          const values = (
+            this.listVals.length ? this.listVals : [this.listDefaultValue]
+          ).map(String);
           next = {
             mode: 'list',
             raw: values.join(','),
@@ -164,22 +275,66 @@ export default Vue.extend({
       this.$emit('input', next);
     },
     /**
-     * @description 指定模式格子变更
-     * @param {number[]} vals - 选中值
+     * @description 选择模式并上抛
+     * @param {CronFieldMode} m - 模式
      * @returns {void}
      */
-    onSpecific(vals: number[]): void {
-      this.specificVals = vals.length ? vals : [this.range.min];
+    selectMode(m: CronFieldMode): void {
+      if (this.disabled) return;
+      this.syncingFromProp = false;
+      this.mode = m;
+      if ((m === 'list' || m === 'specific') && this.listVals.length === 0) {
+        this.listVals = [this.listDefaultValue];
+      }
+      if (m === 'range' && this.name === 'week') {
+        this.rangeStart = 2;
+        this.rangeEnd = 3;
+      }
       this.emitState();
     },
     /**
-     * @description 枚举模式格子变更
+     * @description 控件聚焦时切模式
+     * @param {CronFieldMode} m - 模式
+     * @returns {void}
+     */
+    focusMode(m: CronFieldMode): void {
+      if (this.disabled) return;
+      if (this.mode !== m) this.selectMode(m);
+    },
+    /**
+     * @description 控件输入时切模式并上抛
+     * @param {CronFieldMode} m - 模式
+     * @returns {void}
+     */
+    controlInput(m: CronFieldMode): void {
+      if (this.disabled) return;
+      this.syncingFromProp = false;
+      if (this.mode !== m) {
+        this.selectMode(m);
+        return;
+      }
+      this.emitState();
+    },
+    /**
+     * @description 指定格子变更
      * @param {number[]} vals - 选中值
      * @returns {void}
      */
     onList(vals: number[]): void {
-      this.listVals = vals;
+      this.listVals = vals.length ? vals : [this.listDefaultValue];
+      if (this.mode !== 'list' && this.mode !== 'specific') {
+        this.selectMode('list');
+        return;
+      }
       this.emitState();
+    },
+    /**
+     * @description 周写法变更
+     * @param {WeekFormat} format - number | abbr
+     * @returns {void}
+     */
+    onWeekFormat(format: WeekFormat): void {
+      this.$emit('update:weekFormat', format);
     },
   },
 });
@@ -189,95 +344,255 @@ export default Vue.extend({
   <div class="cz-field" :class="{ 'cz-field--disabled': disabled }">
     <p v-if="disabled && disabledReason" class="cz-field__lock">{{ disabledReason }}</p>
 
-    <div class="cz-field__modes" role="radiogroup">
-      <label v-for="m in modes" :key="m.value" class="cz-field__mode">
-        <input v-model="mode" type="radio" :value="m.value" :disabled="disabled" />
-        <span>{{ m.label }}</span>
-      </label>
-    </div>
-
-    <div v-if="mode === 'specific'" class="cz-field__controls">
-      <p class="cz-field__hint">点击选择一个值（{{ gridMin }}-{{ gridMax }}）</p>
-      <ValueGrid
-        :min="gridMin"
-        :max="gridMax"
-        :value="specificVals"
-        :multiple="false"
+    <label v-if="name === 'day' || name === 'week'" class="cz-row">
+      <input
+        type="radio"
+        :name="modeRadioGroup"
+        :checked="mode === 'unset'"
         :disabled="disabled"
-        :labels="name === 'week' ? weekLabels : undefined"
-        @input="onSpecific"
+        @change="selectMode('unset')"
       />
-    </div>
+      <span>不指定</span>
+      <span class="cz-row__muted">允许的通配符[, - * / L W #]</span>
+    </label>
 
-    <div v-else-if="mode === 'list'" class="cz-field__controls">
-      <p class="cz-field__hint">可多选枚举值</p>
-      <ValueGrid
-        :min="gridMin"
-        :max="gridMax"
-        :value="listVals"
-        :multiple="true"
+    <label v-if="name === 'year'" class="cz-row">
+      <input
+        type="radio"
+        :name="modeRadioGroup"
+        :checked="mode === 'unset'"
         :disabled="disabled"
-        :labels="name === 'week' ? weekLabels : undefined"
-        @input="onList"
+        @change="selectMode('unset')"
       />
-    </div>
+      <span>不指定 <span class="cz-row__muted">（非必填）</span></span>
+    </label>
 
-    <div v-else-if="mode === 'range'" class="cz-field__controls cz-field__controls--row">
-      <label>
+    <label class="cz-row">
+      <input
+        type="radio"
+        :name="modeRadioGroup"
+        :checked="mode === 'every'"
+        :disabled="disabled"
+        @change="selectMode('every')"
+      />
+      <span>{{ everyLabel }} 允许的通配符[, - * /]</span>
+    </label>
+
+    <label class="cz-row">
+      <input
+        type="radio"
+        :name="modeRadioGroup"
+        :checked="mode === 'range'"
+        :disabled="disabled"
+        @change="selectMode('range')"
+      />
+      <span class="cz-row__inline">
+        周期从
+        <input
+          v-model.number="rangeStart"
+          type="number"
+          :min="name === 'week' ? 1 : range.min"
+          :max="name === 'week' ? 7 : range.max"
+          :disabled="disabled"
+          @focus="focusMode('range')"
+          @change="controlInput('range')"
+          @input="controlInput('range')"
+        />
+        -
+        <input
+          v-model.number="rangeEnd"
+          type="number"
+          :min="name === 'week' ? 1 : range.min"
+          :max="name === 'week' ? 7 : range.max"
+          :disabled="disabled"
+          @focus="focusMode('range')"
+          @change="controlInput('range')"
+          @input="controlInput('range')"
+        />
+        {{ unitLabel }}
+      </span>
+    </label>
+
+    <label v-if="name !== 'week'" class="cz-row">
+      <input
+        type="radio"
+        :name="modeRadioGroup"
+        :checked="mode === 'step'"
+        :disabled="disabled"
+        @change="selectMode('step')"
+      />
+      <span class="cz-row__inline">
         从
         <input
-          v-model="rangeStart"
+          v-model.number="stepBase"
           type="number"
           :min="range.min"
           :max="range.max"
           :disabled="disabled"
-          @change="emitState"
+          @focus="focusMode('step')"
+          @change="controlInput('step')"
+          @input="controlInput('step')"
         />
-      </label>
-      <label>
-        到
+        {{ unitLabel }}开始, 每
         <input
-          v-model="rangeEnd"
-          type="number"
-          :min="range.min"
-          :max="range.max"
-          :disabled="disabled"
-          @change="emitState"
-        />
-      </label>
-    </div>
-
-    <div v-else-if="mode === 'step'" class="cz-field__controls cz-field__controls--row">
-      <label>
-        从
-        <input
-          v-model="stepBase"
-          type="number"
-          :min="range.min"
-          :max="range.max"
-          :disabled="disabled"
-          @change="emitState"
-        />
-      </label>
-      <label>
-        每
-        <input
-          v-model="stepValue"
+          v-model.number="stepValue"
           type="number"
           min="1"
           :max="range.max"
           :disabled="disabled"
-          @change="emitState"
+          @focus="focusMode('step')"
+          @change="controlInput('step')"
+          @input="controlInput('step')"
         />
-        执行一次
+        {{ name === 'day' ? '天' : unitLabel }}执行一次
+      </span>
+    </label>
+
+    <label v-if="name === 'day'" class="cz-row">
+      <input
+        type="radio"
+        :name="modeRadioGroup"
+        :checked="mode === 'weekday'"
+        :disabled="disabled"
+        @change="selectMode('weekday')"
+      />
+      <span class="cz-row__inline">
+        每月
+        <input
+          v-model.number="weekdayNear"
+          type="number"
+          min="1"
+          max="31"
+          :disabled="disabled"
+          @focus="focusMode('weekday')"
+          @change="controlInput('weekday')"
+          @input="controlInput('weekday')"
+        />
+        号最近的那个工作日
+      </span>
+    </label>
+
+    <label v-if="name === 'day'" class="cz-row">
+      <input
+        type="radio"
+        :name="modeRadioGroup"
+        :checked="mode === 'last'"
+        :disabled="disabled"
+        @change="selectMode('last')"
+      />
+      <span><strong>每月最后一天</strong></span>
+    </label>
+
+    <label v-if="name === 'day'" class="cz-row">
+      <input
+        type="radio"
+        :name="modeRadioGroup"
+        :checked="mode === 'lastWeekday'"
+        :disabled="disabled"
+        @change="selectMode('lastWeekday')"
+      />
+      <span><strong>本月最后一个工作日</strong></span>
+    </label>
+
+    <label v-if="name === 'week'" class="cz-row">
+      <input
+        type="radio"
+        :name="modeRadioGroup"
+        :checked="mode === 'nth'"
+        :disabled="disabled"
+        @change="selectMode('nth')"
+      />
+      <span class="cz-row__inline">
+        第
+        <input
+          v-model.number="nthOrder"
+          type="number"
+          min="1"
+          max="5"
+          :disabled="disabled"
+          @focus="focusMode('nth')"
+          @change="controlInput('nth')"
+          @input="controlInput('nth')"
+        />
+        个
+        <select
+          v-model.number="nthWeekday"
+          :disabled="disabled"
+          @focus="focusMode('nth')"
+          @change="controlInput('nth')"
+        >
+          <option v-for="o in weekOptions" :key="o.value" :value="o.value">{{ o.label }}</option>
+        </select>
+      </span>
+    </label>
+
+    <label v-if="name === 'week'" class="cz-row">
+      <input
+        type="radio"
+        :name="modeRadioGroup"
+        :checked="mode === 'last'"
+        :disabled="disabled"
+        @change="selectMode('last')"
+      />
+      <span class="cz-row__inline">
+        本月最后一个
+        <select
+          v-model.number="lastWeekday"
+          :disabled="disabled"
+          @focus="focusMode('last')"
+          @change="controlInput('last')"
+        >
+          <option v-for="o in weekOptions" :key="o.value" :value="o.value">{{ o.label }}</option>
+        </select>
+      </span>
+    </label>
+
+    <div class="cz-row cz-row--block">
+      <label class="cz-row__head">
+        <input
+          type="radio"
+          :name="modeRadioGroup"
+          :checked="mode === 'list' || mode === 'specific'"
+          :disabled="disabled"
+          @change="selectMode('list')"
+        />
+        <strong>指定</strong>
       </label>
+      <ValueGrid
+        :min="gridMin"
+        :max="gridMax"
+        :value="mode === 'list' || mode === 'specific' ? listVals : []"
+        :multiple="true"
+        :disabled="disabled"
+        :pad="name !== 'week' && name !== 'year'"
+        :labels="name === 'week' ? weekLabels : name === 'month' ? monthLabels : undefined"
+        :order="name === 'week' ? weekOrder : undefined"
+        @input="onList"
+      />
     </div>
 
-    <p v-else-if="mode === 'every'" class="cz-field__hint">
-      每一{{ name === 'week' ? '周' : '' }}单位都触发（*）
-    </p>
-    <p v-else-if="mode === 'unset'" class="cz-field__hint">
-      不指定该字段（?），用于日/周互斥
-    </p>
+    <div v-if="name === 'week'" class="cz-week-format" role="radiogroup" aria-label="周字段写法">
+      <span class="cz-week-format__label">周字段写法：</span>
+      <label class="cz-week-format__opt">
+        <input
+          type="radio"
+          :name="weekFormatGroup"
+          :checked="weekFormat === 'number'"
+          :disabled="disabled"
+          @change="onWeekFormat('number')"
+        />
+        数字 1~7（1=周日，2=周一，…，7=周六）
+      </label>
+      <label class="cz-week-format__opt">
+        <input
+          type="radio"
+          :name="weekFormatGroup"
+          :checked="weekFormat === 'abbr'"
+          :disabled="disabled"
+          @change="onWeekFormat('abbr')"
+        />
+        英文 SUN、MON、TUE、WED、THU、FRI、SAT
+      </label>
+    </div>
   </div>
 </template>

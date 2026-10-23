@@ -52,7 +52,7 @@ const cron = ref('')
 | --- | --- | --- |
 | [`@cron-zen/core`](./packages/core) | 任意 JS | [@cron-zen/core](https://www.npmjs.com/package/@cron-zen/core) |
 | [`@cron-zen/vue3`](./packages/vue3) | Vue 3 | [@cron-zen/vue3](https://www.npmjs.com/package/@cron-zen/vue3) |
-| [`@cron-zen/vue2`](./packages/vue2) | Vue 2 | 暂不首发 |
+| [`@cron-zen/vue2`](./packages/vue2) | Vue 2.7 | 能力对齐中（workspace 可用，暂不 npm 首发） |
 
 ## 本地开发
 

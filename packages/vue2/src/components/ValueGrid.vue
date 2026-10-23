@@ -1,8 +1,10 @@
 <script lang="ts">
 /**
- * @description 数值格子选择器（Vue2）：单选或多选字段候选值
+ * @description 数值格子选择器（Vue2）：对齐 vue3（上限 / order / pad）
  */
 import Vue, { PropType } from 'vue';
+
+const MAX_GRID_CELLS = 120;
 
 export default Vue.extend({
   name: 'ValueGrid',
@@ -19,11 +21,24 @@ export default Vue.extend({
     disabled: { type: Boolean, default: false },
     /** @description 自定义标签 */
     labels: { type: Object as PropType<Record<number, string>>, default: undefined },
+    /** @description 是否两位补零 */
+    pad: { type: Boolean, default: true },
+    /** @description 自定义格子顺序 */
+    order: { type: Array as PropType<number[]>, default: undefined },
   },
   computed: {
     cells(): number[] {
+      if (this.order && this.order.length > 0) {
+        return this.order
+          .filter((n) => n >= this.min && n <= this.max)
+          .slice(0, MAX_GRID_CELLS);
+      }
       const list: number[] = [];
-      for (let i = this.min; i <= this.max; i++) list.push(i);
+      if (!Number.isFinite(this.min) || !Number.isFinite(this.max) || this.min > this.max) {
+        return list;
+      }
+      const end = Math.min(this.max, this.min + MAX_GRID_CELLS - 1);
+      for (let i = this.min; i <= end; i++) list.push(i);
       return list;
     },
     selected(): Set<number> {
@@ -31,6 +46,16 @@ export default Vue.extend({
     },
   },
   methods: {
+    /**
+     * @description 格子显示文案
+     * @param {number} n - 数值
+     * @returns {string} 文案
+     */
+    labelOf(n: number): string {
+      if (this.labels && this.labels[n] != null) return this.labels[n];
+      if (this.pad && n >= 0 && n <= 99) return String(n).padStart(2, '0');
+      return String(n);
+    },
     /**
      * @description 切换选中
      * @param {number} n - 数值
@@ -84,7 +109,7 @@ export default Vue.extend({
         :aria-pressed="selected.has(n)"
         @click="toggle(n)"
       >
-        {{ labels && labels[n] != null ? labels[n] : n }}
+        {{ labelOf(n) }}
       </button>
     </div>
   </div>
