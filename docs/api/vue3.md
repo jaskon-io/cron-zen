@@ -59,10 +59,12 @@ const { CronZen } = require('@cron-zen/vue3')
 | --- | --- | --- | --- |
 | `modelValue` / `v-model` | `string` | `''` | Cron；空值不注入默认 |
 | `debounceMs` | `number` | `0` | 写回防抖；本地预览始终即时 |
-| `nextCount` | `number` | `10` | 近 N 次（最大 100） |
-| `showPreview` | `boolean` | `true` | 底部预览；弹窗建议 `false` |
+| `nextCount` | `number` | `10` | 近 N 次 / 近 N 次已触发（最大 100） |
+| `showPreview` | `boolean` | `true` | 底部预览（表达式、自然语言、next / prev）；弹窗建议 `false` |
 | `timeZone` | `string` | 本地 | IANA 时区（近 N 次），如 `Asia/Shanghai` |
-| `locale` | `string` | `zh-CN` | 自然语言 / Tab：`zh-CN` \| `en-US` |
+| `locale` | `string` | `zh-CN` | 自然语言 / Tab / 常用模板：`zh-CN` \| `en-US` |
+
+顶部「常用模板」下拉一键套用；预览区同时列出未来触发与已触发（`getNextRuns` / `getPrevRuns`）。
 
 ### Events
 
@@ -91,6 +93,7 @@ const {
   expression,
   description,
   nextRuns,
+  prevRuns,
   updateField,
   loadExpression,
   reset,
@@ -102,7 +105,7 @@ const {
 })
 ```
 
-入口同时再导出 core API（`parseCron`、`generateCron` 等）。
+`prevRuns` 与 `nextRuns` 同为格式化后的时间字符串。入口同时再导出 core API（`parseCron`、`getCronPresets`、`getPrevRuns` 等）。
 
 ---
 

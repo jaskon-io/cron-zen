@@ -1,15 +1,16 @@
 # 在线 Playground
 
 <p class="cz-lead">
-与仓库 <code>pnpm dev</code> 同源的 Vue 3 演示。可点选字段，观察表达式与近 N 次预览。
+与仓库 <code>pnpm dev</code> 同源的 Vue 3 演示：完整编辑器可试用<strong>常用模板</strong>与<strong>近 N 次 / 近 N 次已触发</strong>；下方为 Element Picker 弹窗示例。
 </p>
 
 <PlaygroundEmbed />
 
 ::: tip
-- Playground 是 **Vue 3** 演示应用（体积偏大，含 Element 演示依赖）。  
+- Playground 是 **Vue 3** 演示（体积偏大，含 Element Plus）。  
+- 页首「完整编辑器」可见模板下拉与 prevRuns；Picker 弹窗内 `showPreview=false`，以配置为主。  
 - 若 iframe 长时间空白，点「新窗口打开」。  
-- 无 Vue 环境请用 [`@cron-zen/core`](/api/core)，不要期望在纯 HTML 里直接挂本演示。
+- 无 Vue 请用 [`@cron-zen/vanilla`](/api/vanilla) 或 [`@cron-zen/core`](/api/core)。
 :::
 
 ## 本地运行

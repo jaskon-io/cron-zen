@@ -48,10 +48,12 @@ require('@cron-zen/vue2/style.css')
 | --- | --- | --- | --- |
 | `value` / `v-model` | `string` | `''` | Cron；空值不注入默认 |
 | `debounceMs` | `number` | `0` | 写回防抖；本地预览即时 |
-| `nextCount` | `number` | `10` | 近 N 次（最大 100） |
-| `showPreview` | `boolean` | `true` | 底部预览；弹窗建议 `false` |
+| `nextCount` | `number` | `10` | 近 N 次 / 近 N 次已触发（最大 100） |
+| `showPreview` | `boolean` | `true` | 底部预览（含 next / prev）；弹窗建议 `false` |
 | `timeZone` | `string` | 本地 | IANA 时区（近 N 次） |
-| `locale` | `string` | `zh-CN` | `zh-CN` \| `en-US` |
+| `locale` | `string` | `zh-CN` | 自然语言 / Tab / 常用模板：`zh-CN` \| `en-US` |
+
+顶部「常用模板」下拉；预览区同步展示已触发列表（与 vue3 对齐）。
 
 ### Events
 
@@ -102,6 +104,7 @@ const {
   expression,
   description,
   nextRuns,
+  prevRuns,
   updateField,
   loadExpression,
   reset,

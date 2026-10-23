@@ -51,24 +51,29 @@ const res = generateCron(createDefaultCronState());
 // { success: true, expression: '* * * * * ? *' }
 ```
 
-### `getNextRuns(state, count?, from?): Date[]`
+### `getNextRuns` / `getPrevRuns`
 
-估算最近 N 次触发。已覆盖日 `L` / `LW` / `nW`、周 `nL` / `n#m` / 裸 `L`，以及倒序区间回绕。
+估算最近 N 次触发（未来）与已触发（新→旧）。已覆盖日 `L` / `LW` / `nW`、周 `nL` / `n#m` / 裸 `L`，以及倒序区间回绕。
 
 ```ts
-import { getNextRuns, parseCron, formatRunTime } from '@cron-zen/core';
+import { getNextRuns, getPrevRuns, parseCron, formatRunTime } from '@cron-zen/core';
 
 const { state } = parseCron('0 0 9 ? * 6#3');
-const runs = getNextRuns(state!, 3, new Date('2026-01-01'));
-console.log(runs.map(formatRunTime));
+const from = new Date('2026-01-01');
+console.log(getNextRuns(state!, 3, from).map(formatRunTime));
+console.log(getPrevRuns(state!, 3, from).map(formatRunTime));
 ```
+
+### `getCronPresets` / `listCronPresetDefs`
+
+常用模板（每分钟 / 工作日 9 点 / 月末…）；`getCronPresets(locale)` 带中英标签。
 
 ### 其他导出
 
 - `parseField` / `stringifyField` — 单字段解析 / 序列化
 - `escapeCronPercent` / `unescapeCronPercent` — `%` 转义
 - `enforceDayWeekMutex` / `assertDayWeekMutex` — 日周互斥
-- `describeCron` / `formatRunTime` — 自然语言与时间格式化
+- `describeCron` / `formatRunTime` / `getUiMessages` — 自然语言与 UI 文案
 - `lastDayOfMonth` / `lastWeekdayOfMonth` / `nearestWeekdayOfMonth` — 日日历
 - `lastQuartzWeekdayOfMonth` / `nthQuartzWeekdayOfMonth` — 周日历（nL / #）
 - `QUARTZ_MONTH_LABELS` / `quartzMonthLabel` — 月标签

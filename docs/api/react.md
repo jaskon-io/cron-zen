@@ -40,25 +40,26 @@ export function Demo() {
 | `value` | `string` | `''` | 受控表达式；空串不注入默认 |
 | `onChange` | `(expression, state) => void` | — | 写回 |
 | `debounceMs` | `number` | `0` | 写回防抖 |
-| `nextCount` | `number` | `10` | 近 N 次 |
-| `showPreview` | `boolean` | `true` | 底部预览 |
+| `nextCount` | `number` | `10` | 近 N 次 / 近 N 次已触发 |
+| `showPreview` | `boolean` | `true` | 底部预览（含 next / prev） |
 | `weekFormat` | `'number' \| 'abbr'` | `'number'` | 周字段写法 |
 | `timeZone` | `string` | — | IANA 时区 |
-| `locale` | `string` | `'zh-CN'` | UI / 自然语言 |
+| `locale` | `string` | `'zh-CN'` | UI / 自然语言 / 常用模板 |
 
-`ref` 透传 vanilla `CronZenHandle`（`getValue` / `setValue` / `flush` / `reset` / `controller`）。
+顶部「常用模板」下拉与 vue3 / vanilla 一致。`ref` 透传 vanilla `CronZenHandle`（`getValue` / `setValue` / `flush` / `reset` / `controller`）。
 
 ## useCronZen
 
 无头状态机（不挂可视化），适合自建 UI：
 
 ```tsx
-const { expression, setValue, nextRuns } = useCronZen({
+const { expression, setValue, nextRuns, prevRuns } = useCronZen({
   value: '',
   locale: 'zh-CN',
+  nextCount: 10,
 })
 ```
 
 ## 再导出
 
-本包再导出 `mountCronZen` / `createCronZen`（vanilla）及常用 `core` API，便于单入口引用。
+本包再导出 `mountCronZen` / `createCronZen`（vanilla）及常用 `core` API（含 `getCronPresets` / `getPrevRuns`），便于单入口引用。
