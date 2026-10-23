@@ -4,13 +4,15 @@
 
 | 包 | 给谁用 | npm |
 | --- | --- | --- |
-| **`@cron-zen/core`** | 任意运行时 — 解析 / 生成 / 校验 / 描述 / 近 N 次（时区 + i18n） | [0.2.0](https://www.npmjs.com/package/@cron-zen/core) |
-| **`@cron-zen/vanilla`** | **无框架可视化** — `mountCronZen` / `createCronZen` | [0.2.0](https://www.npmjs.com/package/@cron-zen/vanilla) |
-| **`@cron-zen/vue3`** | **Vue 3** — `CronZen` / `useCronZen` | [0.2.0](https://www.npmjs.com/package/@cron-zen/vue3) |
-| **`@cron-zen/vue2`** | **Vue 2.7** — `CronZen` / `useCronZen` | [0.2.0](https://www.npmjs.com/package/@cron-zen/vue2) |
+| **`@cron-zen/core`** | 任意运行时 — 解析 / 生成 / 校验 / 描述 / 近 N 次与已触发 / 常用模板（时区 + i18n） | [0.2.4](https://www.npmjs.com/package/@cron-zen/core) |
+| **`@cron-zen/vanilla`** | **无框架可视化** — `mountCronZen` / `createCronZen` | [0.2.4](https://www.npmjs.com/package/@cron-zen/vanilla) |
+| **`@cron-zen/react`** | **React 18/19** — `CronZen` / `useCronZen`（底层 vanilla） | [0.2.4](https://www.npmjs.com/package/@cron-zen/react) |
+| **`@cron-zen/vue3`** | **Vue 3** — `CronZen` / `useCronZen` | [0.2.4](https://www.npmjs.com/package/@cron-zen/vue3) |
+| **`@cron-zen/vue2`** | **Vue 2.7** — `CronZen` / `useCronZen` | [0.2.4](https://www.npmjs.com/package/@cron-zen/vue2) |
 
 [![npm core](https://img.shields.io/npm/v/@cron-zen/core.svg?label=%40cron-zen%2Fcore)](https://www.npmjs.com/package/@cron-zen/core)
 [![npm vanilla](https://img.shields.io/npm/v/@cron-zen/vanilla.svg?label=%40cron-zen%2Fvanilla)](https://www.npmjs.com/package/@cron-zen/vanilla)
+[![npm react](https://img.shields.io/npm/v/@cron-zen/react.svg?label=%40cron-zen%2Freact)](https://www.npmjs.com/package/@cron-zen/react)
 [![npm vue3](https://img.shields.io/npm/v/@cron-zen/vue3.svg?label=%40cron-zen%2Fvue3)](https://www.npmjs.com/package/@cron-zen/vue3)
 [![npm vue2](https://img.shields.io/npm/v/@cron-zen/vue2.svg?label=%40cron-zen%2Fvue2)](https://www.npmjs.com/package/@cron-zen/vue2)
 [![license](https://img.shields.io/npm/l/@cron-zen/core.svg)](./LICENSE)
@@ -23,6 +25,9 @@
 ```bash
 # 无 Vue → 可视化
 pnpm add @cron-zen/vanilla @cron-zen/core
+
+# React 18/19
+pnpm add @cron-zen/react @cron-zen/vanilla @cron-zen/core react react-dom
 
 # Vue 2.7
 pnpm add @cron-zen/vue2 @cron-zen/core vue@2.7

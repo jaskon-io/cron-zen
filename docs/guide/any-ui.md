@@ -138,7 +138,7 @@ import { ref } from 'vue'
 import { useCronZen } from '@cron-zen/vue3'
 
 const model = ref('')
-const { expression, description, nextRuns, updateField, reset } = useCronZen({
+const { expression, description, nextRuns, prevRuns, updateField, reset } = useCronZen({
   modelValue: model,
   debounceMs: 0,
   nextCount: 5,
@@ -158,7 +158,8 @@ function everyFiveMinutes() {
   <p>{{ expression }}</p>
   <p>{{ description }}</p>
   <ul>
-    <li v-for="(t, i) in nextRuns" :key="i">{{ t }}</li>
+    <li v-for="(t, i) in nextRuns" :key="'n'+i">{{ t }}</li>
+    <li v-for="(t, i) in prevRuns" :key="'p'+i">{{ t }}</li>
   </ul>
   <button type="button" @click="everyFiveMinutes">每 5 分钟</button>
   <button type="button" @click="reset">重置</button>

@@ -28,8 +28,8 @@ pnpm add @cron-zen/vanilla @cron-zen/core
 ::: code-group
 
 ```html [script 直引 · 推荐纯 HTML]
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@cron-zen/vanilla@0.2.2/dist/cron-zen-vanilla.css" />
-<script src="https://cdn.jsdelivr.net/npm/@cron-zen/vanilla@0.2.2/dist/cron-zen-vanilla.browser.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@cron-zen/vanilla@0.2.4/dist/cron-zen-vanilla.css" />
+<script src="https://cdn.jsdelivr.net/npm/@cron-zen/vanilla@0.2.4/dist/cron-zen-vanilla.browser.js"></script>
 <script>
   CronZen.mountCronZen('#cron', { value: '', onChange: console.log })
 </script>
@@ -73,11 +73,13 @@ api.destroy()
 | `value` | `''` | 初始表达式 |
 | `onChange` | — | `(expression, state) => void` |
 | `debounceMs` | `0` | 写回防抖 |
-| `nextCount` | `10` | 近 N 次（≤100） |
-| `showPreview` | `true` | 底部预览 |
+| `nextCount` | `10` | 近 N 次 / 近 N 次已触发（≤100） |
+| `showPreview` | `true` | 底部预览（含 next / prev） |
 | `weekFormat` | `'number'` | `'abbr'` 输出 MON…SAT |
 | `timeZone` | 本地 | IANA 时区（近 N 次） |
-| `locale` | `zh-CN` | `zh-CN` \| `en-US` |
+| `locale` | `zh-CN` | 自然语言 / Tab / 常用模板：`zh-CN` \| `en-US` |
+
+UI 含顶部「常用模板」下拉；`createCronZen` / `getSnapshot()` 提供 `nextRuns` 与 `prevRuns`。
 
 ## createCronZen
 
@@ -86,9 +88,11 @@ api.destroy()
 ```ts
 import { createCronZen } from '@cron-zen/vanilla'
 
-const ctrl = createCronZen({ debounceMs: 0 })
+const ctrl = createCronZen({ debounceMs: 0, nextCount: 5 })
 ctrl.updateField('hour', { mode: 'specific', raw: '8', value: '8' })
-console.log(ctrl.getSnapshot().expression) // * * 8 * * ?
+const snap = ctrl.getSnapshot()
+console.log(snap.expression) // * * 8 * * ?
+console.log(snap.nextRuns, snap.prevRuns)
 ctrl.destroy()
 ```
 

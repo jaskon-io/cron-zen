@@ -78,18 +78,44 @@ const res = validateCronState(createDefaultCronState())
 console.log(res.valid, res.errors, res.warnings)
 ```
 
-## getNextRuns / formatRunTime
+## getNextRuns / getPrevRuns / formatRunTime
 
 估算最近 N 次触发时间（条数 1–100）。默认按**运行环境本地时区**解释 Cron 墙上时钟；可传 IANA `timeZone`。
 
+- **`getNextRuns`**：未来触发（旧→新）
+- **`getPrevRuns`**：已触发（新→旧），与 next 对称
+
 ```ts
-import { getNextRuns, parseCron, formatRunTime } from '@cron-zen/core'
+import { getNextRuns, getPrevRuns, parseCron, formatRunTime } from '@cron-zen/core'
 
 const { state } = parseCron('0 0 9 ? * 6L') // 每月最后一个周五 09:00
 const from = new Date('2026-01-01T00:00:00Z')
-const runs = getNextRuns(state!, 5, from, { timeZone: 'Asia/Shanghai' })
-console.log(runs.map((d) => formatRunTime(d, { timeZone: 'Asia/Shanghai' })))
+const tz = { timeZone: 'Asia/Shanghai' }
+const next = getNextRuns(state!, 5, from, tz)
+const prev = getPrevRuns(state!, 5, from, tz)
+console.log(next.map((d) => formatRunTime(d, tz)))
+console.log(prev.map((d) => formatRunTime(d, tz)))
 ```
+
+可视化编辑器（vue3 / vue2 / vanilla / react）预览区会同时展示「近 N 次」与「近 N 次已触发」。
+
+## getCronPresets / listCronPresetDefs
+
+内置常用模板（每分钟 / 每小时 / 工作日 9 点 / 月末…）。`listCronPresetDefs` 只返回表达式；`getCronPresets(locale)` 带中英标签。
+
+```ts
+import { getCronPresets, getCronPreset, parseCron } from '@cron-zen/core'
+
+const presets = getCronPresets('zh-CN')
+// [{ id: 'every-minute', label: '每分钟', expression: '0 * * * * ?' }, …]
+
+const weekdays = getCronPreset('weekdays-9am', 'en-US')
+// { id: 'weekdays-9am', label: 'Weekdays at 9:00', expression: '0 0 9 ? * 2-6' }
+
+const { state } = parseCron(weekdays!.expression)
+```
+
+编辑器顶部有「常用模板」下拉，选中即套用表达式（文案随 `locale`）。
 
 ## describeCron（i18n）
 

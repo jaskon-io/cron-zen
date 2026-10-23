@@ -178,7 +178,7 @@ module.exports = { previewNext }
   <title>cron-zen · script 直引</title>
   <link
     rel="stylesheet"
-    href="https://cdn.jsdelivr.net/npm/@cron-zen/vanilla@0.2.2/dist/cron-zen-vanilla.css"
+    href="https://cdn.jsdelivr.net/npm/@cron-zen/vanilla@0.2.4/dist/cron-zen-vanilla.css"
   />
 </head>
 <body>
@@ -186,7 +186,7 @@ module.exports = { previewNext }
   <pre id="out"></pre>
 
   <!-- 一个 JS 即可（内含 core） -->
-  <script src="https://cdn.jsdelivr.net/npm/@cron-zen/vanilla@0.2.2/dist/cron-zen-vanilla.browser.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@cron-zen/vanilla@0.2.4/dist/cron-zen-vanilla.browser.js"></script>
   <script>
     // 全局：CronZen.mountCronZen / createCronZen / parseCron / …
     var api = CronZen.mountCronZen('#cron', {
@@ -225,10 +225,10 @@ module.exports = { previewNext }
 ```html [vanilla · CDN ESM]
 <link
   rel="stylesheet"
-  href="https://cdn.jsdelivr.net/npm/@cron-zen/vanilla@0.2.2/dist/cron-zen-vanilla.css"
+  href="https://cdn.jsdelivr.net/npm/@cron-zen/vanilla@0.2.4/dist/cron-zen-vanilla.css"
 />
 <script type="module">
-  import { mountCronZen } from 'https://cdn.jsdelivr.net/npm/@cron-zen/vanilla@0.2.2/+esm'
+  import { mountCronZen } from 'https://cdn.jsdelivr.net/npm/@cron-zen/vanilla@0.2.4/+esm'
 
   mountCronZen('#cron', {
     value: '',
@@ -241,7 +241,7 @@ module.exports = { previewNext }
 
 ```html [core · CDN ESM]
 <script type="module">
-  import { parseCron, describeCron } from 'https://cdn.jsdelivr.net/npm/@cron-zen/core@0.2.0/+esm'
+  import { parseCron, describeCron } from 'https://cdn.jsdelivr.net/npm/@cron-zen/core@0.2.4/+esm'
 
   var res = parseCron('0 0 9 ? * MON-FRI')
   if (res.success) {
