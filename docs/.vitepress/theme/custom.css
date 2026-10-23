@@ -1,0 +1,76 @@
+:root {
+  --vp-c-brand-1: #0f766e;
+  --vp-c-brand-2: #0d9488;
+  --vp-c-brand-3: #14b8a6;
+  --vp-c-brand-soft: rgba(15, 118, 110, 0.14);
+
+  --vp-home-hero-name-color: transparent;
+  --vp-home-hero-name-background: linear-gradient(120deg, #0f766e 30%, #2dd4bf);
+  --vp-home-hero-image-background-image: linear-gradient(
+    160deg,
+    rgba(15, 118, 110, 0.22) 20%,
+    rgba(45, 212, 191, 0.12) 70%
+  );
+  --vp-home-hero-image-filter: blur(44px);
+}
+
+.dark {
+  --vp-c-brand-1: #2dd4bf;
+  --vp-c-brand-2: #5eead4;
+  --vp-c-brand-3: #14b8a6;
+  --vp-c-brand-soft: rgba(45, 212, 191, 0.16);
+}
+
+/* Home: trust strip under hero actions */
+.cz-home-install {
+  max-width: 1152px;
+  margin: 0 auto;
+  padding: 0 24px 8px;
+}
+
+.cz-home-install .cz-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.cz-home-install .cz-badges img {
+  display: block;
+  height: 20px;
+}
+
+.cz-home-install h2 {
+  margin: 8px 0 12px;
+  border: none;
+  font-size: 1.15rem;
+  font-weight: 600;
+}
+
+.cz-home-install .vp-code-group {
+  margin-top: 0;
+}
+
+/* API / guide tables denser like component docs */
+.vp-doc table {
+  font-size: 14px;
+}
+
+.vp-doc h2 {
+  margin-top: 2.2rem;
+  border-top: 1px solid var(--vp-c-divider);
+  padding-top: 1.4rem;
+}
+
+.vp-doc h2:first-of-type {
+  border-top: none;
+  padding-top: 0;
+}
+
+/* Lead sentence under page title */
+.cz-lead {
+  margin: -0.4rem 0 1.4rem;
+  color: var(--vp-c-text-2);
+  font-size: 1.05rem;
+  line-height: 1.7;
+}

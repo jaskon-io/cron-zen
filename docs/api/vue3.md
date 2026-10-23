@@ -1,15 +1,19 @@
-# `@cron-zen/vue3`
+# @cron-zen/vue3
 
-Vue 3 适配层。默认路径 **不依赖 Element Plus**。
+<p class="cz-lead">
+Vue 3 适配层。默认路径不依赖 Element Plus；Picker 仅为可选示例壳。
+</p>
 
-| 导出 | 依赖 UI 库？ | 用途 |
+## 导出一览
+
+| 导出 | UI 库依赖 | 用途 |
 | --- | --- | --- |
-| `CronZen` | 否 | 完整可视化编辑器 |
-| `useCronZen` | 否 | 无 UI 状态机，自绘界面 |
-| `CronZenPicker` | **Element Plus（optional peer）** | 官方示例壳，已用 EP 时可省胶水 |
-| `CronZenPlugin` | 否 | 可选全局注册 |
+| `CronZen` | 无 | 完整可视化编辑器 |
+| `useCronZen` | 无 | 无头状态机 |
+| `CronZenPicker` | Element Plus（optional peer） | 官方 Element 壳 |
+| `CronZenPlugin` | 无 | 可选全局注册 |
 
-跨 UI 库接法见 [任意 UI 库集成](/guide/any-ui)。
+跨库接法：[任意 UI 库集成](/guide/any-ui)
 
 ## 安装
 
@@ -17,37 +21,35 @@ Vue 3 适配层。默认路径 **不依赖 Element Plus**。
 pnpm add @cron-zen/vue3 @cron-zen/core vue
 ```
 
-仅当使用 `CronZenPicker`：
-
 ```bash
-pnpm add element-plus
+pnpm add element-plus   # 仅 CronZenPicker
 ```
 
 ```ts
-import '@cron-zen/vue3/style.css';
+import '@cron-zen/vue3/style.css'
 ```
 
 ---
 
-## `CronZen`
-
-完整可视化编辑器（顶部 Tab + 中部配置 + 可选底部预览）。**无 Element 依赖。**
+## CronZen
 
 ### Props
 
-| Prop | Type | Default | Description |
+| Prop | 类型 | 默认 | 说明 |
 | --- | --- | --- | --- |
-| `modelValue` / `v-model` | `string` | `''` | Cron；**空值不注入默认** |
-| `debounceMs` | `number` | `0` | 写回 v-model 防抖；本地预览始终即时 |
-| `nextCount` | `number` | `10` | 「近 N 次」条数（最大 100） |
-| `showPreview` | `boolean` | `true` | 底部预览；弹窗内建议 `false` |
+| `modelValue` / `v-model` | `string` | `''` | Cron；空值不注入默认 |
+| `debounceMs` | `number` | `0` | 写回防抖；本地预览始终即时 |
+| `nextCount` | `number` | `10` | 近 N 次（最大 100） |
+| `showPreview` | `boolean` | `true` | 底部预览；弹窗建议 `false` |
 
 ### Events
 
-| Event | Payload |
+| 事件 | 载荷 |
 | --- | --- |
 | `update:modelValue` | `string` |
 | `change` | `CronState` |
+
+### 示例
 
 ```vue
 <CronZen v-model="cron" :show-preview="true" :next-count="10" />
@@ -55,15 +57,13 @@ import '@cron-zen/vue3/style.css';
 
 ---
 
-## `useCronZen`
-
-无 UI 状态机，自绘 Tab / 控件 / 预览时用。
+## useCronZen
 
 ```ts
-import { ref } from 'vue';
-import { useCronZen } from '@cron-zen/vue3';
+import { ref } from 'vue'
+import { useCronZen } from '@cron-zen/vue3'
 
-const model = ref('0 0 0 * * ?');
+const model = ref('0 0 0 * * ?')
 const {
   state,
   expression,
@@ -77,31 +77,30 @@ const {
   modelValue: model,
   debounceMs: 0,
   nextCount: 10,
-});
+})
 ```
 
-包入口同时再导出 core API（`parseCron`、`generateCron` 等）。
+入口同时再导出 core API（`parseCron`、`generateCron` 等）。
 
 ---
 
-## `CronZenPicker`（可选 Element 壳）
+## CronZenPicker
 
-输入框 +「选择」+ Dialog，面向 **已使用 Element Plus** 的表单。  
-若项目是 Ant / Naive / 自研弹层，请用 [任意 UI 库集成](/guide/any-ui)，不要为此引入 Element。
+面向**已使用 Element Plus** 的表单。其它 UI 库请用 [任意 UI 库集成](/guide/any-ui)。
 
-### 主要 Props
+### Props
 
-| Prop | Default | Description |
+| Prop | 默认 | 说明 |
 | --- | --- | --- |
 | `modelValue` | `''` | Cron |
 | `placeholder` | `请选择或输入 Cron 表达式` | 占位 |
-| `readonly` | `false` | 只能弹窗改 |
+| `readonly` | `false` | 仅弹窗可改 |
 | `clearable` | `true` | 可清空 |
 | `buttonText` | `选择` | 按钮文案 |
 | `dialogTitle` | `选择 Cron 表达式` | 标题 |
 | `dialogWidth` | `760px` | 宽度 |
 
-### Events / Slots
+### Events / Slots / Expose
 
 - Events：`update:modelValue`、`confirm`、`cancel`
 - Slot：`trigger="{ open, disabled }"`
@@ -118,6 +117,4 @@ const {
 }
 ```
 
-完整变量见源码 `packages/vue3/src/styles/cron-zen.css`。
-
-更完整说明见 [`packages/vue3/README.md`](https://github.com/jaskon-io/cron-zen/blob/main/packages/vue3/README.md)。
+完整变量见 `packages/vue3/src/styles/cron-zen.css`。

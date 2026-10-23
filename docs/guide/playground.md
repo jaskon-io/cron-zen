@@ -1,17 +1,14 @@
 # 在线 Playground
 
-下面嵌入本仓库的 Vue 3 Playground（与 `pnpm dev` 同源）。可直接点选字段，观察 Cron 与近 N 次预览。
-
-<iframe
-  class="playground-frame"
-  src="/cron-zen/playground/"
-  title="cron-zen playground"
-  loading="lazy"
-></iframe>
-
-<p class="playground-actions">
-  <a class="VPButton medium brand" href="/cron-zen/playground/" target="_blank" rel="noopener">新窗口打开</a>
+<p class="cz-lead">
+与仓库 <code>pnpm dev</code> 同源的 Vue 3 演示。可点选字段，观察表达式与近 N 次预览。
 </p>
+
+<PlaygroundEmbed />
+
+::: tip
+首包体积偏大（含 Element Plus 演示依赖）。若 iframe 长时间空白，点「新窗口打开」。
+:::
 
 ## 本地运行
 
@@ -23,18 +20,5 @@ pnpm dev
 
 ## 说明
 
-- Playground 依赖 `@cron-zen/vue3` + Element Plus，仅作演示。
-- 若 iframe 空白，多半是 GitHub Pages 尚未部署或路径未带 `/cron-zen/` 前缀；可先点「新窗口打开」排查。
-
-<style>
-.playground-frame {
-  width: 100%;
-  height: min(78vh, 880px);
-  border: 1px solid var(--vp-c-divider);
-  border-radius: 8px;
-  background: var(--vp-c-bg-soft);
-}
-.playground-actions {
-  margin-top: 12px;
-}
-</style>
+- Playground 仅用于演示，不代表默认集成路径必须安装 Element Plus。
+- 生产嵌入请优先 [快速开始](./quick-start) 与 [任意 UI 库集成](./any-ui)。
