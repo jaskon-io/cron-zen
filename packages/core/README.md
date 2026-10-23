@@ -51,12 +51,27 @@ const res = generateCron(createDefaultCronState());
 // { success: true, expression: '* * * * * ? *' }
 ```
 
+### `getNextRuns(state, count?, from?): Date[]`
+
+估算最近 N 次触发。已覆盖日 `L` / `LW` / `nW`、周 `nL` / `n#m` / 裸 `L`，以及倒序区间回绕。
+
+```ts
+import { getNextRuns, parseCron, formatRunTime } from '@cron-zen/core';
+
+const { state } = parseCron('0 0 9 ? * 6#3');
+const runs = getNextRuns(state!, 3, new Date('2026-01-01'));
+console.log(runs.map(formatRunTime));
+```
+
 ### 其他导出
 
 - `parseField` / `stringifyField` — 单字段解析 / 序列化
 - `escapeCronPercent` / `unescapeCronPercent` — `%` 转义
 - `enforceDayWeekMutex` / `assertDayWeekMutex` — 日周互斥
-- `describeCron` / `getNextRuns` — 自然语言与最近触发时间
+- `describeCron` / `formatRunTime` — 自然语言与时间格式化
+- `lastDayOfMonth` / `lastWeekdayOfMonth` / `nearestWeekdayOfMonth` — 日日历
+- `lastQuartzWeekdayOfMonth` / `nthQuartzWeekdayOfMonth` — 周日历（nL / #）
+- `QUARTZ_MONTH_LABELS` / `quartzMonthLabel` — 月标签
 - `getCronTabs` — UI Tab 元数据
 - `createDefaultCronState` — 默认 UI 状态
 - `generateCronOrThrow` — 生成失败时抛错
