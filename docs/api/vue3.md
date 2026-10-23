@@ -1,19 +1,23 @@
 # @cron-zen/vue3
 
 <p class="cz-lead">
-Vue 3 适配层。默认路径不依赖 Element Plus；Picker 仅为可选示例壳。
+<strong>Vue 3 专用</strong>适配层。包名中的 <code>vue3</code> 表示运行时要求，不是「也支持无 Vue 页面」。默认不依赖 Element Plus；Picker 仅为可选示例壳。
 </p>
+
+::: warning 没有 Vue？
+请安装 [`@cron-zen/core`](./core)，不要只装本包。对照表：[选哪个包](/guide/choose-package)。
+:::
 
 ## 导出一览
 
-| 导出 | UI 库依赖 | 用途 |
-| --- | --- | --- |
-| `CronZen` | 无 | 完整可视化编辑器 |
-| `useCronZen` | 无 | 无头状态机 |
-| `CronZenPicker` | Element Plus（optional peer） | 官方 Element 壳 |
-| `CronZenPlugin` | 无 | 可选全局注册 |
+| 导出 | 需要 Vue | UI 库依赖 | 用途 |
+| --- | --- | --- | --- |
+| `CronZen` | 是 | 无 | 完整可视化编辑器 |
+| `useCronZen` | 是 | 无 | 无头状态机 |
+| `CronZenPicker` | 是 | Element Plus（optional peer） | 官方 Element 壳 |
+| `CronZenPlugin` | 是 | 无 | 可选全局注册 |
 
-跨库接法：[任意 UI 库集成](/guide/any-ui)
+弹层用原生 `<dialog>` / Ant / Naive：仍在 Vue 应用内，见 [任意 UI 库集成](/guide/any-ui)。
 
 ## 安装
 

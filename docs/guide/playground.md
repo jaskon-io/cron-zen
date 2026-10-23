@@ -7,7 +7,9 @@
 <PlaygroundEmbed />
 
 ::: tip
-首包体积偏大（含 Element Plus 演示依赖）。若 iframe 长时间空白，点「新窗口打开」。
+- Playground 是 **Vue 3** 演示应用（体积偏大，含 Element 演示依赖）。  
+- 若 iframe 长时间空白，点「新窗口打开」。  
+- 无 Vue 环境请用 [`@cron-zen/core`](/api/core)，不要期望在纯 HTML 里直接挂本演示。
 :::
 
 ## 本地运行

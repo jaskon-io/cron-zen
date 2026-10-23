@@ -1,6 +1,8 @@
 # @cron-zen/core
 
-`cron-zen` 核心逻辑层：Cron 表达式解析、生成与校验。无框架依赖，可在 Node.js 与浏览器环境使用。
+`cron-zen` 核心逻辑层：Cron 表达式解析、生成与校验。**无框架依赖**——原生 JS、Node、非 Vue 前端都应优先用本包。
+
+需要 Vue 3 可视化组件时，另装 [`@cron-zen/vue3`](https://www.npmjs.com/package/@cron-zen/vue3)（不能用 vue3 包替代 core 在无 Vue 环境使用）。选包说明：[文档 · 选哪个包](https://jaskon-io.github.io/cron-zen/guide/choose-package)。
 
 ## Install
 

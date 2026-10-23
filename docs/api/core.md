@@ -1,14 +1,22 @@
 # @cron-zen/core
 
 <p class="cz-lead">
-框架无关的 Cron 引擎：解析、生成、校验、自然语言与近 N 次。可在 Node.js 与浏览器使用。
+框架无关的 Cron 引擎：解析、生成、校验、自然语言与近 N 次。这是「原生 / Node / 非 Vue」应安装的包——<strong>不依赖 Vue</strong>。
 </p>
+
+::: info 和 `@cron-zen/vue3` 的分工
+- **`core`**：不需要 Vue；无现成可视化（需自绘）；适合脚本、接口、任意前端。  
+- **`vue3`**：**需要 Vue 3**；提供 `CronZen` / `useCronZen`。  
+选包说明：[选哪个包](/guide/choose-package)
+:::
 
 ## 安装
 
 ```bash
 pnpm add @cron-zen/core
 ```
+
+浏览器原生脚本（无打包器时按你的工程方式加载 ESM 即可），逻辑 API 相同。
 
 ## parseCron
 

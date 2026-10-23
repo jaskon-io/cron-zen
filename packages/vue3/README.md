@@ -2,7 +2,11 @@
 
 Vue 3 可视化 Cron 表达式生成器。基于 `@cron-zen/core`，交互对齐 [cron.ren](https://www.cron.ren/index.html)：顶部 Tab + 中部配置 + 底部预览（可选）。
 
-**默认不依赖任何 UI 库。** `CronZen` / `useCronZen` 即可嵌入；`CronZenPicker` 只是 Element Plus 的可选示例壳。任意 Ant / Naive / 自研弹层接法见文档站 [任意 UI 库集成](https://jaskon-io.github.io/cron-zen/guide/any-ui)。
+**本包需要 Vue 3。** 包名中的 `vue3` 即运行时要求；无 Vue 请用 [`@cron-zen/core`](https://www.npmjs.com/package/@cron-zen/core)。
+
+**默认不依赖 Element / Ant 等 UI 库。** `CronZen` / `useCronZen` 即可嵌入；文档里的原生 `<dialog>` 示例仍是 Vue SFC，只是弹层没用组件库。`CronZenPicker` 仅为 Element 可选壳。
+
+选包：[选哪个包](https://jaskon-io.github.io/cron-zen/guide/choose-package) · 弹层：[任意 UI 库集成](https://jaskon-io.github.io/cron-zen/guide/any-ui)。
 
 ## Install
 

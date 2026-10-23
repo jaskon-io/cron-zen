@@ -1,34 +1,37 @@
 # 任意 UI 库集成
 
 <p class="cz-lead">
-默认路径不依赖 Element Plus 或任何组件库。Cron 引擎与可视化由 cron-zen 提供；按钮、弹窗、表单控件由你的技术栈承载。
+本页默认假设你已在 <strong>Vue 3</strong> 应用中。换的是弹窗 / 表单壳（原生 dialog、Ant、Naive…），不是去掉 Vue。<code>@cron-zen/vue3</code> 提供组件；无 Vue 环境请只用 <a href="./choose-package">@cron-zen/core</a>。
 </p>
 
 ## 分层
 
 ```text
 @cron-zen/core
-  解析 / 生成 / 校验 / 描述 / 近 N 次
+  解析 / 生成 / 校验 / 描述 / 近 N 次     ← 无 Vue 也能用
        │
-@cron-zen/vue3
-  useCronZen      ← 无 UI 状态机
-  CronZen         ← 自带可视化（仅 CSS 变量）
-  CronZenPicker   ← 可选 Element 示例壳
+@cron-zen/vue3                            ← 需要 Vue 3
+  useCronZen / CronZen / CronZenPicker
        │
-你的业务壳
-  Ant Design Vue / Naive UI / Vuetify / 自研 Dialog …
+你的业务壳（仍在 Vue 应用里）
+  <dialog> / Ant Modal / Naive / …
 ```
 
-| 目标 | 选用 | 额外 UI 库 |
-| --- | --- | --- |
-| 只要解析生成 | `@cron-zen/core` | 无 |
-| 页面内嵌编辑器 | `CronZen` | 无 |
-| 自绘弹窗 / 抽屉 | `CronZen` 或 `useCronZen` + 你的 Dialog | 用现有的 |
-| 已有 Element 表单 | `CronZenPicker` | Element Plus |
+| 目标 | 选用 | 需要 Vue？ | 额外 UI 库 |
+| --- | --- | --- | --- |
+| 只要解析生成 | `@cron-zen/core` | 否 | 无 |
+| 页面内嵌编辑器 | `CronZen` | **是** | 无 |
+| 自绘弹窗 / 抽屉 | `CronZen` + 你的 Dialog | **是** | 用现有的 |
+| 已有 Element 表单 | `CronZenPicker` | **是** | Element Plus |
+
+::: tip 「原生 `<dialog>`」≠「原生页面无 Vue」
+下面示例里的 `<dialog>` 是浏览器弹层标签，写在 **Vue SFC（`<script setup>`）** 里。  
+`import { CronZen } from '@cron-zen/vue3'` 仍然依赖 Vue 运行时。
+:::
 
 ---
 
-## 模式 A：页面内嵌
+## 模式 A：页面内嵌（Vue 3）
 
 ```vue
 <script setup lang="ts">
@@ -46,15 +49,16 @@ const cron = ref('')
 
 ---
 
-## 模式 B：自绘弹窗
+## 模式 B：自绘弹窗（Vue 3 + 任意壳）
 
 打开时拷贝 `draft`，弹层内绑定 `CronZen`（建议 `showPreview=false`），确定时写回。
 
-### 原生 `<dialog>`
+### 原生 `<dialog>`（弹层原生，应用仍是 Vue）
 
 ```vue
 <script setup lang="ts">
 import { ref } from 'vue'
+// 来自 vue3 适配包：这是 Vue 组件，不是「可在无 Vue 页使用」的意思
 import { CronZen } from '@cron-zen/vue3'
 import '@cron-zen/vue3/style.css'
 
@@ -192,6 +196,9 @@ const cron = ref('')
 
 ## 选型
 
-1. 新项目 → `CronZen` 或 `useCronZen`
-2. 已有 Ant / Naive / 自研弹层 → 模式 B
-3. 全站 Element Plus → 可用 Picker，也可继续模式 B（更易换库）
+1. **没有 Vue** → 只装 [`@cron-zen/core`](/api/core)，自绘或后接其它框架
+2. Vue 3 新项目 → `CronZen` / `useCronZen`（模式 A / C）
+3. Vue 3 + 已有 Ant / Naive / 自研弹层 → 模式 B
+4. 全站 Element Plus → 可用 Picker，也可模式 B（更易换库）
+
+包该怎么选：[选哪个包](./choose-package)

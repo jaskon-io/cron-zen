@@ -45,6 +45,7 @@ export default defineConfig({
         activeMatch: '/guide/',
         items: [
           { text: '介绍', link: '/guide/introduction' },
+          { text: '选哪个包', link: '/guide/choose-package' },
           { text: '快速开始', link: '/guide/quick-start' },
           { text: '任意 UI 库集成', link: '/guide/any-ui' },
           { text: '与 cron.ren 对照', link: '/guide/vs-cron-ren' },
@@ -75,6 +76,7 @@ export default defineConfig({
           text: '开始',
           items: [
             { text: '介绍', link: '/guide/introduction' },
+            { text: '选哪个包', link: '/guide/choose-package' },
             { text: '快速开始', link: '/guide/quick-start' },
           ],
         },
