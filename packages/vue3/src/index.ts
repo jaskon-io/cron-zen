@@ -31,17 +31,17 @@ export type {
 } from '@cron-zen/core';
 
 /**
- * @description Vue 插件安装函数
+ * @description Vue 插件安装函数（仅注册无 UI 库依赖的 `CronZen`）
+ * `CronZenPicker` 依赖 Element Plus，请按需 `import { CronZenPicker }`，不随插件全局注册。
  * @param {App} app - Vue 应用实例
  * @returns {void}
  * @example
  * import { createApp } from 'vue';
- * import { install } from '@cron-zen/vue3';
- * createApp(App).use(install);
+ * import { CronZenPlugin } from '@cron-zen/vue3';
+ * createApp(App).use(CronZenPlugin);
  */
 export function install(app: App): void {
   app.component('CronZen', CronZen);
-  app.component('CronZenPicker', CronZenPicker);
 }
 
 /**

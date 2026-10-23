@@ -169,7 +169,9 @@ function everyFiveMinutes() {
 
 ---
 
-## 模式 D：Element 壳（可选）
+## 模式 D：Element 壳（可选 · 最低优先级）
+
+仅当**项目已经依赖 Element Plus** 时使用。按需导入 `CronZenPicker`（`CronZenPlugin` 不会注册它）。
 
 ```bash
 pnpm add element-plus
@@ -191,7 +193,7 @@ const cron = ref('')
 ```
 
 ::: warning
-`CronZenPicker` 是官方示例壳，不是使用 cron-zen 的前提。不要为了用 Picker 而引入 Element。
+`CronZenPicker` 是示例壳，**不是**使用 cron-zen 的前提。新项目请优先模式 A / B / C，不要为了 Picker 引入 Element。
 :::
 
 ## 选型
@@ -199,6 +201,6 @@ const cron = ref('')
 1. **没有 Vue** → 只装 [`@cron-zen/core`](/api/core)，自绘或后接其它框架
 2. Vue 3 新项目 → `CronZen` / `useCronZen`（模式 A / C）
 3. Vue 3 + 已有 Ant / Naive / 自研弹层 → 模式 B
-4. 全站 Element Plus → 可用 Picker，也可模式 B（更易换库）
+4. 全站已有 Element Plus → 可用 Picker（模式 D），也可模式 B（更易换库）
 
 包该怎么选：[选哪个包](./choose-package)

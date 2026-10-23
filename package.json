@@ -2,7 +2,7 @@
   "name": "cron-zen",
   "version": "0.1.0",
   "private": true,
-  "description": "Visual Cron expression generator for Vue 2 / Vue 3",
+  "description": "Embeddable Quartz/cron.ren Cron engine — @cron-zen/core (any runtime) + @cron-zen/vue3 (Vue 3, no Element required)",
   "license": "MIT",
   "repository": {
     "type": "git",

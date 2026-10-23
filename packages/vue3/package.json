@@ -1,7 +1,7 @@
 {
   "name": "@cron-zen/vue3",
-  "version": "0.1.3",
-  "description": "Vue 3 adapter for cron-zen visual Cron expression generator",
+  "version": "0.1.4",
+  "description": "Vue 3 Cron visual editor for cron-zen — CronZen / useCronZen, no Element or Ant required",
   "license": "MIT",
   "repository": {
     "type": "git",
