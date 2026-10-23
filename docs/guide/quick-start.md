@@ -1,12 +1,12 @@
 # 快速开始
 
 <p class="cz-lead">
-按运行时选包：无 Vue → <strong>vanilla</strong>；Vue 2 → <strong>vue2</strong>；Vue 3 → <strong>vue3</strong>。只要引擎 → <strong>core</strong>。支持 TypeScript 与纯 JavaScript（ESM / CJS）。
+按运行时选包：无框架 → <strong>vanilla</strong>；React → <strong>react</strong>；Vue 2 → <strong>vue2</strong>；Vue 3 → <strong>vue3</strong>。只要引擎 → <strong>core</strong>。支持 TypeScript 与纯 JavaScript（ESM / CJS）。
 </p>
 
 完整对照 → [选哪个包](./choose-package) · 引入写法 → [引入方式与 Demo](./import-styles) · [纯 HTML 示例页](/examples/script-tag.html)
 
-## 1. 无 Vue / 无 UI 框架 → `@cron-zen/vanilla`
+## 1. 无框架 → `@cron-zen/vanilla`
 
 ```bash
 pnpm add @cron-zen/vanilla @cron-zen/core
@@ -51,7 +51,32 @@ ctrl.destroy()
 
 API → [vanilla](/api/vanilla)
 
-## 2. Vue 2.7 → `@cron-zen/vue2`
+## 2. React 18/19 → `@cron-zen/react`
+
+```bash
+pnpm add @cron-zen/react @cron-zen/vanilla @cron-zen/core react react-dom
+```
+
+```tsx
+import { useState } from 'react'
+import { CronZen } from '@cron-zen/react'
+import '@cron-zen/react/style.css'
+
+export function App() {
+  const [cron, setCron] = useState('')
+  return (
+    <CronZen
+      value={cron}
+      onChange={(expr) => setCron(expr)}
+      locale="zh-CN"
+    />
+  )
+}
+```
+
+API → [react](/api/react)
+
+## 3. Vue 2.7 → `@cron-zen/vue2`
 
 ```bash
 pnpm add @cron-zen/vue2 @cron-zen/core vue@2.7
@@ -77,7 +102,7 @@ export default {
 
 API → [vue2](/api/vue2)
 
-## 3. Vue 3 → `@cron-zen/vue3`
+## 4. Vue 3 → `@cron-zen/vue3`
 
 ```bash
 pnpm add @cron-zen/vue3 @cron-zen/core vue
@@ -121,7 +146,7 @@ const cron = ref('')
 
 API → [vue3](/api/vue3)
 
-## 4. 只要引擎 → `@cron-zen/core`
+## 5. 只要引擎 → `@cron-zen/core`
 
 ```bash
 pnpm add @cron-zen/core
@@ -144,8 +169,8 @@ const { parseCron, generateCron } = require('@cron-zen/core')
 
 ## 弹窗 / 其它 UI 库
 
-- **Vue 3**：壳用 dialog / Ant / Naive，内嵌 `<CronZen />` → [任意 UI 库集成](./any-ui)
-- **无 Vue**：`vanilla` 的 `mountCronZen` 挂到你的弹层 DOM 即可
+- **Vue 3 / React**：壳用 dialog / Modal，内嵌组件即可 → [任意 UI 库集成](./any-ui)
+- **无框架**：`vanilla` 的 `mountCronZen` 挂到你的弹层 DOM 即可
 
 ## 可选：Element Plus Picker（仅 vue3）
 

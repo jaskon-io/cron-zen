@@ -1,0 +1,71 @@
+{
+  "name": "@cron-zen/react",
+  "version": "0.2.3",
+  "description": "React 18/19 Cron visual editor for cron-zen — thin wrapper over @cron-zen/vanilla",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jaskon-io/cron-zen.git",
+    "directory": "packages/react"
+  },
+  "homepage": "https://jaskon-io.github.io/cron-zen/api/react",
+  "bugs": {
+    "url": "https://github.com/jaskon-io/cron-zen/issues"
+  },
+  "type": "module",
+  "main": "./dist/cron-zen-react.umd.cjs",
+  "module": "./dist/cron-zen-react.js",
+  "types": "./dist/index.d.ts",
+  "style": "./dist/cron-zen-react.css",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/cron-zen-react.js",
+      "require": "./dist/cron-zen-react.umd.cjs"
+    },
+    "./style.css": "./dist/cron-zen-react.css"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "keywords": [
+    "cron",
+    "react",
+    "cron-expression",
+    "cron-zen",
+    "quartz"
+  ],
+  "scripts": {
+    "build": "vite build && tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.build.json --noEmit",
+    "test": "vitest run",
+    "prepublishOnly": "pnpm run typecheck && pnpm run test && pnpm run build"
+  },
+  "dependencies": {
+    "@cron-zen/core": "workspace:*",
+    "@cron-zen/vanilla": "workspace:*"
+  },
+  "peerDependencies": {
+    "react": "^18.0.0 || ^19.0.0",
+    "react-dom": "^18.0.0 || ^19.0.0"
+  },
+  "devDependencies": {
+    "@testing-library/react": "^16.2.0",
+    "@types/react": "^18.3.18",
+    "@types/react-dom": "^18.3.5",
+    "jsdom": "^25.0.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "typescript": "^5.7.2",
+    "vite": "^5.4.11",
+    "vitest": "^2.1.8"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "sideEffects": [
+    "**/*.css"
+  ]
+}

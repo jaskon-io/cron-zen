@@ -1,7 +1,7 @@
 # 介绍
 
 <p class="cz-lead">
-cron-zen 是可嵌入的 Cron 能力库：<strong>无 Vue 用 vanilla</strong>，<strong>Vue2 用 vue2</strong>，<strong>Vue3 用 vue3</strong>；只要引擎用 <strong>core</strong>。源码 TypeScript，产物支持 JS / ESM / CJS。不绑定 Element / Ant。
+cron-zen 是可嵌入的 Cron 能力库：<strong>无框架用 vanilla</strong>，<strong>React 用 react</strong>，<strong>Vue2 / Vue3 各用各的</strong>；只要引擎用 <strong>core</strong>。源码 TypeScript，产物支持 JS / ESM / CJS。不绑定 Element / Ant。
 </p>
 
 ## 你会得到什么
@@ -11,6 +11,7 @@ cron-zen 是可嵌入的 Cron 能力库：<strong>无 Vue 用 vanilla</strong>�
 | 解析 / 生成 / 校验 | `core` | 5 / 6 / 7 段；年不指定 → 6 段 |
 | 自然语言 / 近 N 次 | `core` | 无 UI |
 | 三段式编辑器（无框架） | `vanilla` | `mountCronZen`，只要浏览器 DOM |
+| 三段式编辑器（React） | `react` | 薄封装 vanilla；peer React 18/19 |
 | 三段式编辑器 / 状态机 | `vue3` / `vue2` | 需要对应 Vue 运行时 |
 | 弹窗外壳 | 你的技术栈 | 原生 dialog、Ant、Naive…可换 |
 | Element 官方壳 | `vue3` 的 `CronZenPicker` | 可选，不是前提 |
@@ -21,6 +22,7 @@ cron-zen 是可嵌入的 Cron 能力库：<strong>无 Vue 用 vanilla</strong>�
 | --- | --- | --- | --- |
 | [`@cron-zen/core`](https://www.npmjs.com/package/@cron-zen/core) | 任意 JS（浏览器 / Node） | 引擎 | 已发布 |
 | [`@cron-zen/vanilla`](https://www.npmjs.com/package/@cron-zen/vanilla) | 浏览器 DOM | 无框架可视化 | 已发布 |
+| [`@cron-zen/react`](https://www.npmjs.com/package/@cron-zen/react) | **React 18/19** | 薄适配 vanilla | 已发布 |
 | [`@cron-zen/vue3`](https://www.npmjs.com/package/@cron-zen/vue3) | **Vue 3** | 组件与 composable | 已发布 |
 | [`@cron-zen/vue2`](https://www.npmjs.com/package/@cron-zen/vue2) | **Vue 2.7** | 组件与 composable | 已发布 |
 
@@ -32,7 +34,7 @@ cron-zen 是可嵌入的 Cron 能力库：<strong>无 Vue 用 vanilla</strong>�
 @cron-zen/core                 ← 引擎（原生可用）
         │
    ┌────┼────┐
-vanilla vue3 vue2              ← 可视化适配（DOM / Vue）
+vanilla react vue3 vue2        ← 可视化适配（DOM / React / Vue）
         │
 业务壳（可换）
   <dialog> / Ant Modal / Naive / CronZenPicker(Element，仅 vue3)
@@ -40,7 +42,7 @@ vanilla vue3 vue2              ← 可视化适配（DOM / Vue）
 
 ::: tip 差异化
 「可嵌入任意页面架构」= **引擎（core）** 与 **可视化适配 / 弹层壳** 可换。  
-包名标明运行时：`vanilla` 无框架，`vue3` / `vue2` 需对应 Vue。
+包名标明运行时：`vanilla` 无框架，`react` 需 React 18/19，`vue3` / `vue2` 需对应 Vue。
 :::
 
 ## 对比

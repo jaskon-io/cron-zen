@@ -3,11 +3,20 @@
 本项目遵循 [Semantic Versioning](https://semver.org/lang/zh-CN/)。  
 格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 
-发布包：`@cron-zen/core`、`@cron-zen/vue3`、`@cron-zen/vue2`、`@cron-zen/vanilla`（大功能对齐时版本号对齐）。
+发布包：`@cron-zen/core`、`@cron-zen/vue3`、`@cron-zen/vue2`、`@cron-zen/vanilla`、`@cron-zen/react`（大功能对齐时版本号对齐）。
 
 ---
 
 ## [Unreleased]
+
+---
+
+## [0.2.3] - 2026-10-23
+
+### Added
+
+- **`@cron-zen/react` npm 首发**：React 18/19 薄适配（`CronZen` / `useCronZen`，底层 `@cron-zen/vanilla`）；peer `react`/`react-dom` `^18 \|\| ^19`；默认 `locale=zh-CN`
+- 文档：选包 / 快速开始 / API · react
 
 ---
 
