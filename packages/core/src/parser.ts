@@ -47,6 +47,16 @@ export function parseField(
     return { state: createUnsetField(token) };
   }
 
+  // LW：本月最后一个工作日（须在普通 L / nL 之前匹配）
+  if (/^LW$/i.test(token)) {
+    return {
+      state: {
+        mode: 'lastWeekday',
+        raw: 'LW',
+      },
+    };
+  }
+
   // L / nL（最后一天 / 最后一个星期几）
   if (/^\d*L$/i.test(token)) {
     const num = token.slice(0, -1);

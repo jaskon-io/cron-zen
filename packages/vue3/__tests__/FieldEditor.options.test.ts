@@ -83,11 +83,18 @@ describe('FieldEditor 选项联动', () => {
       ['间隔', 'step'],
       ['最近的那个工作日', 'weekday'],
       ['每月最后一天', 'last'],
+      ['本月最后一个工作日', 'lastWeekday'],
       ['指定', 'list'],
     ])('点「%s」→ %s', async (label, mode) => {
       const wrapper = mountField('day', { mode: 'every', raw: '*' });
       const last = await pickRowByText(wrapper, label);
       expect(last.mode).toBe(mode);
+    });
+
+    it('点本月最后一个工作日 → raw=LW', async () => {
+      const wrapper = mountField('day', { mode: 'every', raw: '*' });
+      const last = await pickRowByText(wrapper, '本月最后一个工作日');
+      expect(last).toMatchObject({ mode: 'lastWeekday', raw: 'LW' });
     });
   });
 

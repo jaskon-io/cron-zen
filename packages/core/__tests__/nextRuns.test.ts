@@ -4,7 +4,13 @@ import {
   createEveryField,
   createUnsetField,
 } from '../src/types';
-import { expandFieldValues, formatRunTime, getNextRuns } from '../src/nextRuns';
+import {
+  expandFieldValues,
+  formatRunTime,
+  getNextRuns,
+  lastDayOfMonth,
+  lastWeekdayOfMonth,
+} from '../src/nextRuns';
 
 describe('expandFieldValues', () => {
   it('应展开常见模式', () => {
@@ -44,6 +50,7 @@ describe('expandFieldValues', () => {
       expandFieldValues({ mode: 'step', raw: '0/0', value: '0', secondary: '0' }, 0, 4),
     ).toBeNull();
     expect(expandFieldValues({ mode: 'last', raw: 'L' }, 1, 31)).toBeNull();
+    expect(expandFieldValues({ mode: 'lastWeekday', raw: 'LW' }, 1, 31)).toBeNull();
   });
 
   it('应拒绝越界 specific，并夹紧异常大 range', () => {
@@ -63,6 +70,25 @@ describe('expandFieldValues', () => {
   });
 });
 
+describe('lastDayOfMonth / lastWeekdayOfMonth', () => {
+  it('应返回公历月末日', () => {
+    expect(lastDayOfMonth(2026, 1)).toBe(31);
+    expect(lastDayOfMonth(2026, 2)).toBe(28);
+    expect(lastDayOfMonth(2024, 2)).toBe(29);
+  });
+
+  it('月末为周六/日时应回退到周五（Quartz LW）', () => {
+    // 2026-01-31 周六 → 30 周五
+    expect(lastWeekdayOfMonth(2026, 1)).toBe(30);
+    // 2026-02-28 周六 → 27 周五
+    expect(lastWeekdayOfMonth(2026, 2)).toBe(27);
+    // 2026-05-31 周日 → 29 周五
+    expect(lastWeekdayOfMonth(2026, 5)).toBe(29);
+    // 2026-03-31 周二 → 31
+    expect(lastWeekdayOfMonth(2026, 3)).toBe(31);
+  });
+});
+
 describe('getNextRuns / formatRunTime', () => {
   it('默认 * * * * * ? * 应返回连续秒级触发点', () => {
     const from = new Date(2026, 0, 1, 12, 0, 0);
@@ -74,9 +100,41 @@ describe('getNextRuns / formatRunTime', () => {
   });
 
 
-  it('无法展开的字段应返回空数组', () => {
+  it('日字段裸 L 应按月末触发', () => {
     const state = createDefaultCronState();
+    state.second = { mode: 'specific', raw: '0', value: '0' };
+    state.minute = { mode: 'specific', raw: '0', value: '0' };
+    state.hour = { mode: 'specific', raw: '0', value: '0' };
     state.day = { mode: 'last', raw: 'L' };
+    state.week = createUnsetField();
+    const from = new Date(2026, 0, 1, 0, 0, 0);
+    const runs = getNextRuns(state, 3, from);
+    expect(runs).toHaveLength(3);
+    expect(formatRunTime(runs[0])).toBe('2026-01-31 00:00:00');
+    expect(formatRunTime(runs[1])).toBe('2026-02-28 00:00:00');
+    expect(formatRunTime(runs[2])).toBe('2026-03-31 00:00:00');
+  });
+
+  it('日字段 LW 应按月末工作日触发', () => {
+    const state = createDefaultCronState();
+    state.second = { mode: 'specific', raw: '0', value: '0' };
+    state.minute = { mode: 'specific', raw: '0', value: '0' };
+    state.hour = { mode: 'specific', raw: '9', value: '9' };
+    state.day = { mode: 'lastWeekday', raw: 'LW' };
+    state.week = createUnsetField();
+    const from = new Date(2026, 0, 1, 0, 0, 0);
+    const runs = getNextRuns(state, 3, from);
+    expect(runs).toHaveLength(3);
+    // 1/31 六→30、2/28 六→27、3/31 二→31
+    expect(formatRunTime(runs[0])).toBe('2026-01-30 09:00:00');
+    expect(formatRunTime(runs[1])).toBe('2026-02-27 09:00:00');
+    expect(formatRunTime(runs[2])).toBe('2026-03-31 09:00:00');
+  });
+
+  it('日字段 nL（带 value）仍无法展开，应返回空', () => {
+    const state = createDefaultCronState();
+    state.day = { mode: 'last', raw: '5L', value: '5' };
+    state.week = createUnsetField();
     expect(getNextRuns(state, 5, new Date(2026, 0, 1))).toEqual([]);
   });
 

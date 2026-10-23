@@ -57,6 +57,8 @@ export {
   expandFieldValues,
   getNextRuns,
   formatRunTime,
+  lastDayOfMonth,
+  lastWeekdayOfMonth,
 } from './nextRuns';
 
 export type { CronTabMeta } from './tabs';

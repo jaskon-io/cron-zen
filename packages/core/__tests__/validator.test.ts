@@ -57,6 +57,7 @@ describe('isConcreteField / extractNumericValues', () => {
     ).toEqual([2, 1, 10]);
     expect(extractNumericValues({ mode: 'every', raw: '*' })).toEqual([]);
     expect(extractNumericValues({ mode: 'last', raw: 'L' })).toEqual([]);
+    expect(extractNumericValues({ mode: 'lastWeekday', raw: 'LW' })).toEqual([]);
     expect(extractNumericValues({ mode: 'specific', raw: 'MON', value: 'MON' })).toEqual([]);
     expect(
       extractNumericValues({ mode: 'range', raw: 'a-b', value: 'a', secondary: 'b' }),
@@ -165,6 +166,18 @@ describe('validateFieldRange', () => {
         secondary: '5',
       }),
     ).toEqual([]);
+  });
+
+  it('LW 仅允许日字段', () => {
+    expect(
+      validateFieldRange('day', { mode: 'lastWeekday', raw: 'LW' }),
+    ).toEqual([]);
+    expect(
+      validateFieldRange('week', { mode: 'lastWeekday', raw: 'LW' })[0],
+    ).toContain('不支持 LW');
+    expect(
+      validateFieldRange('hour', { mode: 'lastWeekday', raw: 'LW' })[0],
+    ).toContain('不支持 LW');
   });
 });
 

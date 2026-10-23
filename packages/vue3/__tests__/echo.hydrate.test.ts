@@ -141,4 +141,20 @@ describe('有值回显 / 无值不注入默认', () => {
     useCronZen({ modelValue: model, debounceMs: 0 });
     expect(model.value).toBe('');
   });
+
+  it('日 LW 应回显为本月最后一个工作日', () => {
+    const wrapper = mount(FieldEditor, {
+      props: {
+        name: 'day',
+        modelValue: { mode: 'lastWeekday', raw: 'LW' },
+      },
+    });
+    const row = wrapper
+      .findAll('.cz-row')
+      .find((l) => l.text().includes('本月最后一个工作日'));
+    expect(row).toBeTruthy();
+    expect((row!.find('input[type="radio"]').element as HTMLInputElement).checked).toBe(
+      true,
+    );
+  });
 });

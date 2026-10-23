@@ -21,6 +21,9 @@ describe('describeField', () => {
       describeField('日', { mode: 'list', raw: '1,15', values: ['1', '15'] }),
     ).toContain('1、15');
     expect(describeField('日', { mode: 'last', raw: 'L' })).toBe('最后一天');
+    expect(describeField('日', { mode: 'lastWeekday', raw: 'LW' })).toBe(
+      '本月最后一个工作日',
+    );
     // Quartz：6 = 周五
     expect(describeField('周', { mode: 'last', raw: '6L', value: '6' })).toContain('星期五');
     expect(describeField('日', { mode: 'weekday', raw: '15W', value: '15' })).toContain('15');

@@ -169,6 +169,34 @@ function normalizeCount(count: number): number {
 }
 
 /**
+ * @description 某月最后一天（公历）
+ * @param {number} year - 年
+ * @param {number} month - 月（1-12）
+ * @returns {number} 28-31
+ * @example
+ * lastDayOfMonth(2026, 2); // 28
+ */
+export function lastDayOfMonth(year: number, month: number): number {
+  return new Date(year, month, 0).getDate();
+}
+
+/**
+ * @description 某月最后一个工作日（Quartz LW：若月末为周六/日则回退到周五）
+ * @param {number} year - 年
+ * @param {number} month - 月（1-12）
+ * @returns {number} 日号
+ * @example
+ * lastWeekdayOfMonth(2026, 1); // 2026-01-31 周六 → 30（周五）
+ */
+export function lastWeekdayOfMonth(year: number, month: number): number {
+  let day = lastDayOfMonth(year, month);
+  const jsDay = new Date(year, month - 1, day).getDay();
+  if (jsDay === 6) day -= 1;
+  else if (jsDay === 0) day -= 2;
+  return day;
+}
+
+/**
  * @description 全量时分秒（每秒触发）时的快速路径：按秒递增，避免 86400 次嵌套 Date
  * @param {number} limit - 条数
  * @param {number} fromTs - 起始时间戳
@@ -185,7 +213,8 @@ function nextRunsEverySecond(limit: number, fromTs: number): Date[] {
 }
 
 /**
- * @description 估算最近 N 次触发时间（从 from 起按日推进，早停；L/W/nth 无法展开时返回空）
+ * @description 估算最近 N 次触发时间（从 from 起按日推进，早停）
+ * 支持日字段 `L` / `LW`；周字段 `L`/`W`/`#` 等仍无法展开时返回空
  * @param {CronState} state - 可视化状态
  * @param {number} [count=10] - 返回条数（1-100）
  * @param {Date} [from] - 起始时间（默认当前）
@@ -206,12 +235,22 @@ export function getNextRuns(
   const seconds = expandFieldValues(state.second, 0, 59)?.slice().sort((a, b) => a - b) ?? null;
   const minutes = expandFieldValues(state.minute, 0, 59)?.slice().sort((a, b) => a - b) ?? null;
   const hours = expandFieldValues(state.hour, 0, 23)?.slice().sort((a, b) => a - b) ?? null;
-  const days = expandFieldValues(state.day, 1, 31);
   const months = expandFieldValues(state.month, 1, 12);
 
-  if (!seconds || !minutes || !hours || !days || !months) {
+  /** 日字段裸 L（最后一天） */
+  const dayIsLast = state.day.mode === 'last' && !state.day.value;
+  /** 日字段 LW（最后工作日） */
+  const dayIsLW = state.day.mode === 'lastWeekday';
+  const daySpecial = dayIsLast || dayIsLW;
+  const daysExpanded = daySpecial ? null : expandFieldValues(state.day, 1, 31);
+
+  if (!seconds || !minutes || !hours || !months) {
     return [];
   }
+  if (!daySpecial && daysExpanded == null) {
+    return [];
+  }
+  const days = daysExpanded ?? [];
 
   const weekConcrete = state.week.mode !== 'every' && state.week.mode !== 'unset';
   const dayConcrete = state.day.mode !== 'every' && state.day.mode !== 'unset';
@@ -244,6 +283,7 @@ export function getNextRuns(
     !dayConcrete &&
     yearCandidates == null &&
     months.length === 12 &&
+    !daySpecial &&
     days.length === 31;
   const denseTime = hours.length === 24 && minutes.length === 60 && seconds.length === 60;
   if (denseCalendar && denseTime) {
@@ -251,7 +291,7 @@ export function getNextRuns(
   }
 
   const monthSet = new Set(months);
-  const daySet = dayConcrete ? new Set(days) : null;
+  const daySet = dayConcrete && !daySpecial ? new Set(days) : null;
   const yearSet = yearCandidates ? new Set(yearCandidates) : null;
   const sortedYears = yearCandidates ? [...yearCandidates].sort((a, b) => a - b) : null;
 
@@ -289,7 +329,17 @@ export function getNextRuns(
       }
       continue;
     }
-    if (daySet && !daySet.has(day)) {
+    if (dayIsLast) {
+      if (day !== lastDayOfMonth(year, month)) {
+        cursor.setDate(cursor.getDate() + 1);
+        continue;
+      }
+    } else if (dayIsLW) {
+      if (day !== lastWeekdayOfMonth(year, month)) {
+        cursor.setDate(cursor.getDate() + 1);
+        continue;
+      }
+    } else if (daySet && !daySet.has(day)) {
       cursor.setDate(cursor.getDate() + 1);
       continue;
     }

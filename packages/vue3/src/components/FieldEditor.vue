@@ -67,7 +67,7 @@ const unitLabel = computed(() => {
 });
 
 const wildcards = computed(() => {
-  if (props.name === 'day') return '[, - * / L W]';
+  if (props.name === 'day') return '[, - * / L LW W]';
   if (props.name === 'week') return '[, - * / L #]';
   return '[, - * /]';
 });
@@ -276,6 +276,10 @@ function emitState(): void {
       } else {
         next = { mode: 'last', raw: 'L' };
       }
+      break;
+    }
+    case 'lastWeekday': {
+      next = { mode: 'lastWeekday', raw: 'LW' };
       break;
     }
     case 'nth': {
@@ -570,6 +574,18 @@ function onList(vals: number[]): void {
         @change="selectMode('last')"
       />
       <span><strong>每月最后一天</strong></span>
+    </label>
+
+    <!-- 日：最后工作日 LW -->
+    <label v-if="name === 'day'" class="cz-row">
+      <input
+        type="radio"
+        :name="modeRadioGroup"
+        :checked="mode === 'lastWeekday'"
+        :disabled="disabled"
+        @change="selectMode('lastWeekday')"
+      />
+      <span><strong>本月最后一个工作日</strong></span>
     </label>
 
     <!-- 周：第 n 个星期 x -->

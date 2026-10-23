@@ -241,6 +241,7 @@ describe('CronZen 交互联动（对标 cron.ren）', () => {
       ['间隔', '1/1'],
       ['最近的那个工作日', /^\d+W$/],
       ['每月最后一天', 'L'],
+      ['本月最后一个工作日', 'LW'],
       ['指定', /^\d/],
     ] as const)('点「%s」→ 日=%s 且周=?', async (label, expectDay) => {
       const wrapper = mountZen();
