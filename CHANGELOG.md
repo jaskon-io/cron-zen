@@ -9,6 +9,10 @@
 
 ## [Unreleased]
 
+---
+
+## [0.1.2] - 2026-10-23
+
 ### Added
 
 - 日字段 `LW`（本月最后一个工作日）：解析 / 生成 / 自然语言 / 校验 / 近 N 次预估
@@ -56,5 +60,6 @@
 
 ---
 
+[0.1.2]: https://github.com/jaskon-io/cron-zen/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/jaskon-io/cron-zen/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/jaskon-io/cron-zen/releases/tag/v0.1.0
