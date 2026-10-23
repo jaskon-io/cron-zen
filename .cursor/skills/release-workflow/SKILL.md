@@ -61,12 +61,10 @@ docs: clarify core vs vue3 runtime boundaries
 - 仅内部结构整理、无行为变化的 chore
 - 「刚改两行就升补丁」的冲动
 
-发版包（版本号 **对齐**）：
+发版包：
 
-- `@cron-zen/core`
-- `@cron-zen/vue3`
-
-（`vue2` 暂不首发，除非用户明确要求。）
+- `@cron-zen/core` + `@cron-zen/vue3`（版本号 **对齐**）
+- `@cron-zen/vue2`（可独立补丁号发版；大功能对齐时可与主线同号）
 
 ---
 

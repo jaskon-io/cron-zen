@@ -57,6 +57,7 @@ export default defineConfig({
         items: [
           { text: '@cron-zen/core', link: '/api/core' },
           { text: '@cron-zen/vue3', link: '/api/vue3' },
+          { text: '@cron-zen/vue2', link: '/api/vue2' },
         ],
       },
       { text: 'Playground', link: '/guide/playground', activeMatch: '/guide/playground' },
@@ -65,6 +66,7 @@ export default defineConfig({
         items: [
           { text: 'npm · core', link: 'https://www.npmjs.com/package/@cron-zen/core' },
           { text: 'npm · vue3', link: 'https://www.npmjs.com/package/@cron-zen/vue3' },
+          { text: 'npm · vue2', link: 'https://www.npmjs.com/package/@cron-zen/vue2' },
           { text: 'GitHub', link: 'https://github.com/jaskon-io/cron-zen' },
           {
             text: '更新日志',
@@ -102,6 +104,7 @@ export default defineConfig({
           items: [
             { text: '@cron-zen/core', link: '/api/core' },
             { text: '@cron-zen/vue3', link: '/api/vue3' },
+            { text: '@cron-zen/vue2', link: '/api/vue2' },
           ],
         },
       ],

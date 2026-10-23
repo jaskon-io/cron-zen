@@ -17,6 +17,10 @@
 pnpm add @cron-zen/vue3 @cron-zen/core vue
 ```
 
+```bash [Vue 2.7 可视化]
+pnpm add @cron-zen/vue2 @cron-zen/core vue@2.7
+```
+
 ```bash [仅引擎 · 无 Vue 也可]
 pnpm add @cron-zen/core
 ```
@@ -52,6 +56,28 @@ const cron = ref('')
 ::: info 默认输出
 重置后的配置态为 **6 段** `* * * * * ?`。年选择「不指定」时不会强行补第 7 段 `*`。
 :::
+
+## Vue 2.7 用法
+
+```vue
+<template>
+  <cron-zen v-model="cron" />
+</template>
+
+<script>
+import { CronZen } from '@cron-zen/vue2'
+import '@cron-zen/vue2/style.css'
+
+export default {
+  components: { CronZen },
+  data() {
+    return { cron: '' }
+  },
+}
+</script>
+```
+
+完整 API → [API · vue2](/api/vue2)
 
 ## 只要引擎：`@cron-zen/core`（原生 / Node 可用）
 
