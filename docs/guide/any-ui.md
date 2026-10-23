@@ -53,6 +53,10 @@ const cron = ref('')
 
 打开时拷贝 `draft`，弹层内绑定 `CronZen`（建议 `showPreview=false`），确定时写回。
 
+**本页可点（文档站真实组件，非 iframe）：**
+
+<CronZenBusinessDemo />
+
 ### 原生 `<dialog>`（弹层原生，应用仍是 Vue）
 
 ```vue

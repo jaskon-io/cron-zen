@@ -13,6 +13,7 @@
 
 - 文档：`getPrevRuns` / 常用模板 API 示例；适配层说明；Playground 露出完整编辑器；CDN 示例钉到 `0.2.4`；README 徽标对齐
 - 文档：四包在线 Demo（vanilla / react / vue2 / vue3）+ **core 引擎 Demo**；`API · core` 按导出补全参数 / 返回 / 示例
+- 文档 Playground：去掉整页 iframe；Vue 3 **业务弹层**（按钮 → `<dialog>` + 真组件）；各包 Demo 新窗口打开
 
 ### Fixed
 

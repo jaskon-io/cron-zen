@@ -1,4 +1,8 @@
 import { defineConfig } from 'vitepress';
+import { resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const root = resolve(fileURLToPath(new URL('.', import.meta.url)), '../..');
 
 /**
  * @description VitePress site config for cron-zen docs (GitHub Pages).
@@ -13,6 +17,20 @@ export default defineConfig({
   cleanUrls: true,
   lastUpdated: true,
   ignoreDeadLinks: true,
+  vite: {
+    resolve: {
+      alias: {
+        '@cron-zen/core': resolve(root, 'packages/core/src'),
+        '@cron-zen/vue3': resolve(root, 'packages/vue3/src'),
+      },
+    },
+    server: {
+      fs: { allow: [root] },
+    },
+    optimizeDeps: {
+      exclude: ['@cron-zen/core', '@cron-zen/vue3'],
+    },
+  },
   head: [
     ['link', { rel: 'icon', href: '/cron-zen/favicon.svg' }],
     ['meta', { name: 'theme-color', content: '#0f766e' }],
