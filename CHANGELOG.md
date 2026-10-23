@@ -9,9 +9,18 @@
 
 ## [Unreleased]
 
+---
+
+## [0.2.1] - 2026-10-23
+
+### Added
+
+- `@cron-zen/vanilla`：**browser 单文件** `cron-zen-vanilla.browser.js`（IIFE，内联 core）→ `<script src>` 直引，全局 `CronZen`
+- `package.json`：`unpkg` / `jsdelivr` 指向 browser 包；`exports["./browser"]`
+
 ### Changed
 
-- 文档：选包决策改为「无 Vue→vanilla / Vue2→vue2 / Vue3→vue3」；新增「引入方式与 Demo」「质量与安全」；首页 / 快速开始 Demo 升华（JS·TS·ESM·CJS·CDN）
+- 文档：选包决策「无 Vue→vanilla / Vue2→vue2 / Vue3→vue3」；「引入方式」突出 script 直引；「质量与安全」
 
 ---
 

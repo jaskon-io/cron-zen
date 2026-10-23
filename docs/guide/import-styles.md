@@ -164,30 +164,32 @@ module.exports = { previewNext }
 
 ---
 
-## 4. 浏览器 CDN（无打包 Demo）
+## 4. 浏览器 `<script>` 直引（推荐纯 HTML）
 
-::: code-group
+不需要打包器、不需要 `type="module"`。用 **browser 单文件**（已内联 `core`），挂到全局 `window.CronZen`：
 
-```html [vanilla · CDN ESM]
+```html
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8" />
-  <title>cron-zen vanilla</title>
+  <title>cron-zen · script 直引</title>
   <link
     rel="stylesheet"
-    href="https://cdn.jsdelivr.net/npm/@cron-zen/vanilla@0.2.0/dist/cron-zen-vanilla.css"
+    href="https://cdn.jsdelivr.net/npm/@cron-zen/vanilla@0.2.1/dist/cron-zen-vanilla.css"
   />
 </head>
 <body>
   <div id="cron"></div>
   <pre id="out"></pre>
-  <script type="module">
-    import { mountCronZen } from 'https://cdn.jsdelivr.net/npm/@cron-zen/vanilla@0.2.0/+esm'
 
-    mountCronZen('#cron', {
+  <!-- 一个 JS 即可（内含 core） -->
+  <script src="https://cdn.jsdelivr.net/npm/@cron-zen/vanilla@0.2.1/dist/cron-zen-vanilla.browser.js"></script>
+  <script>
+    // 全局：CronZen.mountCronZen / createCronZen / parseCron / …
+    var api = CronZen.mountCronZen('#cron', {
       value: '',
-      showPreview: true,
+      locale: 'zh-CN',
       onChange: function (expr) {
         document.getElementById('out').textContent = expr
       },
@@ -197,6 +199,44 @@ module.exports = { previewNext }
 </html>
 ```
 
+| 文件 | 说明 |
+| --- | --- |
+| `cron-zen-vanilla.browser.js` | **IIFE 单文件**，内联 core，≈40KB；`unpkg` / `jsdelivr` 默认入口 |
+| `cron-zen-vanilla.css` | 样式（必引） |
+
+本地相对路径同样：
+
+```html
+<link rel="stylesheet" href="./cron-zen-vanilla.css" />
+<script src="./cron-zen-vanilla.browser.js"></script>
+<script>
+  CronZen.mountCronZen(document.getElementById('cron'), { value: '' })
+</script>
+```
+
+## 5. 浏览器 CDN · ESM（`type="module"`）
+
+适合已用 ESM 的页面：
+
+::: code-group
+
+```html [vanilla · CDN ESM]
+<link
+  rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/@cron-zen/vanilla@0.2.1/dist/cron-zen-vanilla.css"
+/>
+<script type="module">
+  import { mountCronZen } from 'https://cdn.jsdelivr.net/npm/@cron-zen/vanilla@0.2.1/+esm'
+
+  mountCronZen('#cron', {
+    value: '',
+    onChange: function (expr) {
+      document.getElementById('out').textContent = expr
+    },
+  })
+</script>
+```
+
 ```html [core · CDN ESM]
 <script type="module">
   import { parseCron, describeCron } from 'https://cdn.jsdelivr.net/npm/@cron-zen/core@0.2.0/+esm'
@@ -204,7 +244,6 @@ module.exports = { previewNext }
   var res = parseCron('0 0 9 ? * MON-FRI')
   if (res.success) {
     console.log(describeCron(res.state, { locale: 'zh-CN' }))
-    console.log(describeCron(res.state, { locale: 'en-US' }))
   }
 </script>
 ```
@@ -213,7 +252,7 @@ module.exports = { previewNext }
 
 ---
 
-## 5. TypeScript 与 JavaScript
+## 6. TypeScript 与 JavaScript
 
 | | TypeScript | JavaScript |
 | --- | --- | --- |
@@ -225,11 +264,12 @@ module.exports = { previewNext }
 
 ---
 
-## 6. 选包 + 引入速查
+## 7. 选包 + 引入速查
 
 | 场景 | 包 | 典型引入 |
 | --- | --- | --- |
-| 无 Vue 可视化 | `vanilla` | `import { mountCronZen } from '@cron-zen/vanilla'` |
+| 纯 HTML `<script>` | `vanilla` browser | `<script src="…browser.js">` → `CronZen.mountCronZen` |
+| 无 Vue 可视化（打包） | `vanilla` | `import { mountCronZen } from '@cron-zen/vanilla'` |
 | Vue 2 | `vue2` | `import { CronZen } from '@cron-zen/vue2'` |
 | Vue 3 | `vue3` | `import { CronZen } from '@cron-zen/vue3'` |
 | Node 校验 | `core` | `const { parseCron } = require('@cron-zen/core')` |

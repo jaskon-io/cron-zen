@@ -14,27 +14,27 @@ pnpm add @cron-zen/vanilla @cron-zen/core
 
 ::: code-group
 
-```js [ESM · JS]
+```html [script 直引 · 纯 HTML]
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@cron-zen/vanilla@0.2.1/dist/cron-zen-vanilla.css" />
+<script src="https://cdn.jsdelivr.net/npm/@cron-zen/vanilla@0.2.1/dist/cron-zen-vanilla.browser.js"></script>
+<script>
+  CronZen.mountCronZen('#cron', {
+    value: '',
+    locale: 'zh-CN',
+    onChange: function (expr) { console.log(expr) },
+  })
+</script>
+```
+
+```js [ESM · 打包器]
 import { mountCronZen } from '@cron-zen/vanilla'
 import '@cron-zen/vanilla/style.css'
 
-const api = mountCronZen('#cron', {
+mountCronZen('#cron', {
   value: '',
   locale: 'zh-CN',
   timeZone: 'Asia/Shanghai',
-  onChange(expr) {
-    console.log(expr)
-  },
-})
-```
-
-```ts [ESM · TS]
-import { mountCronZen } from '@cron-zen/vanilla'
-import '@cron-zen/vanilla/style.css'
-
-const api = mountCronZen('#cron', {
-  value: '',
-  onChange: (expr: string) => console.log(expr),
+  onChange(expr) { console.log(expr) },
 })
 ```
 

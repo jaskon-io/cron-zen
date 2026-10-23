@@ -10,6 +10,23 @@
 pnpm add @cron-zen/vanilla @cron-zen/core
 ```
 
+### 纯 HTML · `<script>` 直引（无需打包）
+
+```html
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@cron-zen/vanilla/dist/cron-zen-vanilla.css" />
+<script src="https://cdn.jsdelivr.net/npm/@cron-zen/vanilla/dist/cron-zen-vanilla.browser.js"></script>
+<script>
+  CronZen.mountCronZen('#app', {
+    value: '',
+    onChange: function (expr) { console.log(expr); },
+  });
+</script>
+```
+
+全局对象：`window.CronZen`（`mountCronZen` / `createCronZen` / `parseCron` …）。browser 包已内联 `@cron-zen/core`。
+
+### 打包器 · ESM
+
 ```js
 import { mountCronZen } from '@cron-zen/vanilla';
 import '@cron-zen/vanilla/style.css';

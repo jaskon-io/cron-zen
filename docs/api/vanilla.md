@@ -27,7 +27,15 @@ pnpm add @cron-zen/vanilla @cron-zen/core
 
 ::: code-group
 
-```js [ESM]
+```html [script 直引 · 推荐纯 HTML]
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@cron-zen/vanilla@0.2.1/dist/cron-zen-vanilla.css" />
+<script src="https://cdn.jsdelivr.net/npm/@cron-zen/vanilla@0.2.1/dist/cron-zen-vanilla.browser.js"></script>
+<script>
+  CronZen.mountCronZen('#cron', { value: '', onChange: console.log })
+</script>
+```
+
+```js [ESM · 打包器]
 import { mountCronZen } from '@cron-zen/vanilla'
 import '@cron-zen/vanilla/style.css'
 ```
@@ -36,16 +44,9 @@ import '@cron-zen/vanilla/style.css'
 const { createCronZen } = require('@cron-zen/vanilla')
 ```
 
-```html [CDN]
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@cron-zen/vanilla@0.2.0/dist/cron-zen-vanilla.css" />
-<script type="module">
-  import { mountCronZen } from 'https://cdn.jsdelivr.net/npm/@cron-zen/vanilla@0.2.0/+esm'
-</script>
-```
-
 :::
 
-更多写法 → [引入方式与 Demo](/guide/import-styles)
+`cron-zen-vanilla.browser.js`：**单文件 IIFE**（内联 core）→ 全局 `window.CronZen`。更多 → [引入方式](/guide/import-styles)
 
 ## mountCronZen
 
