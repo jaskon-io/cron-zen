@@ -75,24 +75,22 @@ pnpm add @cron-zen/core
 
 ### A. 无框架页面 → vanilla
 
-```html
-<div id="cron"></div>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@cron-zen/vanilla@0.2.0/dist/cron-zen-vanilla.css" />
-<script type="module">
-  import { mountCronZen } from 'https://cdn.jsdelivr.net/npm/@cron-zen/vanilla@0.2.0/+esm'
+**纯 HTML（`<script>` 直引，最省事）**：
 
-  const api = mountCronZen('#cron', {
+```html
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@cron-zen/vanilla@0.2.1/dist/cron-zen-vanilla.css" />
+<div id="cron"></div>
+<script src="https://cdn.jsdelivr.net/npm/@cron-zen/vanilla@0.2.1/dist/cron-zen-vanilla.browser.js"></script>
+<script>
+  CronZen.mountCronZen('#cron', {
     value: '',
     locale: 'zh-CN',
-    timeZone: 'Asia/Shanghai',
-    onChange(expr) {
-      console.log('cron =', expr)
-    },
+    onChange: function (expr) { console.log(expr) },
   })
 </script>
 ```
 
-打包器（Vite / Webpack）里同样：
+打包器（Vite / Webpack）：
 
 ```js
 import { mountCronZen } from '@cron-zen/vanilla'

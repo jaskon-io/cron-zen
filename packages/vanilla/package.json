@@ -1,7 +1,7 @@
 {
   "name": "@cron-zen/vanilla",
-  "version": "0.2.0",
-  "description": "Framework-free Cron visual editor for cron-zen — mount(el) / createCronZen, pure JS/TS",
+  "version": "0.2.1",
+  "description": "Framework-free Cron visual editor — mount(el) / script-tag browser bundle / createCronZen",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -17,13 +17,18 @@
   "module": "./dist/cron-zen-vanilla.js",
   "types": "./dist/index.d.ts",
   "style": "./dist/cron-zen-vanilla.css",
+  "unpkg": "./dist/cron-zen-vanilla.browser.js",
+  "jsdelivr": "./dist/cron-zen-vanilla.browser.js",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/cron-zen-vanilla.js",
       "require": "./dist/cron-zen-vanilla.umd.cjs"
     },
-    "./style.css": "./dist/cron-zen-vanilla.css"
+    "./style.css": "./dist/cron-zen-vanilla.css",
+    "./browser": {
+      "default": "./dist/cron-zen-vanilla.browser.js"
+    }
   },
   "files": [
     "dist",
@@ -35,11 +40,13 @@
     "cron-expression",
     "vanilla",
     "dom",
+    "browser",
+    "iife",
     "typescript",
     "cron-zen"
   ],
   "scripts": {
-    "build": "vite build && tsc -p tsconfig.build.json",
+    "build": "vite build && vite build --config vite.browser.config.ts && tsc -p tsconfig.build.json",
     "typecheck": "tsc -p tsconfig.build.json --noEmit",
     "test": "vitest run",
     "prepublishOnly": "pnpm run typecheck && pnpm run test && pnpm run build"
