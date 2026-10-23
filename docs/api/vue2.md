@@ -24,9 +24,21 @@
 pnpm add @cron-zen/vue2 @cron-zen/core vue@2.7
 ```
 
-```js
+::: code-group
+
+```js [ESM]
+import { CronZen } from '@cron-zen/vue2'
 import '@cron-zen/vue2/style.css'
 ```
+
+```js [CJS · require]
+const { CronZenPlugin } = require('@cron-zen/vue2')
+require('@cron-zen/vue2/style.css')
+```
+
+:::
+
+更多 → [引入方式](/guide/import-styles)
 
 ## CronZen
 

@@ -1,124 +1,170 @@
 # 选哪个包
 
 <p class="cz-lead">
-名字里的 <code>vue3</code> 只表示「Vue 3 适配层」。没有 Vue 的原生页面 / Node 服务请用 <code>@cron-zen/core</code>，不要指望 <code>@cron-zen/vue3</code> 在无 Vue 环境里跑组件。
+三步定包：先看有没有 Vue，再看要不要可视化。源码是 TypeScript，但产物同时提供 <strong>ESM / CJS</strong>，纯 JS 项目、 <code>require</code> / <code>import</code> 都能用。
 </p>
 
-## 一句话对照
+## 决策（先看这一张）
 
-| 你的环境 | 该装什么 | 能得到什么 | 得不到什么 |
-| --- | --- | --- | --- |
-| 纯 JS / TS、Node、脚本（只要引擎） | **`@cron-zen/core`** | 解析、生成、校验、描述、近 N 次 | 可视化组件 |
-| 无框架页面要完整点选 UI | **`@cron-zen/vanilla`**（再带上 core） | `mountCronZen` / `createCronZen` | — |
-| Vue 3 应用 | **`@cron-zen/vue3`**（通常再带上 core） | `CronZen` / `useCronZen` 等 | — |
-| Vue 3 + 已有 Element Plus | 同上，可选再用 `CronZenPicker` | 官方 Element 弹窗壳 | — |
-| Vue 2.7 应用 | **`@cron-zen/vue2`**（再带上 core） | `CronZen` / `useCronZen` | Element Picker（仅 vue3） |
+| 你的项目 | 可视化编辑器装什么 | 只要引擎（无 UI） |
+| --- | --- | --- |
+| **没有 Vue**（原生 HTML / jQuery / React / 其它 / Node） | **`@cron-zen/vanilla`** | `@cron-zen/core` |
+| **有 Vue 2.7** | **`@cron-zen/vue2`** | `@cron-zen/core` |
+| **有 Vue 3** | **`@cron-zen/vue3`** | `@cron-zen/core` |
 
-::: tip 命名没有误导
-`@cron-zen/vue3` = **给 Vue 3 用的适配包**，一看就知道要 Vue——这是刻意的。  
-「原生也能用」指的是 **`@cron-zen/core`**，不是把 `vue3` 包拿到无 Vue 页面里用。
+::: tip 记牢
+- **无 UI 框架、无 Vue，又要点选 Cron** → 用 **`vanilla`**（不是 vue3）。  
+- **有 Vue 2** → **`vue2`**；**有 Vue 3** → **`vue3`**。  
+- **只要解析 / 生成 / 校验 / 近 N 次**（脚本、接口）→ 只装 **`core`**。
 :::
 
-## 两层分别是什么
+## 安装对照
+
+::: code-group
+
+```bash [无框架 · vanilla]
+pnpm add @cron-zen/vanilla @cron-zen/core
+```
+
+```bash [Vue 2.7]
+pnpm add @cron-zen/vue2 @cron-zen/core vue@2.7
+```
+
+```bash [Vue 3]
+pnpm add @cron-zen/vue3 @cron-zen/core vue
+```
+
+```bash [仅引擎]
+pnpm add @cron-zen/core
+```
+
+:::
+
+## 架构
 
 ```text
 ┌─────────────────────────────────────┐
-│  @cron-zen/core                     │  ← 纯 TypeScript，零 UI、零框架
+│  @cron-zen/core                     │  ← 纯逻辑，任意 JS/TS 运行时
 │  parse / generate / validate / …    │
 └─────────────────┬───────────────────┘
                   │ 被依赖
      ┌────────────┼────────────┐
 ┌────▼────┐  ┌────▼────┐  ┌────▼────┐
-│ vanilla │  │  vue3   │  │  vue2   │
-│ 纯 DOM  │  │ Vue 3   │  │ Vue 2.7 │
+│ vanilla │  │  vue2   │  │  vue3   │
+│ 无框架  │  │ Vue 2.7 │  │ Vue 3   │
+│ 纯 DOM  │  │         │  │         │
 └─────────┘  └─────────┘  └─────────┘
 ```
 
 | 概念 | 说明 |
 | --- | --- |
-| **引擎** | `core`：字符串 ↔ 状态、校验、预览计算 |
-| **可视化适配** | `vanilla` / `vue3` / `vue2`：把引擎接到 DOM 或 Vue |
-| **业务壳** | 你的 `<dialog>` / Ant Modal / 自研抽屉——**不属于** cron-zen 包名 |
+| **引擎** | `core`：字符串 ↔ 状态、校验、描述、近 N 次、时区、i18n |
+| **可视化** | `vanilla` / `vue2` / `vue3`：把引擎接到 DOM 或 Vue |
+| **业务壳** | 你的 dialog / Modal / 抽屉——**不属于**包名 |
 
 ## 常见误解
 
 | 误解 | 事实 |
 | --- | --- |
-| 「文档里用了原生 `<dialog>`，所以 vue3 包能在纯 HTML 用」 | 示例仍是 **`<script setup>` 的 Vue SFC**；`<dialog>` 只是弹层标签，宿主仍是 Vue 应用 |
-| 「不绑 UI 库 = 不需要 Vue」 | 不绑的是 **Element/Ant 等组件库**；`CronZen` 本身仍是 Vue 组件 |
-| 「只要 core 就有点选界面」 | core **没有** UI；点选界面来自 `CronZen` 或你自绘 |
-| 「装了 vue3 还必须装 Element」 | 否。仅 `CronZenPicker` 需要 |
+| 「无 Vue 也能用 `@cron-zen/vue3` 组件」 | 否。无 Vue 可视化请用 **`vanilla`** |
+| 「不绑 UI 库 = 不需要 Vue」 | 不绑的是 Element/Ant；`vue3` 包本身仍要 Vue 3 |
+| 「只要 core 就有点选界面」 | core **没有** UI；点选来自 `vanilla` / `vue2` / `vue3` |
+| 「只有 TypeScript 能用」 | 否。产物含 **ESM + CJS**，纯 JS / `require` 可用，见 [引入方式](./import-styles) |
 
-## 按场景选
+## 场景 Demo（升华）
 
-### 1. Node / 脚本 / 校验接口
+### A. 无框架页面 → vanilla
 
-```bash
-pnpm add @cron-zen/core
-```
+```html
+<div id="cron"></div>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@cron-zen/vanilla@0.2.0/dist/cron-zen-vanilla.css" />
+<script type="module">
+  import { mountCronZen } from 'https://cdn.jsdelivr.net/npm/@cron-zen/vanilla@0.2.0/+esm'
 
-```ts
-import { parseCron, generateCron } from '@cron-zen/core'
-```
-
-→ 详见 [API · core](/api/core)
-
-### 2. Vue 3 后台配置页
-
-```bash
-pnpm add @cron-zen/vue3 @cron-zen/core vue
-```
-
-```vue
-<script setup lang="ts">
-import { CronZen } from '@cron-zen/vue3'
-import '@cron-zen/vue3/style.css'
+  const api = mountCronZen('#cron', {
+    value: '',
+    locale: 'zh-CN',
+    timeZone: 'Asia/Shanghai',
+    onChange(expr) {
+      console.log('cron =', expr)
+    },
+  })
 </script>
 ```
 
-→ 详见 [快速开始](./quick-start)
-
-### 3. Vue 3，但弹窗想用原生 / Ant / Naive
-
-仍然安装 **`@cron-zen/vue3`**，弹层用你的壳，内部放 `<CronZen />`。
-
-→ 详见 [任意 UI 库集成](./any-ui)
-
-### 4. Vue 2.7 后台
-
-```bash
-pnpm add @cron-zen/vue2 @cron-zen/core vue@2.7
-```
-
-```js
-import Vue from 'vue'
-import { CronZenPlugin } from '@cron-zen/vue2'
-import '@cron-zen/vue2/style.css'
-
-Vue.use(CronZenPlugin)
-```
-
-→ 详见 [API · vue2](/api/vue2)
-
-### 5. 无框架可视化（纯 HTML / 任意壳）
-
-```bash
-pnpm add @cron-zen/vanilla @cron-zen/core
-```
+打包器（Vite / Webpack）里同样：
 
 ```js
 import { mountCronZen } from '@cron-zen/vanilla'
 import '@cron-zen/vanilla/style.css'
 
-mountCronZen('#cron', { value: '', onChange: console.log })
+mountCronZen(document.getElementById('cron'), {
+  value: '',
+  onChange: (expr) => { /* 写入表单 */ },
+})
 ```
 
-→ 详见 [API · vanilla](/api/vanilla)
+### B. Vue 2.7 → vue2
+
+```vue
+<template>
+  <cron-zen v-model="cron" locale="zh-CN" time-zone="Asia/Shanghai" />
+</template>
+
+<script>
+import { CronZen } from '@cron-zen/vue2'
+import '@cron-zen/vue2/style.css'
+
+export default {
+  components: { CronZen },
+  data() {
+    return { cron: '' }
+  },
+}
+</script>
+```
+
+### C. Vue 3 → vue3
+
+```vue
+<script setup>
+import { ref } from 'vue'
+import { CronZen } from '@cron-zen/vue3'
+import '@cron-zen/vue3/style.css'
+
+const cron = ref('')
+</script>
+
+<template>
+  <CronZen v-model="cron" locale="en-US" time-zone="UTC" />
+</template>
+```
+
+### D. 只要引擎 → core（Node / 接口）
+
+```js
+// ESM
+import { parseCron, generateCron, getNextRuns, formatRunTime } from '@cron-zen/core'
+
+// 或 CJS
+// const { parseCron } = require('@cron-zen/core')
+
+const res = parseCron('0 0 9 * * ?')
+if (res.success) {
+  const runs = getNextRuns(res.state, 5, new Date(), { timeZone: 'Asia/Shanghai' })
+  console.log(runs.map((d) => formatRunTime(d, { timeZone: 'Asia/Shanghai' })))
+}
+```
+
+更多引入写法（`require` / ESM / 浏览器）→ [引入方式与 Demo](./import-styles)
+
+## 质量与可信度
+
+引擎与适配层均有 Vitest 覆盖（含压测、韧性、非法输入、卸载清理）。说明见 [质量与安全](./quality)。
 
 ## 下一步
 
-- [介绍](./introduction)
+- [引入方式与 Demo](./import-styles)
 - [快速开始](./quick-start)
-- [任意 UI 库集成](./any-ui)
-- [API · vue2](/api/vue2)
-- [API · vanilla](/api/vanilla)
+- [质量与安全](./quality)
+- [API · vanilla](/api/vanilla) · [vue2](/api/vue2) · [vue3](/api/vue3) · [core](/api/core)

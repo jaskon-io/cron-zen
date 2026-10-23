@@ -16,7 +16,24 @@
 pnpm add @cron-zen/core
 ```
 
-浏览器原生脚本（无打包器时按你的工程方式加载 ESM 即可），逻辑 API 相同。
+::: code-group
+
+```js [ESM · import]
+import { parseCron, generateCron } from '@cron-zen/core'
+```
+
+```js [CJS · require]
+const { parseCron, generateCron } = require('@cron-zen/core')
+```
+
+```js [ES5 风格]
+var core = require('@cron-zen/core')
+var parseCron = core.parseCron
+```
+
+:::
+
+纯 JS / TS 均可；完整 Demo → [引入方式](/guide/import-styles)
 
 ## parseCron
 

@@ -25,10 +25,27 @@
 pnpm add @cron-zen/vanilla @cron-zen/core
 ```
 
-```js
+::: code-group
+
+```js [ESM]
 import { mountCronZen } from '@cron-zen/vanilla'
 import '@cron-zen/vanilla/style.css'
 ```
+
+```js [CJS]
+const { createCronZen } = require('@cron-zen/vanilla')
+```
+
+```html [CDN]
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@cron-zen/vanilla@0.2.0/dist/cron-zen-vanilla.css" />
+<script type="module">
+  import { mountCronZen } from 'https://cdn.jsdelivr.net/npm/@cron-zen/vanilla@0.2.0/+esm'
+</script>
+```
+
+:::
+
+更多写法 → [引入方式与 Demo](/guide/import-styles)
 
 ## mountCronZen
 
