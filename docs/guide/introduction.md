@@ -1,7 +1,7 @@
 # 介绍
 
 <p class="cz-lead">
-cron-zen 是可嵌入的 Cron 能力库：<strong>@cron-zen/core</strong> 是任意运行时都能用的引擎；<strong>@cron-zen/vue3</strong> 是 Vue 3 专用可视化适配。不绑定 Element / Ant 等 UI 库——不等于「可以没有 Vue 还用 CronZen 组件」。
+cron-zen 是可嵌入的 Cron 能力库：<strong>@cron-zen/core</strong> 是任意运行时都能用的引擎；<strong>@cron-zen/vue3</strong> / <strong>@cron-zen/vue2</strong> 是对应 Vue 的可视化适配。不绑定 Element / Ant 等 UI 库——不等于「可以没有 Vue 还用 CronZen 组件」。
 </p>
 
 ## 你会得到什么
@@ -10,7 +10,7 @@ cron-zen 是可嵌入的 Cron 能力库：<strong>@cron-zen/core</strong> 是任
 | --- | --- | --- |
 | 解析 / 生成 / 校验 | `core` | 5 / 6 / 7 段；年不指定 → 6 段 |
 | 自然语言 / 近 N 次 | `core` | 无 UI |
-| 三段式编辑器 / 状态机 | `vue3` | **需要 Vue 3** |
+| 三段式编辑器 / 状态机 | `vue3` / `vue2` | 需要对应 Vue 运行时 |
 | 弹窗外壳 | 你的技术栈 | 原生 dialog、Ant、Naive…可换 |
 | Element 官方壳 | `vue3` 的 `CronZenPicker` | 可选，不是前提 |
 
@@ -20,7 +20,7 @@ cron-zen 是可嵌入的 Cron 能力库：<strong>@cron-zen/core</strong> 是任
 | --- | --- | --- | --- |
 | [`@cron-zen/core`](https://www.npmjs.com/package/@cron-zen/core) | 任意 JS（浏览器 / Node） | 引擎 | 已发布 |
 | [`@cron-zen/vue3`](https://www.npmjs.com/package/@cron-zen/vue3) | **Vue 3** | 组件与 composable | 已发布 |
-| `@cron-zen/vue2` | Vue 2 | 适配 | 暂不首发 |
+| [`@cron-zen/vue2`](https://www.npmjs.com/package/@cron-zen/vue2) | **Vue 2.7** | 组件与 composable | 已发布 |
 
 不确定装哪个？→ [选哪个包](./choose-package)
 
@@ -29,16 +29,17 @@ cron-zen 是可嵌入的 Cron 能力库：<strong>@cron-zen/core</strong> 是任
 ```text
 @cron-zen/core                 ← 引擎（原生可用）
         │
-@cron-zen/vue3                 ← 仅 Vue 3
+   ┌────┴────┐
+vue3       vue2                ← 对应 Vue 运行时
   useCronZen / CronZen         ← 不强制 Element/Ant
         │
 业务壳（可换，仍在 Vue 应用内）
-  <dialog> / Ant Modal / Naive / CronZenPicker(Element)
+  <dialog> / Ant Modal / Naive / CronZenPicker(Element，仅 vue3)
 ```
 
 ::: tip 差异化
 「可嵌入任意页面架构」= **引擎（core）** 与 **弹层/表单壳** 可换。  
-`vue3` 包名表示适配层面向 Vue 3，避免装错包。
+`vue3` / `vue2` 包名表示适配层面向的 Vue 大版本，避免装错包。
 :::
 
 ## 对比

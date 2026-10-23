@@ -1,24 +1,26 @@
 # cron-zen
 
-可嵌入的 Cron 引擎（Quartz / cron.ren 风格）。当前 **npm latest：0.1.4**。
+可嵌入的 Cron 引擎（Quartz / cron.ren 风格）。**`@cron-zen/vue2` 首发 0.1.5**；`core` / `vue3` 当前为 **0.1.4**。
 
 | 包 | 给谁用 |
 | --- | --- |
 | **`@cron-zen/core`** | **任意运行时**（原生 JS / Node / 非 Vue）— 解析 / 生成 / 校验 / 自然语言 / 近 N 次 |
 | **`@cron-zen/vue3`** | **仅 Vue 3** — `CronZen` / `useCronZen`；**默认不绑** Element / Ant |
+| **`@cron-zen/vue2`** | **仅 Vue 2.7** — `CronZen` / `useCronZen`；与 vue3 主路径对齐 |
 
 [![npm core](https://img.shields.io/npm/v/@cron-zen/core.svg?label=%40cron-zen%2Fcore)](https://www.npmjs.com/package/@cron-zen/core)
 [![npm vue3](https://img.shields.io/npm/v/@cron-zen/vue3.svg?label=%40cron-zen%2Fvue3)](https://www.npmjs.com/package/@cron-zen/vue3)
+[![npm vue2](https://img.shields.io/npm/v/@cron-zen/vue2.svg?label=%40cron-zen%2Fvue2)](https://www.npmjs.com/package/@cron-zen/vue2)
 [![license](https://img.shields.io/npm/l/@cron-zen/core.svg)](./LICENSE)
 
 **文档**：[选哪个包](https://jaskon-io.github.io/cron-zen/guide/choose-package) · [站点](https://jaskon-io.github.io/cron-zen/) · [Playground](https://jaskon-io.github.io/cron-zen/guide/playground)  
 **更新日志**：[CHANGELOG.md](./CHANGELOG.md) · [Releases](https://github.com/jaskon-io/cron-zen/releases)
 
-### 0.1.3 能力速览
+### 能力速览
 
 - 近 N 次：日 `L` / `LW` / `nW`，周 `nL` / `n#m` / 裸 `L`，倒序区间回绕
-- Vue3：日「本月最后一个工作日」、月格子「1月」…「12月」
-- `CronZenPicker` 仅为 Element **可选示例**；插件只注册 `CronZen`
+- Vue3 / Vue2：日「本月最后一个工作日」、月格子「1月」…「12月」、`useCronZen`
+- `CronZenPicker` 仅为 Element **可选示例**（vue3）；插件只注册 `CronZen`
 
 ## 安装
 
@@ -26,8 +28,11 @@
 # 无 Vue / 只要引擎
 pnpm add @cron-zen/core
 
-# Vue 3 可视化（需要 vue）
+# Vue 3 可视化
 pnpm add @cron-zen/vue3 @cron-zen/core vue
+
+# Vue 2.7 可视化
+pnpm add @cron-zen/vue2 @cron-zen/core vue@2.7
 ```
 
 ```vue
@@ -52,7 +57,7 @@ const cron = ref('')
 | --- | --- | --- |
 | [`@cron-zen/core`](./packages/core) | 任意 JS | [@cron-zen/core](https://www.npmjs.com/package/@cron-zen/core) |
 | [`@cron-zen/vue3`](./packages/vue3) | Vue 3 | [@cron-zen/vue3](https://www.npmjs.com/package/@cron-zen/vue3) |
-| [`@cron-zen/vue2`](./packages/vue2) | Vue 2.7 | 能力对齐中（workspace 可用，暂不 npm 首发） |
+| [`@cron-zen/vue2`](./packages/vue2) | Vue 2.7 | [@cron-zen/vue2](https://www.npmjs.com/package/@cron-zen/vue2) |
 
 ## 本地开发
 
