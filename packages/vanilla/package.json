@@ -1,6 +1,6 @@
 {
   "name": "@cron-zen/vanilla",
-  "version": "0.1.6",
+  "version": "0.2.0",
   "description": "Framework-free Cron visual editor for cron-zen — mount(el) / createCronZen, pure JS/TS",
   "license": "MIT",
   "repository": {

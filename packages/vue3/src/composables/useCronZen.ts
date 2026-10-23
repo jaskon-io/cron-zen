@@ -113,6 +113,14 @@ export interface UseCronZenOptions {
    * @description 周字段输出写法（默认 number）
    */
   weekFormat?: Ref<WeekFormat> | WeekFormat;
+  /**
+   * @description IANA 时区（近 N 次预估 / 格式化）；默认本地
+   */
+  timeZone?: Ref<string | undefined> | string;
+  /**
+   * @description 自然语言 / Tab 语言：zh-CN | en-US
+   */
+  locale?: Ref<string | undefined> | string;
 }
 
 /**
@@ -135,6 +143,10 @@ export interface UseCronZenReturn {
   hint: Ref<string>;
   /** @description 周字段写法 */
   weekFormat: Ref<WeekFormat>;
+  /** @description 近 N 次时区 */
+  timeZone: Ref<string | undefined>;
+  /** @description 文案语言 */
+  locale: Ref<string>;
   /** @description 更新单个字段并触发日周互斥 */
   updateField: (name: CronFieldName, field: CronFieldState) => void;
   /** @description 设置周字段输出写法并立即重生成 */
@@ -177,6 +189,21 @@ function resolveWeekFormat(input?: Ref<WeekFormat> | WeekFormat): WeekFormat {
 }
 
 /**
+ * @description 解析字符串或 Ref 选项
+ * @param {Ref<string | undefined> | string | undefined} input - 入参
+ * @param {string} fallback - 默认
+ * @returns {string}
+ */
+function resolveStringOption(
+  input: Ref<string | undefined> | string | undefined,
+  fallback: string,
+): string {
+  if (input == null) return fallback;
+  if (typeof input === 'string') return input || fallback;
+  return input.value || fallback;
+}
+
+/**
  * @description CronZen 核心组合式 API：shallowRef 状态、防抖生成、日周互斥、周写法、销毁清理
  * @param {UseCronZenOptions} [options] - 配置项
  * @returns {UseCronZenReturn} 状态与操作方法
@@ -204,6 +231,14 @@ export function useCronZen(options: UseCronZenOptions = {}): UseCronZenReturn {
   });
   const hint = shallowRef('');
   const weekFormat = shallowRef<WeekFormat>(resolveWeekFormat(options.weekFormat));
+  const timeZone = shallowRef<string | undefined>(
+    typeof options.timeZone === 'string'
+      ? options.timeZone || undefined
+      : options.timeZone?.value || undefined,
+  );
+  const locale = shallowRef(
+    resolveStringOption(options.locale as Ref<string | undefined> | string | undefined, 'zh-CN'),
+  );
 
   let timer: ReturnType<typeof setTimeout> | null = null;
   /** 近 N 次预估防抖（表达式即时，重计算延后，避免拖垮输入） */
@@ -223,8 +258,9 @@ export function useCronZen(options: UseCronZenOptions = {}): UseCronZenReturn {
       nextRuns.value = [];
       return;
     }
-    nextRuns.value = getNextRuns(state.value, nextCount)
-      .map(formatRunTime)
+    const tzOpt = timeZone.value ? { timeZone: timeZone.value } : undefined;
+    nextRuns.value = getNextRuns(state.value, nextCount, new Date(), tzOpt)
+      .map((d) => formatRunTime(d, tzOpt))
       .filter(Boolean);
   };
 
@@ -266,7 +302,7 @@ export function useCronZen(options: UseCronZenOptions = {}): UseCronZenReturn {
     validation.value = validateCronState(state.value);
 
     if (showPreview) {
-      description.value = describeCron(state.value);
+      description.value = describeCron(state.value, { locale: locale.value });
       scheduleNextRuns(opts.immediateNextRuns === true);
     } else {
       description.value = '';
@@ -477,6 +513,26 @@ export function useCronZen(options: UseCronZenOptions = {}): UseCronZenReturn {
     );
   }
 
+  if (options.timeZone && typeof options.timeZone !== 'string') {
+    watch(
+      () => (options.timeZone as Ref<string | undefined>).value,
+      (v) => {
+        timeZone.value = v || undefined;
+        refreshNow();
+      },
+    );
+  }
+
+  if (options.locale && typeof options.locale !== 'string') {
+    watch(
+      () => (options.locale as Ref<string | undefined>).value,
+      (v) => {
+        locale.value = v || 'zh-CN';
+        refreshNow();
+      },
+    );
+  }
+
   if (getCurrentInstance()) {
     onBeforeUnmount(() => {
       if (timer != null) {
@@ -499,6 +555,8 @@ export function useCronZen(options: UseCronZenOptions = {}): UseCronZenReturn {
     validation: validation as unknown as Ref<ValidateResult>,
     hint: hint as unknown as Ref<string>,
     weekFormat: weekFormat as unknown as Ref<WeekFormat>,
+    timeZone: timeZone as unknown as Ref<string | undefined>,
+    locale: locale as unknown as Ref<string>,
     updateField,
     setWeekFormat,
     loadExpression,

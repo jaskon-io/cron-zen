@@ -30,6 +30,14 @@ const props = withDefaults(
      * @description 是否展示底部字段表 / 表达式 / 近 N 次（弹窗场景建议 false）
      */
     showPreview?: boolean;
+    /**
+     * @description IANA 时区（近 N 次）；默认运行环境本地
+     */
+    timeZone?: string;
+    /**
+     * @description 自然语言语言：zh-CN | en-US
+     */
+    locale?: string;
   }>(),
   {
     // 无值保持空，不注入默认表达式；UI 仍用「每*」原始态供编辑
@@ -38,6 +46,8 @@ const props = withDefaults(
     debounceMs: 0,
     nextCount: 10,
     showPreview: true,
+    timeZone: undefined,
+    locale: 'zh-CN',
   },
 );
 
@@ -81,15 +91,17 @@ const {
   debounceMs: props.debounceMs,
   nextCount: props.nextCount,
   showPreview: props.showPreview,
+  timeZone: toRef(props, 'timeZone'),
+  locale: toRef(props, 'locale'),
 });
 
-const tabs = getCronTabs();
+const tabs = computed(() => getCronTabs(props.locale));
 const currentField = computed(() => state.value[activeTab.value]);
 const copied = ref(false);
 let copiedTimer: ReturnType<typeof setTimeout> | null = null;
 
 const fieldParts = computed(() =>
-  tabs.map((tab) => ({
+  tabs.value.map((tab) => ({
     name: tab.name,
     label: tab.label,
     value: displayFieldValue(tab.name, state.value[tab.name], weekFormat.value),

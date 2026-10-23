@@ -1,5 +1,20 @@
 import type { CronFieldState, CronState } from './types';
+import {
+  getZonedParts,
+  isValidTimeZone,
+  zonedWallTimeToUtc,
+} from './timezone';
 import { matchesQuartzWeek } from './week';
+
+/**
+ * @description getNextRuns / formatRunTime 时区选项
+ */
+export interface TimeZoneOptions {
+  /**
+   * @description IANA 时区（如 Asia/Shanghai）；省略则用运行环境本地时区
+   */
+  timeZone?: string;
+}
 
 /** 单次预估最多返回条数，防止异常入参拖垮 UI */
 const MAX_NEXT_RUN_COUNT = 100;
@@ -315,22 +330,31 @@ function nextRunsEverySecond(limit: number, fromTs: number): Date[] {
 
 /**
  * @description 估算最近 N 次触发时间（从 from 起按日推进，早停）
- * 支持日 `L` / `LW` / `nW`，周 `nL` / `n#m`；周裸 `L` 按 Quartz 视为每周六
+ * 支持日 `L` / `LW` / `nW`，周 `nL` / `n#m`；周裸 `L` 按 Quartz 视为每周六。
+ * 传入 `timeZone` 时按该 IANA 时区的墙上时钟解释 Cron 字段。
  * @param {CronState} state - 可视化状态
  * @param {number} [count=10] - 返回条数（1-100）
  * @param {Date} [from] - 起始时间（默认当前）
- * @returns {Date[]} 触发时间列表
+ * @param {TimeZoneOptions} [options] - 时区选项
+ * @returns {Date[]} 触发时间列表（UTC 时间戳）
  * @example
  * getNextRuns(createDefaultCronState(), 3);
+ * getNextRuns(state, 5, new Date(), { timeZone: 'Asia/Shanghai' });
  */
 export function getNextRuns(
   state: CronState,
   count = 10,
   from: Date = new Date(),
+  options?: TimeZoneOptions,
 ): Date[] {
   const limit = normalizeCount(count);
   if (limit === 0) return [];
   if (!(from instanceof Date) || Number.isNaN(from.getTime())) return [];
+
+  const tz =
+    options?.timeZone && isValidTimeZone(options.timeZone)
+      ? options.timeZone.trim()
+      : undefined;
 
   // 时间字段按数值升序迭代，保证倒序回绕（如时 22-2 → [22,23,0,1,2]）在日内按时钟推进
   const seconds = expandFieldValues(state.second, 0, 59)?.slice().sort((a, b) => a - b) ?? null;
@@ -431,7 +455,8 @@ export function getNextRuns(
     !daySpecial &&
     days.length === 31;
   const denseTime = hours.length === 24 && minutes.length === 60 && seconds.length === 60;
-  if (denseCalendar && denseTime) {
+  // 每秒快路径仅本地时区（与历史行为一致）；显式 timeZone 走通用扫描
+  if (denseCalendar && denseTime && !tz) {
     return nextRunsEverySecond(limit, fromTs);
   }
 
@@ -441,92 +466,156 @@ export function getNextRuns(
   const sortedYears = yearCandidates ? [...yearCandidates].sort((a, b) => a - b) : null;
 
   const results: Date[] = [];
-  const cursor = new Date(from.getFullYear(), from.getMonth(), from.getDate());
+
+  // 日历光标：本地用 Date；时区用墙上 Y-M-D 三元组推进
+  let cursorY: number;
+  let cursorM: number;
+  let cursorD: number;
+  let fromY: number;
+  let fromMo: number;
+  let fromD: number;
+  let fromH: number;
+  let fromMi: number;
+
+  if (tz) {
+    const zp = getZonedParts(from, tz);
+    if (!zp) return [];
+    cursorY = zp.year;
+    cursorM = zp.month;
+    cursorD = zp.day;
+    fromY = zp.year;
+    fromMo = zp.month;
+    fromD = zp.day;
+    fromH = zp.hour;
+    fromMi = zp.minute;
+  } else {
+    cursorY = from.getFullYear();
+    cursorM = from.getMonth() + 1;
+    cursorD = from.getDate();
+    fromY = cursorY;
+    fromMo = cursorM;
+    fromD = cursorD;
+    fromH = from.getHours();
+    fromMi = from.getMinutes();
+  }
+
+  const advanceDay = (): void => {
+    if (tz) {
+      // 用 UTC 中午锚点 +1 天再读回时区日期，避开 DST 歧义
+      const noon = zonedWallTimeToUtc(cursorY, cursorM, cursorD, 12, 0, 0, tz);
+      if (!noon) {
+        // 退化：按公历 +1
+        const tmp = new Date(Date.UTC(cursorY, cursorM - 1, cursorD + 1, 12));
+        cursorY = tmp.getUTCFullYear();
+        cursorM = tmp.getUTCMonth() + 1;
+        cursorD = tmp.getUTCDate();
+        return;
+      }
+      const next = getZonedParts(new Date(noon.getTime() + 24 * 3600 * 1000), tz);
+      if (!next) return;
+      cursorY = next.year;
+      cursorM = next.month;
+      cursorD = next.day;
+    } else {
+      const cursor = new Date(cursorY, cursorM - 1, cursorD);
+      cursor.setDate(cursor.getDate() + 1);
+      cursorY = cursor.getFullYear();
+      cursorM = cursor.getMonth() + 1;
+      cursorD = cursor.getDate();
+    }
+  };
+
+  const setCursor = (y: number, m: number, d: number): void => {
+    cursorY = y;
+    cursorM = m;
+    cursorD = d;
+  };
+
+  const jsWeekday = (): number => {
+    if (tz) {
+      const noon = zonedWallTimeToUtc(cursorY, cursorM, cursorD, 12, 0, 0, tz);
+      if (!noon) return 0;
+      return getZonedParts(noon, tz)?.weekday ?? 0;
+    }
+    return new Date(cursorY, cursorM - 1, cursorD).getDay();
+  };
 
   for (let i = 0; i < MAX_SCAN_DAYS && results.length < limit; i++) {
-    const year = cursor.getFullYear();
-    const month = cursor.getMonth() + 1;
-    const day = cursor.getDate();
-    const sameDayAsFrom =
-      year === from.getFullYear() &&
-      month === from.getMonth() + 1 &&
-      day === from.getDate();
+    const year = cursorY;
+    const month = cursorM;
+    const day = cursorD;
+    const sameDayAsFrom = year === fromY && month === fromMo && day === fromD;
 
     if (yearSet && !yearSet.has(year)) {
-      // 跳到下一个候选年，避免按日空转数年
       const nextY = sortedYears!.find((y) => y > year);
       if (nextY == null) break;
-      cursor.setFullYear(nextY, 0, 1);
+      setCursor(nextY, 1, 1);
       continue;
     }
     if (!monthSet.has(month)) {
-      // 跳到本月之后的下一个合法月，否则跨年
       let jumped = false;
       for (const m of months) {
         if (m > month) {
-          cursor.setMonth(m - 1, 1);
+          setCursor(year, m, 1);
           jumped = true;
           break;
         }
       }
       if (!jumped) {
-        cursor.setFullYear(year + 1, (months[0] ?? 1) - 1, 1);
+        setCursor(year + 1, months[0] ?? 1, 1);
       }
       continue;
     }
     if (dayIsLast) {
       if (day !== lastDayOfMonth(year, month)) {
-        cursor.setDate(cursor.getDate() + 1);
+        advanceDay();
         continue;
       }
     } else if (dayIsLW) {
       if (day !== lastWeekdayOfMonth(year, month)) {
-        cursor.setDate(cursor.getDate() + 1);
+        advanceDay();
         continue;
       }
     } else if (dayIsWeekday) {
       const target = nearestWeekdayOfMonth(year, month, weekdayNear);
       if (target == null || day !== target) {
-        cursor.setDate(cursor.getDate() + 1);
+        advanceDay();
         continue;
       }
     } else if (daySet && !daySet.has(day)) {
-      cursor.setDate(cursor.getDate() + 1);
+      advanceDay();
       continue;
     }
     if (weekIsLast) {
       const target = lastQuartzWeekdayOfMonth(year, month, weekLastQ);
       if (target == null || day !== target) {
-        cursor.setDate(cursor.getDate() + 1);
+        advanceDay();
         continue;
       }
     } else if (weekIsNth) {
       const target = nthQuartzWeekdayOfMonth(year, month, weekNthQ, weekNthN);
       if (target == null || day !== target) {
-        cursor.setDate(cursor.getDate() + 1);
+        advanceDay();
         continue;
       }
     } else if (weekConcrete && weeks) {
-      // Quartz：1=周日…7=周六（0=周日）；勿按 ISO/JS 直接比
-      if (!matchesQuartzWeek(cursor.getDay(), weeks)) {
-        cursor.setDate(cursor.getDate() + 1);
+      if (!matchesQuartzWeek(jsWeekday(), weeks)) {
+        advanceDay();
         continue;
       }
     }
 
-    const fromH = from.getHours();
-    const fromM = from.getMinutes();
-
     for (const hour of hours) {
-      // 同一天时跳过已过去的小时，减少无意义 Date 构造
       if (sameDayAsFrom && hour < fromH) continue;
       for (const minute of minutes) {
-        if (sameDayAsFrom && hour === fromH && minute < fromM) {
+        if (sameDayAsFrom && hour === fromH && minute < fromMi) {
           continue;
         }
         for (const second of seconds) {
-          const dt = new Date(year, month - 1, day, hour, minute, second, 0);
-          // 统一用时间戳过滤已过去的秒（覆盖同分钟内的历史秒）
+          const dt = tz
+            ? zonedWallTimeToUtc(year, month, day, hour, minute, second, tz)
+            : new Date(year, month - 1, day, hour, minute, second, 0);
+          if (!dt || Number.isNaN(dt.getTime())) continue;
           if (dt.getTime() <= fromTs) continue;
           results.push(dt);
           if (results.length >= limit) return results;
@@ -534,21 +623,32 @@ export function getNextRuns(
       }
     }
 
-    cursor.setDate(cursor.getDate() + 1);
+    advanceDay();
   }
 
   return results;
 }
 
 /**
- * @description 格式化触发时间为本地可读字符串
+ * @description 格式化触发时间为可读字符串（默认本地；可指定 IANA 时区）
  * @param {Date} date - 时间
+ * @param {TimeZoneOptions} [options] - 时区选项
  * @returns {string} `YYYY-MM-DD HH:mm:ss`；非法 Date 返回空串
  * @example
- * formatRunTime(new Date('2026-01-01T08:00:00')); // '2026-01-01 08:00:00'
+ * formatRunTime(new Date('2026-01-01T08:00:00')); // 本地
+ * formatRunTime(date, { timeZone: 'UTC' }); // '…' 按 UTC
  */
-export function formatRunTime(date: Date): string {
+export function formatRunTime(date: Date, options?: TimeZoneOptions): string {
   if (!(date instanceof Date) || Number.isNaN(date.getTime())) return '';
   const pad = (n: number) => String(n).padStart(2, '0');
+  const tz =
+    options?.timeZone && isValidTimeZone(options.timeZone)
+      ? options.timeZone.trim()
+      : undefined;
+  if (tz) {
+    const p = getZonedParts(date, tz);
+    if (!p) return '';
+    return `${p.year}-${pad(p.month)}-${pad(p.day)} ${pad(p.hour)}:${pad(p.minute)}:${pad(p.second)}`;
+  }
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
 }

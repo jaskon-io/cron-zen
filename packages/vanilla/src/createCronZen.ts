@@ -45,6 +45,10 @@ export interface CreateCronZenOptions {
   showPreview?: boolean;
   /** @description 周字段写法 */
   weekFormat?: WeekFormat;
+  /** @description IANA 时区（近 N 次） */
+  timeZone?: string;
+  /** @description 自然语言语言 zh-CN | en-US */
+  locale?: string;
   /** @description 表达式或状态变化回调 */
   onChange?: (payload: { expression: string; state: CronState }) => void;
 }
@@ -61,6 +65,8 @@ export interface CronZenSnapshot {
   validation: ValidateResult;
   hint: string;
   weekFormat: WeekFormat;
+  timeZone?: string;
+  locale: string;
 }
 
 /**
@@ -77,6 +83,8 @@ export interface CronZenController {
   /** @description 更新字段 */
   updateField: (name: CronFieldName, field: CronFieldState) => void;
   setWeekFormat: (format: WeekFormat) => void;
+  setTimeZone: (timeZone?: string) => void;
+  setLocale: (locale: string) => void;
   loadExpression: (expression: string) => void;
   reset: () => void;
   flush: () => void;
@@ -174,6 +182,8 @@ export function createCronZen(options: CreateCronZenOptions = {}): CronZenContro
   let validation: ValidateResult = { valid: true, errors: [], warnings: [] };
   let hint = '';
   let weekFormat: WeekFormat = options.weekFormat === 'abbr' ? 'abbr' : 'number';
+  let timeZone: string | undefined = options.timeZone?.trim() || undefined;
+  let locale = options.locale?.trim() || 'zh-CN';
 
   let timer: ReturnType<typeof setTimeout> | null = null;
   let nextRunsTimer: ReturnType<typeof setTimeout> | null = null;
@@ -197,6 +207,8 @@ export function createCronZen(options: CreateCronZenOptions = {}): CronZenContro
     validation,
     hint,
     weekFormat,
+    timeZone,
+    locale,
   });
 
   const refreshNextRuns = (): void => {
@@ -204,7 +216,10 @@ export function createCronZen(options: CreateCronZenOptions = {}): CronZenContro
       nextRuns = [];
       return;
     }
-    nextRuns = getNextRuns(state, nextCount).map(formatRunTime).filter(Boolean);
+    const tzOpt = timeZone ? { timeZone } : undefined;
+    nextRuns = getNextRuns(state, nextCount, new Date(), tzOpt)
+      .map((d) => formatRunTime(d, tzOpt))
+      .filter(Boolean);
   };
 
   const scheduleNextRuns = (immediate: boolean): void => {
@@ -233,7 +248,7 @@ export function createCronZen(options: CreateCronZenOptions = {}): CronZenContro
     validation = validateCronState(state);
 
     if (showPreview) {
-      description = describeCron(state);
+      description = describeCron(state, { locale });
       scheduleNextRuns(opts.immediateNextRuns === true);
     } else {
       description = '';
@@ -302,6 +317,16 @@ export function createCronZen(options: CreateCronZenOptions = {}): CronZenContro
 
   const setWeekFormat = (format: WeekFormat): void => {
     weekFormat = format === 'abbr' ? 'abbr' : 'number';
+    refreshNow();
+  };
+
+  const setTimeZone = (tz?: string): void => {
+    timeZone = tz?.trim() || undefined;
+    refreshNow();
+  };
+
+  const setLocale = (loc: string): void => {
+    locale = loc?.trim() || 'zh-CN';
     refreshNow();
   };
 
@@ -383,6 +408,8 @@ export function createCronZen(options: CreateCronZenOptions = {}): CronZenContro
     },
     updateField,
     setWeekFormat,
+    setTimeZone,
+    setLocale,
     loadExpression,
     reset,
     flush: refreshNow,

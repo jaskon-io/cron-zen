@@ -25,6 +25,10 @@ export interface MountCronZenOptions {
   showPreview?: boolean;
   /** @description 周字段写法 */
   weekFormat?: WeekFormat;
+  /** @description IANA 时区 */
+  timeZone?: string;
+  /** @description zh-CN | en-US */
+  locale?: string;
 }
 
 /**
@@ -86,10 +90,11 @@ export function mountCronZen(
     nextCount: options.nextCount,
     showPreview: options.showPreview,
     weekFormat: options.weekFormat,
+    timeZone: options.timeZone,
+    locale: options.locale,
   });
 
   const showPreview = options.showPreview !== false;
-  const tabs = getCronTabs();
   let fieldHandle: FieldEditorHandle | null = null;
   let copiedTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -130,6 +135,8 @@ export function mountCronZen(
   root.appendChild(preview);
 
   const renderTabs = (): void => {
+    const snap = ctrl.getSnapshot();
+    const tabs = getCronTabs(snap.locale);
     const active = ctrl.getActiveTab();
     nav.replaceChildren();
     for (const tab of tabs) {
@@ -187,6 +194,7 @@ export function mountCronZen(
 
     preview.replaceChildren();
 
+    const tabs = getCronTabs(snap.locale);
     const fields = document.createElement('div');
     fields.className = 'cron-zen__fields';
     const head = document.createElement('div');

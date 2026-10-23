@@ -42,6 +42,14 @@ export default defineComponent({
      * @description 是否展示底部预览（弹窗建议 false）
      */
     showPreview: { type: Boolean, default: true },
+    /**
+     * @description IANA 时区（近 N 次）
+     */
+    timeZone: { type: String, default: undefined },
+    /**
+     * @description 自然语言语言 zh-CN | en-US
+     */
+    locale: { type: String, default: 'zh-CN' },
   },
   emits: ['input', 'update:value', 'change'],
   setup(props, { emit }) {
@@ -75,15 +83,17 @@ export default defineComponent({
       debounceMs: props.debounceMs,
       nextCount: props.nextCount,
       showPreview: props.showPreview,
+      timeZone: toRef(props, 'timeZone'),
+      locale: toRef(props, 'locale'),
     });
 
-    const tabs = getCronTabs();
+    const tabs = computed(() => getCronTabs(props.locale));
     const currentField = computed(() => state.value[activeTab.value]);
     const copied = ref(false);
     let copiedTimer: ReturnType<typeof setTimeout> | null = null;
 
     const fieldParts = computed(() =>
-      tabs.map((tab) => ({
+      tabs.value.map((tab) => ({
         name: tab.name,
         label: tab.label,
         value: displayFieldValue(tab.name, state.value[tab.name], weekFormat.value),

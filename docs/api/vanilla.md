@@ -58,6 +58,8 @@ api.destroy()
 | `nextCount` | `10` | 近 N 次（≤100） |
 | `showPreview` | `true` | 底部预览 |
 | `weekFormat` | `'number'` | `'abbr'` 输出 MON…SAT |
+| `timeZone` | 本地 | IANA 时区（近 N 次） |
+| `locale` | `zh-CN` | `zh-CN` \| `en-US` |
 
 ## createCronZen
 

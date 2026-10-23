@@ -45,6 +45,8 @@ import '@cron-zen/vue3/style.css'
 | `debounceMs` | `number` | `0` | 写回防抖；本地预览始终即时 |
 | `nextCount` | `number` | `10` | 近 N 次（最大 100） |
 | `showPreview` | `boolean` | `true` | 底部预览；弹窗建议 `false` |
+| `timeZone` | `string` | 本地 | IANA 时区（近 N 次），如 `Asia/Shanghai` |
+| `locale` | `string` | `zh-CN` | 自然语言 / Tab：`zh-CN` \| `en-US` |
 
 ### Events
 

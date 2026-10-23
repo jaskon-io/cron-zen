@@ -52,6 +52,7 @@ export {
 export type { StringifyFieldOptions } from './stringify';
 
 export { describeCron, describeField } from './describe';
+export type { DescribeOptions } from './describe';
 
 export {
   expandFieldValues,
@@ -63,9 +64,29 @@ export {
   lastQuartzWeekdayOfMonth,
   nthQuartzWeekdayOfMonth,
 } from './nextRuns';
+export type { TimeZoneOptions } from './nextRuns';
+
+export {
+  isValidTimeZone,
+  getZonedParts,
+  zonedWallTimeToUtc,
+} from './timezone';
+export type { ZonedParts } from './timezone';
 
 export type { CronTabMeta } from './tabs';
 export { getCronTabs } from './tabs';
+
+export {
+  resolveLocale,
+  listLocales,
+  zhCN,
+  enUS,
+} from './i18n';
+export type {
+  CronLocaleCode,
+  CronLocaleMessages,
+  CronLocaleInput,
+} from './i18n';
 
 export {
   QUARTZ_WEEK_LABELS,

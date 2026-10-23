@@ -100,6 +100,10 @@ export interface UseCronZenOptions {
   showPreview?: boolean;
   /** @description 周字段输出写法（默认 number） */
   weekFormat?: Ref<WeekFormat> | WeekFormat;
+  /** @description IANA 时区 */
+  timeZone?: Ref<string | undefined> | string;
+  /** @description zh-CN | en-US */
+  locale?: Ref<string | undefined> | string;
 }
 
 /**
@@ -122,6 +126,10 @@ export interface UseCronZenReturn {
   hint: Ref<string>;
   /** @description 周字段写法 */
   weekFormat: Ref<WeekFormat>;
+  /** @description 近 N 次时区 */
+  timeZone: Ref<string | undefined>;
+  /** @description 文案语言 */
+  locale: Ref<string>;
   /** @description 更新单个字段并触发日周互斥 */
   updateField: (name: CronFieldName, field: CronFieldState) => void;
   /** @description 设置周字段输出写法并立即重生成 */
@@ -191,6 +199,16 @@ export function useCronZen(options: UseCronZenOptions = {}): UseCronZenReturn {
   });
   const hint = shallowRef('');
   const weekFormat = shallowRef<WeekFormat>(resolveWeekFormat(options.weekFormat));
+  const timeZone = shallowRef<string | undefined>(
+    typeof options.timeZone === 'string'
+      ? options.timeZone || undefined
+      : options.timeZone?.value || undefined,
+  );
+  const locale = shallowRef(
+    typeof options.locale === 'string'
+      ? options.locale || 'zh-CN'
+      : options.locale?.value || 'zh-CN',
+  );
 
   let timer: ReturnType<typeof setTimeout> | null = null;
   let nextRunsTimer: ReturnType<typeof setTimeout> | null = null;
@@ -207,8 +225,9 @@ export function useCronZen(options: UseCronZenOptions = {}): UseCronZenReturn {
       nextRuns.value = [];
       return;
     }
-    nextRuns.value = getNextRuns(state.value, nextCount)
-      .map(formatRunTime)
+    const tzOpt = timeZone.value ? { timeZone: timeZone.value } : undefined;
+    nextRuns.value = getNextRuns(state.value, nextCount, new Date(), tzOpt)
+      .map((d) => formatRunTime(d, tzOpt))
       .filter(Boolean);
   };
 
@@ -250,7 +269,7 @@ export function useCronZen(options: UseCronZenOptions = {}): UseCronZenReturn {
     validation.value = validateCronState(state.value);
 
     if (showPreview) {
-      description.value = describeCron(state.value);
+      description.value = describeCron(state.value, { locale: locale.value });
       scheduleNextRuns(opts.immediateNextRuns === true);
     } else {
       description.value = '';
@@ -453,6 +472,26 @@ export function useCronZen(options: UseCronZenOptions = {}): UseCronZenReturn {
     );
   }
 
+  if (options.timeZone && typeof options.timeZone !== 'string') {
+    watch(
+      () => (options.timeZone as Ref<string | undefined>).value,
+      (v) => {
+        timeZone.value = v || undefined;
+        refreshNow();
+      },
+    );
+  }
+
+  if (options.locale && typeof options.locale !== 'string') {
+    watch(
+      () => (options.locale as Ref<string | undefined>).value,
+      (v) => {
+        locale.value = v || 'zh-CN';
+        refreshNow();
+      },
+    );
+  }
+
   if (getCurrentInstance()) {
     onBeforeUnmount(() => {
       if (timer != null) {
@@ -475,6 +514,8 @@ export function useCronZen(options: UseCronZenOptions = {}): UseCronZenReturn {
     validation: validation as Ref<ValidateResult>,
     hint: hint as Ref<string>,
     weekFormat: weekFormat as Ref<WeekFormat>,
+    timeZone: timeZone as Ref<string | undefined>,
+    locale: locale as Ref<string>,
     updateField,
     setWeekFormat,
     loadExpression,
