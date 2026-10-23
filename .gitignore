@@ -6,3 +6,8 @@ coverage
 *.tsbuildinfo
 .turbo
 .pnpm-store
+
+# Local-only (do not publish)
+.cursorrules
+.cursor/
+PUBLISH.local.md
