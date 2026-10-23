@@ -13,6 +13,10 @@ export {
   expandFieldValues,
   formatRunTime,
   getCronTabs,
+  parseCron,
+  generateCron,
+  enforceDayWeekMutex,
+  stringifyField,
 } from '@cron-zen/core';
 
 export type {
@@ -20,6 +24,7 @@ export type {
   CronFieldState,
   CronFieldName,
   CronTabMeta,
+  WeekFormat,
 } from '@cron-zen/core';
 
 /**

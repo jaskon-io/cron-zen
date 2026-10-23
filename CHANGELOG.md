@@ -9,6 +9,10 @@
 
 ## [Unreleased]
 
+### Changed
+
+- `@cron-zen/vue2`：FieldEditor / CronZen 对齐 vue3 主路径（L·LW·nW·nL·#、月标签、周 abbr、空 v-model、`showPreview`）；样式同步；暂不 npm 首发
+
 ---
 
 ## [0.1.4] - 2026-10-23
