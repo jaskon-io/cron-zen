@@ -1,8 +1,10 @@
 # 在线示例 Demo
 
 <p class="cz-lead">
-四个可视化包 + 引擎包各有一份可复制的 CDN 页面。打开即可试，无需本地打包。
+四个可视化包 + 引擎包各有一份可复制的 CDN 页面（新窗口打开，文档不嵌 iframe）。Vue 3 业务弹层可在 <a href="./playground">Playground</a> 本页直接点。
 </p>
+
+<PackageDemoLinks />
 
 | 包 | 在线 Demo | 说明 |
 | --- | --- | --- |
