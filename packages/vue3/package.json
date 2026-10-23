@@ -8,7 +8,7 @@
     "url": "git+https://github.com/jaskon-io/cron-zen.git",
     "directory": "packages/vue3"
   },
-  "homepage": "https://github.com/jaskon-io/cron-zen/tree/main/packages/vue3#readme",
+  "homepage": "https://jaskon-io.github.io/cron-zen/api/vue3",
   "bugs": {
     "url": "https://github.com/jaskon-io/cron-zen/issues"
   },

@@ -8,7 +8,7 @@
     "type": "git",
     "url": "git+https://github.com/jaskon-io/cron-zen.git"
   },
-  "homepage": "https://github.com/jaskon-io/cron-zen#readme",
+  "homepage": "https://jaskon-io.github.io/cron-zen/",
   "bugs": {
     "url": "https://github.com/jaskon-io/cron-zen/issues"
   },
@@ -23,6 +23,9 @@
   ],
   "scripts": {
     "dev": "pnpm --filter @cron-zen/playground dev",
+    "docs:dev": "pnpm --filter @cron-zen/docs dev",
+    "docs:build": "node scripts/build-docs.mjs",
+    "docs:preview": "pnpm --filter @cron-zen/docs preview --base /cron-zen/",
     "build": "pnpm -r --filter @cron-zen/core build && pnpm -r --filter @cron-zen/vue3 build && pnpm -r --filter @cron-zen/vue2 build",
     "build:core": "pnpm --filter @cron-zen/core build",
     "build:vue3": "pnpm --filter @cron-zen/vue3 build",

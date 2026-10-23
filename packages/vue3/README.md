@@ -2,16 +2,16 @@
 
 Vue 3 可视化 Cron 表达式生成器。基于 `@cron-zen/core`，交互对齐 [cron.ren](https://www.cron.ren/index.html)：顶部 Tab + 中部配置 + 底部预览（可选）。
 
+**默认不依赖任何 UI 库。** `CronZen` / `useCronZen` 即可嵌入；`CronZenPicker` 只是 Element Plus 的可选示例壳。任意 Ant / Naive / 自研弹层接法见文档站 [任意 UI 库集成](https://jaskon-io.github.io/cron-zen/guide/any-ui)。
+
 ## Install
 
 ```bash
 pnpm add @cron-zen/vue3 @cron-zen/core vue
 ```
 
-`CronZenPicker` 依赖 Element Plus（可选 peer）；只用 `CronZen` 时可不装。
-
 ```bash
-pnpm add element-plus   # 仅使用 CronZenPicker 时需要
+pnpm add element-plus   # 仅使用 CronZenPicker 时需要；不是安装前提
 ```
 
 ```ts
@@ -97,9 +97,9 @@ function onChange(state: CronState) {
 
 ---
 
-## `CronZenPicker`
+## `CronZenPicker`（可选 · Element 壳）
 
-输入框 +「选择」按钮 + Dialog，适合 Element Plus 表单。弹窗内使用 `CronZen`（`showPreview=false`）。
+输入框 +「选择」按钮 + Dialog，**仅当你已在用 Element Plus** 时省胶水代码。弹窗内使用 `CronZen`（`showPreview=false`）。其它 UI 库请自行包一层 Dialog，不必为此引入 Element。
 
 ### Props
 

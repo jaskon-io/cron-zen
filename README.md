@@ -4,13 +4,17 @@
 
 面向 Vue 2 / Vue 3 的开源组件，核心逻辑与框架解耦，可独立发布与复用。
 
+**文档站**：[jaskon-io.github.io/cron-zen](https://jaskon-io.github.io/cron-zen/)（VitePress · 含在线 Playground）
+
+定位：**可嵌入的 Cron 引擎**（`@cron-zen/core`），Vue 可视化可选、**不绑 Element Plus / 其它 UI 库**；`CronZenPicker` 仅为 Element 示例壳。
+
 ## Packages
 
 | Package | Description | npm |
 | --- | --- | --- |
-| [`@cron-zen/core`](./packages/core) | 纯 TypeScript：解析 / 生成 / 校验（无 UI 依赖） | 待发布 |
-| [`@cron-zen/vue3`](./packages/vue3) | Vue 3 可视化组件（v-model + 三段式 UI） | 待发布 |
-| [`@cron-zen/vue2`](./packages/vue2) | Vue 2 可视化组件（v-model / `.sync`） | 待发布 |
+| [`@cron-zen/core`](./packages/core) | 纯 TypeScript：解析 / 生成 / 校验（无 UI 依赖） | [@cron-zen/core](https://www.npmjs.com/package/@cron-zen/core) |
+| [`@cron-zen/vue3`](./packages/vue3) | Vue 3 可视化组件（v-model + 三段式 UI） | [@cron-zen/vue3](https://www.npmjs.com/package/@cron-zen/vue3) |
+| [`@cron-zen/vue2`](./packages/vue2) | Vue 2 可视化组件（v-model / `.sync`） | 开发中 |
 
 ## Requirements
 
@@ -26,6 +30,9 @@ pnpm --filter @cron-zen/core typecheck
 
 # 本地可视化 Playground
 pnpm dev
+
+# 本地文档站
+pnpm docs:dev
 ```
 
 ### `@cron-zen/core` 示例
@@ -55,10 +62,12 @@ if (res.success) {
 
 | Command | Description |
 | --- | --- |
-| `pnpm test` | 运行 core 单元测试 |
+| `pnpm test` | 运行 core / vue3 单元测试 |
 | `pnpm test:coverage` | 覆盖率报告（目标 100%） |
 | `pnpm typecheck` | TypeScript 类型检查 |
 | `pnpm build` | 构建可发布产物 |
+| `pnpm docs:dev` | 本地文档站（VitePress） |
+| `pnpm docs:build` | 构建文档 + Playground（GitHub Pages） |
 
 ## License
 

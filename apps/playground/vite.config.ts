@@ -3,6 +3,8 @@ import vue from '@vitejs/plugin-vue';
 import { resolve } from 'node:path';
 
 export default defineConfig({
+  // GitHub Pages: /cron-zen/playground/ （由 scripts/build-docs.mjs 注入）
+  base: process.env.PLAYGROUND_BASE || '/',
   plugins: [vue()],
   resolve: {
     alias: {

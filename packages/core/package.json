@@ -8,7 +8,7 @@
     "url": "git+https://github.com/jaskon-io/cron-zen.git",
     "directory": "packages/core"
   },
-  "homepage": "https://github.com/jaskon-io/cron-zen/tree/main/packages/core#readme",
+  "homepage": "https://jaskon-io.github.io/cron-zen/api/core",
   "bugs": {
     "url": "https://github.com/jaskon-io/cron-zen/issues"
   },
