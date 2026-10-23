@@ -1,6 +1,6 @@
 {
   "name": "@cron-zen/core",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Framework-agnostic Cron expression parser, generator and validator for cron-zen",
   "license": "MIT",
   "repository": {
