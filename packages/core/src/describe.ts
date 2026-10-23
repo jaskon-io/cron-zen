@@ -1,5 +1,15 @@
 import type { CronFieldState, CronState } from './types';
-import { quartzWeekShortLabel } from './week';
+import { quartzWeekDayLabel, quartzWeekShortLabel } from './week';
+
+/**
+ * @description 将周字段取值格式化为「周一」等（支持数字与 SUN…SAT）
+ * @param {string | undefined} token - 原始 token
+ * @returns {string} 中文周标签
+ */
+function formatWeekToken(token: string | undefined): string {
+  if (token == null || token === '') return '';
+  return quartzWeekDayLabel(token);
+}
 
 /**
  * @description 将单个字段状态转为简短中文描述片段
@@ -8,21 +18,39 @@ import { quartzWeekShortLabel } from './week';
  * @returns {string} 描述片段；every/unset 返回空串
  * @example
  * describeField('小时', { mode: 'specific', raw: '2', value: '2' }); // '在 2 小时'
+ * describeField('周', { mode: 'range', raw: '2-6', value: '2', secondary: '6' }); // '周一至周五'
  */
 export function describeField(label: string, field: CronFieldState): string {
+  const isWeek = label === '周';
+
   switch (field.mode) {
     case 'every':
     case 'unset':
       return '';
-    case 'specific':
+    case 'specific': {
+      if (isWeek) {
+        const day = formatWeekToken(field.value ?? field.raw);
+        return day ? `每${day}` : '';
+      }
       return `在 ${field.value ?? field.raw} ${label}`;
-    case 'range':
+    }
+    case 'range': {
+      if (isWeek) {
+        const from = formatWeekToken(field.value);
+        const to = formatWeekToken(field.secondary);
+        if (from && to) return `${from}至${to}`;
+      }
       return `${label} ${field.value}-${field.secondary}`;
+    }
     case 'step':
       return `每 ${field.secondary ?? '1'} ${label}（从 ${field.value || '*'}）`;
     case 'list': {
       const items = (field.values ?? field.value?.split(',') ?? []).filter(Boolean);
-      return items.length > 0 ? `${label}为 ${items.join('、')}` : '';
+      if (items.length === 0) return '';
+      if (isWeek) {
+        return items.map((t) => formatWeekToken(t)).filter(Boolean).join('、');
+      }
+      return `${label}为 ${items.join('、')}`;
     }
     case 'last':
       return field.value

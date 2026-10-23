@@ -56,7 +56,43 @@ describe('describeCron', () => {
     state.month = { mode: 'list', raw: '1,6', values: ['1', '6'] };
     const text = describeCron(state);
     expect(text).toContain('2026');
-    expect(text).toContain('周');
+    expect(text).toContain('周日至周四');
+  });
+
+  it('周字段应输出周一至周五而非周 2-6', () => {
+    expect(
+      describeField('周', {
+        mode: 'range',
+        raw: '2-6',
+        value: '2',
+        secondary: '6',
+      }),
+    ).toBe('周一至周五');
+    expect(
+      describeField('周', {
+        mode: 'range',
+        raw: '7-3',
+        value: '7',
+        secondary: '3',
+      }),
+    ).toBe('周六至周二');
+    expect(
+      describeField('周', { mode: 'specific', raw: '2', value: '2' }),
+    ).toBe('每周一');
+    expect(
+      describeField('周', {
+        mode: 'list',
+        raw: '2,4,6',
+        values: ['2', '4', '6'],
+      }),
+    ).toBe('周一、周三、周五');
+    expect(
+      describeField('周', {
+        mode: 'list',
+        raw: 'MON,FRI',
+        values: ['MON', 'FRI'],
+      }),
+    ).toBe('周一、周五');
   });
 
   it('日具体时应走日描述分支', () => {

@@ -68,6 +68,7 @@ export {
   QUARTZ_WEEK_ABBR_TO_NUM,
   QUARTZ_WEEK_UI_ORDER,
   quartzWeekShortLabel,
+  quartzWeekDayLabel,
   weekNumberToAbbr,
   weekAbbrToNumber,
   normalizeWeekFieldToken,

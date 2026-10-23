@@ -62,6 +62,29 @@ export function quartzWeekShortLabel(quartzDay: number | string): string {
 }
 
 /**
+ * @description Quartz 周数字 / 英文缩写 →「周日」「周一」…（自然语言用）
+ * @param {number | string} quartzDayOrAbbr - 0-7、1-7 或 SUN…SAT
+ * @returns {string} 中文周标签；无法识别则返回原字符串
+ * @example
+ * quartzWeekDayLabel(2); // '周一'
+ * quartzWeekDayLabel('FRI'); // '周五'
+ */
+export function quartzWeekDayLabel(quartzDayOrAbbr: number | string): string {
+  if (typeof quartzDayOrAbbr === 'string') {
+    const abbrNum = weekAbbrToNumber(quartzDayOrAbbr);
+    if (abbrNum != null) {
+      const short = quartzWeekShortLabel(abbrNum);
+      return short === '日' ? '周日' : `周${short}`;
+    }
+  }
+  const short = quartzWeekShortLabel(quartzDayOrAbbr);
+  if (short.length === 1 && '日一二三四五六'.includes(short)) {
+    return short === '日' ? '周日' : `周${short}`;
+  }
+  return String(quartzDayOrAbbr);
+}
+
+/**
  * @description Quartz 周数字 → 英文缩写
  * @param {number | string} quartzDay - 周数字
  * @returns {string} SUN…SAT；非法则返回原字符串

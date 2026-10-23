@@ -11,7 +11,8 @@
 [![npm vue3](https://img.shields.io/npm/v/@cron-zen/vue3.svg?label=%40cron-zen%2Fvue3)](https://www.npmjs.com/package/@cron-zen/vue3)
 [![license](https://img.shields.io/npm/l/@cron-zen/core.svg)](./LICENSE)
 
-**文档**：[选哪个包](https://jaskon-io.github.io/cron-zen/guide/choose-package) · [站点](https://jaskon-io.github.io/cron-zen/) · [Playground](https://jaskon-io.github.io/cron-zen/guide/playground)
+**文档**：[选哪个包](https://jaskon-io.github.io/cron-zen/guide/choose-package) · [站点](https://jaskon-io.github.io/cron-zen/) · [Playground](https://jaskon-io.github.io/cron-zen/guide/playground)  
+**更新日志**：[CHANGELOG.md](./CHANGELOG.md)
 
 ## 安装
 

@@ -66,7 +66,11 @@ export default defineConfig({
           { text: 'npm · core', link: 'https://www.npmjs.com/package/@cron-zen/core' },
           { text: 'npm · vue3', link: 'https://www.npmjs.com/package/@cron-zen/vue3' },
           { text: 'GitHub', link: 'https://github.com/jaskon-io/cron-zen' },
-          { text: '更新日志', link: 'https://github.com/jaskon-io/cron-zen/releases' },
+          {
+            text: '更新日志',
+            link: 'https://github.com/jaskon-io/cron-zen/blob/main/CHANGELOG.md',
+          },
+          { text: 'Releases', link: 'https://github.com/jaskon-io/cron-zen/releases' },
         ],
       },
     ],
