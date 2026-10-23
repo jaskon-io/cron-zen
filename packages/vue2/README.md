@@ -2,7 +2,7 @@
 
 Vue 2.7 可视化 Cron 表达式生成器。基于 `@cron-zen/core`，交互与能力对齐 [`@cron-zen/vue3`](https://www.npmjs.com/package/@cron-zen/vue3)（日 `L`/`LW`/`nW`、周 `nL`/`#`、月「1月」标签、周 abbr/数字、空 v-model 不注入默认等）。
 
-**暂未 npm 首发**；本地 / workspace 可用。需要 Vue 3 请用 `@cron-zen/vue3`。
+文档：[API · vue2](https://jaskon-io.github.io/cron-zen/api/vue2) · [选哪个包](https://jaskon-io.github.io/cron-zen/guide/choose-package)
 
 ## Install
 
@@ -37,6 +37,19 @@ export default {
 </script>
 ```
 
+## useCronZen
+
+```js
+import { ref } from 'vue';
+import { useCronZen } from '@cron-zen/vue2';
+
+const model = ref('');
+const { expression, updateField, reset } = useCronZen({
+  modelValue: model,
+  debounceMs: 0,
+});
+```
+
 ## Props
 
 | Prop | Type | Default | Description |
@@ -53,16 +66,14 @@ export default {
 | `input` / `update:value` | `string` | 表达式变更 |
 | `change` | `CronState` | 可视化状态变更 |
 
-## 与 vue3 对齐进度
+## 与 vue3
 
 | 能力 | vue2 | vue3 |
 | --- | --- | --- |
 | `CronZen` + 日周互斥 / L·LW·W·nL·# | ✅ | ✅ |
-| 月「1月」标签 / 周 abbr | ✅ | ✅ |
-| 空 v-model / `showPreview` / 默认防抖 0 | ✅ | ✅ |
-| `useCronZen` 无头 API | ❌（Phase2 mixin） | ✅ |
-| `CronZenPicker` | ❌（不计划；示例壳仅 vue3） | 可选 |
-| Vitest 覆盖 | ❌（Phase2） | ✅ |
+| `useCronZen` | ✅（Vue 2.7 Composition API） | ✅ |
+| 空 v-model / `showPreview` | ✅ | ✅ |
+| `CronZenPicker` | ❌（不计划） | 可选 |
 
 ## License
 
