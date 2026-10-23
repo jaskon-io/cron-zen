@@ -61,6 +61,26 @@ const res = validateCronState(createDefaultCronState())
 console.log(res.valid, res.errors, res.warnings)
 ```
 
+## getNextRuns
+
+估算最近 N 次触发时间（本地时区；条数 1–100）。
+
+```ts
+import { getNextRuns, parseCron, formatRunTime } from '@cron-zen/core'
+
+const { state } = parseCron('0 0 9 ? * 6L') // 每月最后一个周五 09:00
+const runs = getNextRuns(state!, 5, new Date('2026-01-01T00:00:00'))
+console.log(runs.map(formatRunTime))
+```
+
+已支持的特殊字段（无法安全估算时返回 `[]`）：
+
+| 字段 | 模式 | 说明 |
+| --- | --- | --- |
+| 日 | `L` / `LW` / `nW` | 月末 / 最后工作日 / 最接近 n 号的工作日 |
+| 周 | `nL` / `n#m` / 裸 `L` | 本月最后星期 x / 第 m 个星期 x；裸 `L`≡每周六 |
+| 任意 | 倒序区间 | 如时 `22-2`、周 `7-3` 环形回绕 |
+
 ## 其它导出
 
 | API | 说明 |
@@ -69,7 +89,10 @@ console.log(res.valid, res.errors, res.warnings)
 | `escapeCronPercent` / `unescapeCronPercent` | `%` 转义 |
 | `enforceDayWeekMutex` / `assertDayWeekMutex` | 日周互斥 |
 | `describeCron` | 自然语言 |
-| `getNextRuns` | 近 N 次 |
+| `getNextRuns` / `formatRunTime` | 近 N 次与格式化 |
+| `lastDayOfMonth` / `lastWeekdayOfMonth` / `nearestWeekdayOfMonth` | 日日历辅助 |
+| `lastQuartzWeekdayOfMonth` / `nthQuartzWeekdayOfMonth` | 周日历辅助（nL / #） |
+| `QUARTZ_MONTH_LABELS` / `quartzMonthLabel` | 月中文标签 |
 | `getCronTabs` | Tab 元数据 |
 | `createDefaultCronState` | 默认状态 |
 | `generateCronOrThrow` | 失败抛错 |
