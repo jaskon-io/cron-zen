@@ -10,7 +10,12 @@ import type {
   CronFieldState,
   WeekFormat,
 } from '@cron-zen/core';
-import { FIELD_RANGES, QUARTZ_WEEK_LABELS, QUARTZ_WEEK_UI_ORDER } from '@cron-zen/core';
+import {
+  FIELD_RANGES,
+  QUARTZ_MONTH_LABELS,
+  QUARTZ_WEEK_LABELS,
+  QUARTZ_WEEK_UI_ORDER,
+} from '@cron-zen/core';
 import ValueGrid from './ValueGrid.vue';
 
 /** 同页多实例时避免 radio name 冲突 */
@@ -102,6 +107,7 @@ const weekOptions = QUARTZ_WEEK_UI_ORDER.map((value) => ({
 
 const weekLabels: Record<number, string> = { ...QUARTZ_WEEK_LABELS };
 const weekOrder = [...QUARTZ_WEEK_UI_ORDER];
+const monthLabels: Record<number, string> = { ...QUARTZ_MONTH_LABELS };
 
 const hourGroups = [
   { label: 'AM:', min: 0, max: 11 },
@@ -664,7 +670,7 @@ function onList(vals: number[]): void {
         :columns="
           name === 'year' ? 6 : name === 'month' ? 12 : name === 'week' ? 7 : name === 'hour' ? 12 : 10
         "
-        :labels="name === 'week' ? weekLabels : undefined"
+        :labels="name === 'week' ? weekLabels : name === 'month' ? monthLabels : undefined"
         :order="name === 'week' ? weekOrder : undefined"
         :groups="name === 'hour' ? hourGroups : undefined"
         @update:model-value="onList"

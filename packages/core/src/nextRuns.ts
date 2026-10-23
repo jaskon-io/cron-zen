@@ -197,6 +197,38 @@ export function lastWeekdayOfMonth(year: number, month: number): number {
 }
 
 /**
+ * @description 某月最接近指定日号的工作日（Quartz nW；不跨月）
+ * @param {number} year - 年
+ * @param {number} month - 月（1-12）
+ * @param {number} dayOfMonth - 目标日号（1-31）
+ * @returns {number | null} 实际触发日；日号越界或不存在返回 null
+ * @example
+ * // 2026-01-31 周六 → 30；2026-02-01 周日 → 2
+ * nearestWeekdayOfMonth(2026, 1, 31); // 30
+ * nearestWeekdayOfMonth(2026, 2, 1); // 2
+ */
+export function nearestWeekdayOfMonth(
+  year: number,
+  month: number,
+  dayOfMonth: number,
+): number | null {
+  if (!Number.isFinite(dayOfMonth)) return null;
+  const dom = Math.floor(dayOfMonth);
+  const last = lastDayOfMonth(year, month);
+  if (dom < 1 || dom > last) return null;
+
+  const jsDay = new Date(year, month - 1, dom).getDay();
+  if (jsDay >= 1 && jsDay <= 5) return dom;
+
+  if (jsDay === 6) {
+    // 周六：优先前一日周五；若为 1 号则进到周一（不跨月）
+    return dom > 1 ? dom - 1 : dom + 2;
+  }
+  // 周日：优先后一日周一；若为月末则退到周五
+  return dom < last ? dom + 1 : dom - 2;
+}
+
+/**
  * @description 全量时分秒（每秒触发）时的快速路径：按秒递增，避免 86400 次嵌套 Date
  * @param {number} limit - 条数
  * @param {number} fromTs - 起始时间戳
@@ -214,7 +246,7 @@ function nextRunsEverySecond(limit: number, fromTs: number): Date[] {
 
 /**
  * @description 估算最近 N 次触发时间（从 from 起按日推进，早停）
- * 支持日字段 `L` / `LW`；周字段 `L`/`W`/`#` 等仍无法展开时返回空
+ * 支持日字段 `L` / `LW` / `nW`；周字段 `L`/`#` 等仍无法展开时返回空
  * @param {CronState} state - 可视化状态
  * @param {number} [count=10] - 返回条数（1-100）
  * @param {Date} [from] - 起始时间（默认当前）
@@ -241,10 +273,21 @@ export function getNextRuns(
   const dayIsLast = state.day.mode === 'last' && !state.day.value;
   /** 日字段 LW（最后工作日） */
   const dayIsLW = state.day.mode === 'lastWeekday';
-  const daySpecial = dayIsLast || dayIsLW;
+  /** 日字段 nW（最接近 n 号的工作日） */
+  const weekdayNear =
+    state.day.mode === 'weekday' ? Number(state.day.value) : Number.NaN;
+  const dayIsWeekday =
+    state.day.mode === 'weekday' &&
+    Number.isFinite(weekdayNear) &&
+    weekdayNear >= 1 &&
+    weekdayNear <= 31;
+  const daySpecial = dayIsLast || dayIsLW || dayIsWeekday;
   const daysExpanded = daySpecial ? null : expandFieldValues(state.day, 1, 31);
 
   if (!seconds || !minutes || !hours || !months) {
+    return [];
+  }
+  if (state.day.mode === 'weekday' && !dayIsWeekday) {
     return [];
   }
   if (!daySpecial && daysExpanded == null) {
@@ -336,6 +379,12 @@ export function getNextRuns(
       }
     } else if (dayIsLW) {
       if (day !== lastWeekdayOfMonth(year, month)) {
+        cursor.setDate(cursor.getDate() + 1);
+        continue;
+      }
+    } else if (dayIsWeekday) {
+      const target = nearestWeekdayOfMonth(year, month, weekdayNear);
+      if (target == null || day !== target) {
         cursor.setDate(cursor.getDate() + 1);
         continue;
       }

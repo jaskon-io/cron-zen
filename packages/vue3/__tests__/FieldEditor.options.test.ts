@@ -109,6 +109,15 @@ describe('FieldEditor 选项联动', () => {
       const last = await pickRowByText(wrapper, label);
       expect(last.mode).toBe(mode);
     });
+
+    it('指定格子应显示 1月–12月 标签', async () => {
+      const wrapper = mountField('month', { mode: 'every', raw: '*' });
+      await pickRowByText(wrapper, '指定');
+      const text = wrapper.text();
+      expect(text).toContain('1月');
+      expect(text).toContain('12月');
+      expect(text).toContain('6月');
+    });
   });
 
   describe('周', () => {
