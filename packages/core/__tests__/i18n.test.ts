@@ -40,8 +40,8 @@ describe('describeCron locale', () => {
       day: { mode: 'unset', raw: '?' },
       week: { mode: 'range', raw: '2-6', value: '2', secondary: '6' },
     };
-    expect(describeCron(state)).toContain('周一');
-    expect(describeCron(state)).toContain('周五');
+    // zh-CN 口语化：周一至周五区间 →「工作日」
+    expect(describeCron(state)).toContain('工作日');
     const en = describeCron(state, { locale: 'en-US' });
     expect(en).toContain('Monday');
     expect(en).toContain('Friday');

@@ -1,6 +1,76 @@
 import type { CronLocaleMessages } from './types';
 
 /**
+ * @description 按字段单位生成更口语的「指定」描述
+ * @param {string} value - 值
+ * @param {string} unit - 单位文案
+ * @returns {string}
+ */
+function formatZhAtUnit(value: string, unit: string): string {
+  switch (unit) {
+    case '小时':
+      return `${value} 点`;
+    case '分':
+      return `${value} 分`;
+    case '秒':
+      return `${value} 秒`;
+    case '日':
+      return `${value} 号`;
+    case '月':
+      return `${value} 月`;
+    default:
+      return `在 ${value} ${unit}`;
+  }
+}
+
+/**
+ * @description 按字段单位生成更口语的「列表」描述
+ * @param {string} unit - 单位文案
+ * @param {string} items - 已用顿号连接的值
+ * @returns {string}
+ */
+function formatZhList(unit: string, items: string): string {
+  switch (unit) {
+    case '小时':
+      return `${items} 点`;
+    case '分':
+      return `${items} 分`;
+    case '秒':
+      return `${items} 秒`;
+    case '日':
+      return `${items} 号`;
+    case '月':
+      return `${items} 月`;
+    default:
+      return `${unit}为 ${items}`;
+  }
+}
+
+/**
+ * @description 按字段单位生成更口语的「区间」描述
+ * @param {string} unit - 单位文案
+ * @param {string} from - 起点
+ * @param {string} to - 终点
+ * @returns {string}
+ */
+function formatZhRange(unit: string, from: string, to: string): string {
+  switch (unit) {
+    case '小时':
+      return `${from}～${to} 点`;
+    case '分':
+      return `${from}～${to} 分`;
+    case '秒':
+      return `${from}～${to} 秒`;
+    case '日':
+      return `${from}～${to} 号`;
+    case '月':
+      return `${from}～${to} 月`;
+    default:
+      return `${unit} ${from}～${to}`;
+  }
+}
+
+/**
  * @description 简体中文文案（默认）
  */
 export const zhCN: CronLocaleMessages = {
@@ -112,12 +182,12 @@ export const zhCN: CronLocaleMessages = {
   },
   everyDay: '每天',
   customSchedule: '自定义调度',
-  atUnit: (value, unit) => `在 ${value} ${unit}`,
+  atUnit: (value, unit) => formatZhAtUnit(value, unit),
   everyWeekday: (weekday) => `每${weekday}`,
   weekRange: (from, to) => `${from}至${to}`,
-  range: (unit, from, to) => `${unit} ${from}-${to}`,
+  range: (unit, from, to) => formatZhRange(unit, from, to),
   step: (step, unit, from) => `每 ${step} ${unit}（从 ${from}）`,
-  list: (unit, items) => `${unit}为 ${items}`,
+  list: (unit, items) => formatZhList(unit, items),
   listJoin: (items) => items.join('、'),
   lastDay: '最后一天',
   lastWeekdayOfMonth: (w) => `最后一个星期${w}`,
@@ -125,7 +195,7 @@ export const zhCN: CronLocaleMessages = {
   nearestWorkday: (day) => `最接近 ${day} 号的工作日`,
   nthWeekday: (n, w) => `第 ${n} 个星期${w}`,
   yearSpecific: (y) => `${y} 年`,
-  hourSpecific: (h) => `${h} 时`,
+  hourSpecific: (h) => `${h} 点`,
   minuteSpecific: (m) => `${m} 分`,
   secondSpecific: (s) => `${s} 秒`,
   weekDayFull: {

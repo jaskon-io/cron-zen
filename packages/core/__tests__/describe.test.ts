@@ -13,7 +13,7 @@ describe('describeField', () => {
     expect(describeField('时', { mode: 'specific', raw: '2', value: '2' })).toContain('2');
     expect(
       describeField('分', { mode: 'range', raw: '1-5', value: '1', secondary: '5' }),
-    ).toContain('1-5');
+    ).toContain('1～5');
     expect(
       describeField('秒', { mode: 'step', raw: '0/5', value: '0', secondary: '5' }),
     ).toContain('每 5');
@@ -151,7 +151,7 @@ describe('describeCron', () => {
     state.minute = { mode: 'step', raw: '0/5', value: '0', secondary: '5' };
     state.second = { mode: 'list', raw: '0,30', values: ['0', '30'] };
     const text = describeCron(state);
-    expect(text).toContain('小时');
+    expect(text).toContain('点');
     expect(text).toContain('分');
     expect(text).toContain('秒');
   });

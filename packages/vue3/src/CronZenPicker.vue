@@ -11,7 +11,11 @@
  */
 import { computed, ref, watch } from 'vue';
 import { ElButton, ElDialog, ElInput, ElMessage } from 'element-plus';
-import { parseCron } from '@cron-zen/core';
+import {
+  parseCron,
+  resolveCronDisplay,
+  type CronFrequencyOption,
+} from '@cron-zen/core';
 import CronZen from './CronZen.vue';
 
 const props = withDefaults(
@@ -56,6 +60,14 @@ const props = withDefaults(
      * @description 生成防抖毫秒数
      */
     debounceMs?: number;
+    /**
+     * @description 业务频率列表：命中则底部文案优先用 frequencyName
+     */
+    frequencyOptions?: CronFrequencyOption[];
+    /**
+     * @description 是否在弹窗底部展示「下次执行」行（默认 false，仅展示语义文案）
+     */
+    showNextRun?: boolean;
   }>(),
   {
     modelValue: '',
@@ -69,6 +81,8 @@ const props = withDefaults(
     dialogWidth: '760px',
     // 弹窗内即时回写底部草稿，避免 300ms 滞后造成「点确定值还是旧的」体感
     debounceMs: 0,
+    frequencyOptions: () => [],
+    showNextRun: false,
   },
 );
 
@@ -99,6 +113,13 @@ const inputValue = computed({
   get: () => props.modelValue ?? '',
   set: (val: string) => emit('update:modelValue', val ?? ''),
 });
+
+/** 底部展示：频率名优先，否则自动语义 + 可选下次执行 */
+const draftDisplay = computed(() =>
+  resolveCronDisplay(draft.value, props.frequencyOptions ?? []),
+);
+const draftDescription = computed(() => draftDisplay.value.description);
+const draftNextRun = computed(() => draftDisplay.value.nextRun);
 
 /**
  * @description 打开 Cron 选择弹窗：有值则原样回显，无值保持空（不注入默认表达式）
@@ -217,7 +238,21 @@ defineExpose({
 
       <template #footer>
         <div class="cz-picker__footer">
-          <code class="cz-picker__draft" :title="draft">{{ draft }}</code>
+          <div class="cz-picker__summary">
+            <code class="cz-picker__draft" :title="draft">{{ draft }}</code>
+            <div v-if="draftDescription" class="cz-picker__meta">
+              <span class="cz-picker__desc" :title="draftDescription">
+                {{ draftDescription }}
+              </span>
+              <span
+                v-if="showNextRun && draftNextRun"
+                class="cz-picker__next"
+                :title="draftNextRun"
+              >
+                {{ draftNextRun }}
+              </span>
+            </div>
+          </div>
           <div class="cz-picker__actions">
             <el-button :size="size" @click="onCancel">取消</el-button>
             <el-button type="primary" :size="size" :disabled="!draft.trim()" @click="onConfirm">
@@ -251,16 +286,53 @@ defineExpose({
   width: 100%;
 }
 
-.cz-picker__draft {
+.cz-picker__summary {
   flex: 1 1 auto;
   min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-align: left;
+}
+
+.cz-picker__draft {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 42%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-size: 12px;
   color: var(--el-text-color-secondary, #909399);
-  text-align: left;
+}
+
+.cz-picker__meta {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+.cz-picker__desc {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+  color: var(--el-color-primary, #409eff);
+  font-weight: 500;
+}
+
+.cz-picker__next {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  color: var(--el-text-color-secondary, #909399);
 }
 
 .cz-picker__actions {

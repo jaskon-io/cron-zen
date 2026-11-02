@@ -55,6 +55,16 @@ export { describeCron, describeField } from './describe';
 export type { DescribeOptions } from './describe';
 
 export {
+  resolveCronDisplay,
+  normalizeCronKey,
+} from './resolveCronDisplay';
+export type {
+  CronFrequencyOption,
+  CronDisplayInfo,
+  ResolveCronDisplayOptions,
+} from './resolveCronDisplay';
+
+export {
   expandFieldValues,
   getNextRuns,
   getPrevRuns,

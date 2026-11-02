@@ -24,6 +24,8 @@ export {
   parseCron,
   generateCron,
   enforceDayWeekMutex,
+  resolveCronDisplay,
+  normalizeCronKey,
 } from '@cron-zen/core';
 
 export type {
@@ -32,6 +34,9 @@ export type {
   CronFieldName,
   CronTabMeta,
   WeekFormat,
+  CronFrequencyOption,
+  CronDisplayInfo,
+  ResolveCronDisplayOptions,
 } from '@cron-zen/core';
 
 /**

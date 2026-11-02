@@ -221,12 +221,29 @@ getCronPresets('zh-CN')
 
 ### `describeCron(state, options?)`
 
-整表自然语言摘要。
+整表自然语言摘要。中文默认走口语化（如「每5分钟执行」「工作日9点执行」）。
 
 ```ts
-describeCron(state) // 默认 zh-CN，如「工作日 09:00」
+describeCron(state) // 默认 zh-CN，如「工作日9点执行」
 describeCron(state, { locale: 'en-US' })
 ```
+
+### `resolveCronDisplay(expression, options?)`
+
+业务展示用：优先命中频率表 `frequencyName`，否则 `describeCron`；并附带「下次执行：…」。
+
+```ts
+import { resolveCronDisplay } from '@cron-zen/core'
+
+resolveCronDisplay('0 0/5 * * * ?')
+// { description: '每5分钟执行', nextRun: '下次执行：…', matched: false }
+
+resolveCronDisplay('0 0 9 * * ?', [
+  { cronExpression: '0 0 9 * * ?', frequencyName: '每天上午9点' },
+])
+```
+
+`CronZenPicker` 可通过 `frequencyOptions` / `showNextRun` 在弹窗底栏展示上述文案。
 
 ### `describeField(fieldKey, field, options?)`
 
