@@ -1,6 +1,6 @@
 {
   "name": "@cron-zen/vanilla",
-  "version": "0.2.4",
+  "version": "0.2.5",
   "description": "Framework-free Cron visual editor — mount(el) / script-tag browser bundle / createCronZen",
   "license": "MIT",
   "repository": {

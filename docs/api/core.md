@@ -30,7 +30,7 @@ const { parseCron, generateCron, getNextRuns } = require('@cron-zen/core')
 
 ```html [浏览器 ESM]
 <script type="module">
-  import { parseCron } from 'https://cdn.jsdelivr.net/npm/@cron-zen/core@0.2.4/+esm'
+  import { parseCron } from 'https://cdn.jsdelivr.net/npm/@cron-zen/core@0.2.5/+esm'
 </script>
 ```
 

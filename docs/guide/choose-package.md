@@ -93,9 +93,9 @@ pnpm add @cron-zen/core
 **纯 HTML（`<script>` 直引，最省事）**：
 
 ```html
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@cron-zen/vanilla@0.2.4/dist/cron-zen-vanilla.css" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@cron-zen/vanilla@0.2.5/dist/cron-zen-vanilla.css" />
 <div id="cron"></div>
-<script src="https://cdn.jsdelivr.net/npm/@cron-zen/vanilla@0.2.4/dist/cron-zen-vanilla.browser.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@cron-zen/vanilla@0.2.5/dist/cron-zen-vanilla.browser.js"></script>
 <script>
   CronZen.mountCronZen('#cron', {
     value: '',
